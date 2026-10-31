@@ -92,11 +92,14 @@ body.sheet-collapsed #out{padding-bottom:64px}
 /* Start screen, as on Spot: black, a round open button, the version bottom left, an About drawer under a yellow strip. */
 #startScreen{display:none}
 html.show-start{overflow:hidden}
-html.show-start #startScreen{display:flex;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;overflow:hidden;background:transparent;transition:opacity .5s ease;--strip-w:44px;--panel-w:max(320px,calc(100vw / 3 - var(--strip-w)))}
+html.show-start #startScreen{display:flex;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;overflow:hidden;background:#000;transition:opacity .5s ease;--strip-w:44px;--panel-w:max(320px,calc(100vw / 3 - var(--strip-w)))}
 html.start-leaving #startScreen{opacity:0;pointer-events:none}
-#startOpen{width:clamp(140px,26vmin,260px);aspect-ratio:1;border-radius:50%;border:0;background:#ececec;color:#000;box-shadow:0 0 0 200vmax #000;font:400 clamp(18px,3.2vmin,30px)/1 var(--font);font-style:italic;letter-spacing:.04em;cursor:pointer;transition:background-color .35s ease,color .35s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
-#startOpen:hover,#startOpen:focus-visible{background:transparent;color:transparent;outline:none;transform:scale(2)}
-#startOpen:focus-visible{box-shadow:inset 0 0 0 3px var(--yellow),0 0 0 200vmax #000}
+#startOpen{display:flex;flex-direction:column;align-items:center;gap:clamp(18px,4vmin,34px);padding:0;border:0;border-radius:0;background:none;color:#fff;font:italic 400 clamp(16px,2.6vmin,24px)/1 var(--font);letter-spacing:.04em;cursor:pointer}
+#startOpen svg{height:clamp(170px,40vmin,360px);width:auto;fill:var(--yellow);transform:rotate(-14deg);transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+#startOpen span{transition:color .35s ease}
+#startOpen:hover svg,#startOpen:focus-visible svg{transform:rotate(0deg) scale(1.06)}
+#startOpen:hover span,#startOpen:focus-visible span{color:var(--yellow)}
+#startOpen:focus-visible{outline:2px solid var(--yellow);outline-offset:14px}
 .start-version{position:fixed;left:16px;bottom:max(12px,env(safe-area-inset-bottom));z-index:3;font-size:11px;color:rgba(255,255,255,.55);text-decoration:none}
 .start-version:hover,.start-version:focus-visible{color:var(--yellow);outline:none}
 .start-drawer{position:fixed;top:0;right:0;bottom:0;z-index:3;display:flex;transform:translateX(var(--panel-w));transition:transform .45s cubic-bezier(.2,.7,.2,1)}
@@ -109,7 +112,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .start-drawer.is-open .strip-icon{transform:rotate(45deg)}
 @media(prefers-reduced-motion:no-preference){.start-drawer:not(.is-open) .strip-icon{animation:form-nudge 2.4s ease-in-out 1.2s 2}}
 @keyframes form-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-4px)}}
-@media(prefers-reduced-motion:reduce){html.show-start #startScreen,#startOpen,.start-drawer,.strip-icon{transition:none}}
+@media(prefers-reduced-motion:reduce){html.show-start #startScreen,#startOpen svg,#startOpen span,.sa-open,.start-drawer,.strip-icon{transition:none}}
 .start-panel{width:var(--panel-w);max-width:calc(100vw - var(--strip-w));background:#fff;color:var(--ink);overflow-y:auto;display:flex;flex-direction:column}
 .sa-content{padding:28px 28px 8px}
 .sa-content h1{margin:0 0 14px;font-size:clamp(30px,2.6vw,42px);line-height:1;letter-spacing:-.03em;font-weight:300}
@@ -122,8 +125,9 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .sp-foot{margin-top:auto;padding:16px 28px 22px;display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#6b6862}
 /* Phones and narrow windows: the panel covers the circle, so it carries its own open circle, the first paragraph first, "More" to unfold. */
 .sa-lead,.sa-open-end{display:none}
-.sa-open{flex:none;width:92px;height:92px;border-radius:50%;border:0;padding:0;background:var(--ink);color:#fff;font:italic 400 17px var(--font);cursor:pointer;transition:transform .2s ease,background-color .15s ease,color .15s ease}
-.sa-open:active{transform:scale(.94)}
+.sa-open{flex:none;width:92px;height:92px;border-radius:0;transform:rotate(-8deg);border:0;padding:0;background:var(--ink);color:#fff;font:italic 400 17px var(--font);cursor:pointer;transition:transform .35s cubic-bezier(.2,.7,.2,1),background-color .15s ease,color .15s ease}
+.sa-open:hover,.sa-open:focus-visible{transform:rotate(0deg)}
+.sa-open:active{transform:rotate(0deg) scale(.94)}
 .sa-open:hover,.sa-open:active,.sa-open:focus-visible{background:var(--yellow);color:var(--ink);outline:none}
 .sa-more{border:0;background:none;padding:0;color:var(--ink);font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media(max-width:760px){
