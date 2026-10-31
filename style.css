@@ -158,3 +158,5 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #screen #camera[aria-pressed=true]{color:var(--yellow);background:var(--ink)}
 #screen label{color:#555}
 #screen #camT{margin-top:2px}
+#out label.inline{color:#231F20}
+#out input[type=checkbox]{accent-color:var(--ink)}

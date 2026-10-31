@@ -5,7 +5,7 @@
 // (print double sided, flip on short edge, fold and staple), or the plain A5 pages for proofing.
 // It relies on globals from app.js: SHAPES, ang, ghosts, TONE, U, bbox, waysLabel.
 const PT = 72 / 25.4, A5W = 148 * PT, A5H = 210 * PT, A4W = 297 * PT;
-const THEME = { light: { bg: '#DEDDD2', ink: '#231F20', dim: '#231F20' }, dark: { bg: '#231F20', ink: '#DEDDD2', dim: '#7A776F' } };
+const THEME = { light: { bg: '#DEDDD2', ink: '#231F20', dim: '#231F20' }, dark: { bg: '#231F20', ink: '#DEDDD2', dim: '#7A776F' }, yellow: { bg: '#FFE100', ink: '#FFFFFF', dim: '#231F20' } };
 // Shape outlines in a 100 by 100 cell. Keep in step with SHAPES in app.js.
 const SEG = {
   square: [['m', 0, 0], ['l', 100, 0], ['l', 100, 100], ['l', 0, 100], ['h']],
@@ -68,6 +68,15 @@ function makeBook(bc, opt) {
     const bb = bbox(bc, view), bw = bb.w / U, bh = bb.h / U, c = Math.min(0.11 * W, 0.76 * W / bw, 0.5 * H / bh);
     return { bb, c, X: W / 2 - bw * c / 2 - bb.x / U * c, Y: 0.435 * H - bh * c / 2 - bb.y / U * c };
   };
+  // End papers: the iterations tiled edge to edge, white on yellow. The front one runs through the variants in order, the back one in reverse. The bleed is not drawn, so the pattern runs to the page edge.
+  const endpaper = rev => {
+    const bb = bbox(bc, 'form'), bw = bb.w / U, bh = bb.h / U, s = W / (7 * bw), pw = s * bw, ph = s * bh, th = THEME.yellow; let body = '';
+    for (let r = 0; r <= Math.ceil(H / ph); r++) for (let c = -1; c <= 8; c++) {
+      const idx = (((r * 7 + c) % N) + N) % N, k = rev ? N - idx : idx + 1;
+      body += frameOps(k, 'form', c * pw + (r % 2 ? pw / 2 : 0) - bb.x / U * s, r * ph - bb.y / U * s, s, th.ink);
+    }
+    return page(th, body);
+  };
   const pages = [];
   // cover
   { const bb = bbox(bc, 'form'), bw = bb.w / U, bh = bb.h / U, c = Math.min(0.11 * W, 0.76 * W / bw, 0.5 * H / bh);
@@ -75,6 +84,7 @@ function makeBook(bc, opt) {
     const cc = Math.min(0.11 * W, 0.7 * W / (x1 - x0), 0.5 * H / (y1 - y0));
     pages.push(page(THEME.light, frameOps(0, 'form', W / 2 - (x0 + x1) / 2 * cc, 0.435 * H - (y0 + y1) / 2 * cc, cc, THEME.light.ink) +
       text(title, 0, 8, W / 2, H * 0.808, THEME.light.ink) + text('Form', 2, 8, W / 2, H * 0.826, THEME.light.ink))); }
+  if (opt.endpapers) pages.push(endpaper(false));
   // the five treatments, each with the original on top and the variants in a grid
   VIEWS.forEach(([view, name], vi) => {
     const bb = bbox(bc, view), bw = bb.w / U, bh = bb.h / U, per = 48, pc = Math.max(1, Math.ceil(N / per));
@@ -99,7 +109,8 @@ function makeBook(bc, opt) {
         pages.push(page(d, ks.map((k, i) => frameOps(k, 'form', left + (i % f.cols) * f.s * bw - bb.x / U * f.s, 0.1 * H + Math.floor(i / f.cols) * f.s * bh - bb.y / U * f.s, f.s, d.ink)).join(''))); } }
   }
   // blank pages so the booklet is a multiple of four, then the colophon as the last page
-  while ((pages.length + 1) % 4) pages.push(page(THEME.dark, ''));
+  while ((pages.length + (opt.endpapers ? 1 : 0) + 1) % 4) pages.push(page(THEME.dark, ''));
+  if (opt.endpapers) pages.push(endpaper(true));
   const total = pages.length + 1, L = THEME.light;
   pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
     text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch, no bleed.', 2, 6.5, W / 2, H * 0.83, L.ink)));

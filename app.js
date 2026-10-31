@@ -348,7 +348,7 @@ if (typeof document !== 'undefined') {
     if (!chain) return $('msg').textContent = 'Press Process first.';
     const kc = kept(), orig = chain.states.find(s => s.id === 0), vs = kc.states.filter(s => s.id !== 0);
     if (!orig || !vs.length) return $('msg').textContent = 'There are no variants to put in a book.';
-    const bytes = makeBook({ states: [orig, ...vs] }, { imposed, verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, date: new Date().toISOString().slice(0, 10) });
+    const bytes = makeBook({ states: [orig, ...vs] }, { imposed, verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) });
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
     a.download = `form-publication-A5${imposed ? '-imposed' : ''}.pdf`; a.click(); URL.revokeObjectURL(a.href);
   }
