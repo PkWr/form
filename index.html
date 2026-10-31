@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Form</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <section id="panel">
+    <h1>Form</h1>
+    <p class="sub">11 ways I can make you up</p>
+    <svg id="grid" viewBox="0 0 1600 1600" aria-label="16 by 16 grid: click a cell to place or remove a block"></svg>
+    <div id="palette" role="radiogroup" aria-label="Shape"></div>
+    <label>Chain length <output id="lenOut">11</output><input id="len" type="range" min="1" max="200" value="11"></label>
+    <label>Animation speed <output id="spdOut">400 ms</output><input id="spd" type="range" min="80" max="1500" step="20" value="400"></label>
+    <label>Seed <input id="seed" type="number" value="1" min="0"></label>
+    <div class="row">
+      <label class="inline"><input type="radio" name="mode" value="form" checked> Form</label>
+      <label class="inline"><input type="radio" name="mode" value="solid"> Cumulative solid</label>
+    </div>
+    <div class="row">
+      <button id="process">Process</button>
+      <button id="reroll">Reroll</button>
+      <button id="clear">Clear</button>
+    </div>
+    <p id="msg" role="status"></p>
+  </section>
+  <section id="out">
+    <h2>Animated frame</h2>
+    <svg id="anim" viewBox="0 0 100 100"></svg>
+    <div class="row"><button id="dlAnim">Download animated SVG</button><button id="dlFrame">Download this frame</button></div>
+    <h2>Contact sheet</h2>
+    <div id="sheet"></div>
+    <div class="row"><button id="dlSheet">Download contact sheet SVG</button></div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

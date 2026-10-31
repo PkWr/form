@@ -1,0 +1,23 @@
+:root{--ink:#231f20;--paper:#dcdcd0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.4 system-ui,sans-serif}
+main{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:32px;padding:24px;max-width:1400px;margin:auto}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+h1{margin:0;font-size:28px}h2{font-size:14px;margin:24px 0 8px}
+.sub{margin:0 0 16px;font-style:italic}
+svg{display:block;width:100%;height:auto}
+#grid{border:1px solid var(--ink);cursor:pointer;touch-action:manipulation}
+#anim{max-height:60vh;border:1px solid var(--ink);background:var(--paper)}
+#palette{display:flex;gap:8px;margin:12px 0}
+#palette button{width:48px;height:48px;padding:6px;background:transparent;border:1px solid var(--ink)}
+#palette button[aria-checked=true]{background:var(--ink)}
+#palette button[aria-checked=true] svg{fill:var(--paper)}
+#palette svg{fill:var(--ink)}
+label{display:block;margin:8px 0}
+label.inline{display:inline-block;margin-right:16px}
+input[type=range]{width:100%}input[type=number]{width:80px}
+output{float:right}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+button{font:inherit;padding:8px 14px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer}
+button:hover,#process{background:var(--ink);color:var(--paper)}
+#msg{min-height:1.4em}
