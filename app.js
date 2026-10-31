@@ -2,13 +2,14 @@
 // Form — pick blocks on a 16x16 grid; a chain of moves leaves traces; export as SVG.
 let G = 9;
 const U = 100, MAXCAP = 500, TONE = 0.22, INK = '#111', PAPER = '#f4f2ee', YEL = '#ffe100';
-// Shape library: paths in a 100x100 cell. sign = turn direction (mirror pairs turn opposite ways).
+// Shape library: paths in a 100x100 cell. sym = looks the same turned. A placed block has a base turn q (0 to 3, from clicking) and r (0 to 3, the direction of its last move).
 const SHAPES = {
-  square: { d: 'M0 0H100V100H0Z', sign: 1, sym: 1 },
-  archR:  { d: 'M0 0A100 100 0 0 1 100 100L0 100Z', sign: 1 },
-  archL:  { d: 'M100 0A100 100 0 0 0 0 100L100 100Z', sign: -1 },
-  circle: { d: 'M50 0A50 50 0 1 1 50 100A50 50 0 1 1 50 0Z', sign: 1, sym: 1 },
+  square: { d: 'M0 0H100V100H0Z', sym: 1 },
+  arch:   { d: 'M0 0A100 100 0 0 1 100 100L0 100Z' },
+  tri:    { d: 'M0 0L100 100L0 100Z' },
+  circle: { d: 'M50 0A50 50 0 1 1 50 100A50 50 0 1 1 50 0Z', sym: 1 },
 };
+const ang = b => SHAPES[b.s].sym ? 0 : (((b.q || 0) + b.r) % 4) * 90;
 const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]]; // right, down, left, up
 
 // ---------- engine ----------
@@ -28,7 +29,7 @@ function norm(bl, tr) {
     tr: tr.map(t => ({ ...t, x: t.x - mx, y: t.y - my })),
   };
 }
-const keyOf = (st, ax, withTr) => st.blocks.map(b => b.x + ',' + b.y + b.s + b.r + (ax ? b.a : '')).join('|') +
+const keyOf = (st, ax, withTr) => st.blocks.map(b => b.x + ',' + b.y + b.s + b.r + (b.q || 0) + (ax ? b.a : '')).join('|') +
   (withTr ? '#' + st.tr.map(t => t.x + ',' + t.y).sort().join('|') : '');
 // Direction: a block's stripes run along the line it is joined on: vertical if it has a block above or below, else horizontal.
 const axisOf = (b, bl) => bl.some(o => o.x === b.x && Math.abs(o.y - b.y) === 1) ? 1 : 0;
@@ -47,7 +48,7 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
           const nb = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir } : o);
           nb[i].a = axisOf(nb[i], nb);
           if (!connected(nb)) continue;
-          const n = norm(nb, [...st.tr, { x: old.x, y: old.y, s: old.s, r: old.r }]);
+          const n = norm(nb, [...st.tr, { x: old.x, y: old.y, s: old.s, r: old.r, q: old.q }]);
           if (Math.max(...n.blocks.map(b => b.x)) >= G || Math.max(...n.blocks.map(b => b.y)) >= G) continue;
           const k = keyOf(n, ax, withTr); if (seen.has(k)) continue;
           seen.add(k); next.push(n);
@@ -68,8 +69,8 @@ const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id=
   '<g id="hs" shape-rendering="crispEdges"><rect y="0" width="100" height="20"/><rect y="40" width="100" height="20"/><rect y="80" width="100" height="20"/></g>' +
   '<g id="vs" shape-rendering="crispEdges"><rect x="0" width="20" height="100"/><rect x="40" width="20" height="100"/><rect x="80" width="20" height="100"/></g></defs>';
 // Direction: each block is three stripes running along its last move (vertical until it moves).
-const stripes = b => `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${((SHAPES[b.s].sign * 90 * b.r) % 360 + 360) % 360})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
-const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${SHAPES[b.s].sign * 90 * b.r} 50 50)"/>`;
+const stripes = b => `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
+const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${ang(b)} 50 50)"/>`;
 function frame(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(stripes).join('');
@@ -107,7 +108,7 @@ if (typeof document !== 'undefined') {
   const $ = id => document.getElementById(id);
   let grid = Array(G * G).fill(null);
   let shape = 'square', chain = null, mode = 'form', cur = 0, timer = null;
-  const mk = (s, m = {}) => ({ s, r: 0, ...m });
+  const mk = s => ({ s, r: 0, q: 0 });
   function startT() {
     grid = Array(G * G).fill(null);
     const ox = Math.floor((G - 3) / 2), oy = Math.floor((G - 5) / 2);
@@ -124,7 +125,10 @@ if (typeof document !== 'undefined') {
   }
   $('grid').addEventListener('click', e => {
     const r = $('grid').getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * G), y = Math.floor((e.clientY - r.top) / r.height * G), i = y * G + x;
-    grid[i] = grid[i] ? null : mk(shape); drawGrid();
+    // Empty cell: place. Same shape: turn a quarter (removed after the fourth turn, or at once for square and circle). Other shape: replace.
+    const c = grid[i];
+    grid[i] = !c || c.s !== shape ? mk(shape) : SHAPES[c.s].sym || c.q === 3 ? null : { ...c, q: c.q + 1 };
+    drawGrid();
   });
   $('palette').innerHTML = Object.entries(SHAPES).map(([id, s]) =>
     `<button role="radio" aria-checked="${id === shape}" aria-label="${id}" data-s="${id}"><svg viewBox="0 0 100 100"><path d="${s.d}"/></svg></button>`).join('');
@@ -147,7 +151,7 @@ if (typeof document !== 'undefined') {
     draw(); timer = setInterval(draw, +$('spd').value);
   }
   function process() {
-    const start = grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0 }).filter(Boolean);
+    const start = grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
     hidden = new Set();
