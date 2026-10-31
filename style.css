@@ -39,15 +39,38 @@ button:hover{border-color:var(--accent-line)}
 .hint{color:var(--muted);font-size:11px;margin:8px 0 0}
 @media(max-width:900px){#out{padding:24px 24px 48vh}#panel{top:auto;height:44vh}}
 .cp-grab{display:none}
-/* Phones / touch: controls become a bottom sheet, as in Spot (grab handle collapses it). */
+.cp-tabs{display:none}
+.draw-side .row{margin:0 0 12px}
+/* Phones / touch: controls become a bottom sheet, as in Spot: grab handle, tabs at the bottom (Draw, Rule), Process always in reach. */
 @media(pointer:coarse),(max-width:600px){
-#out{padding:16px 16px calc(min(64vh,600px) + 24px)}
+#out{padding:16px 16px calc(clamp(450px,64vh,600px) + 24px)}
 body.sheet-collapsed #out{padding-bottom:64px}
-#panel{top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;height:min(64vh,600px);padding:0 16px max(16px,env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:20px 20px 0 0}
-#panel.collapsed{height:auto;overflow:hidden;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+#panel{display:flex;flex-direction:column;overflow:hidden;top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;height:clamp(450px,64vh,600px);padding:0;border-width:1px 0 0;border-radius:20px 20px 0 0}
+#panel.collapsed{height:auto;padding-bottom:max(6px,env(safe-area-inset-bottom))}
 #panel.collapsed>:not(.cp-grab){display:none}
-.cp-grab{display:flex;position:sticky;top:0;z-index:1;align-items:center;justify-content:center;width:calc(100% + 32px);height:26px;margin:0 -16px 6px;padding:0;border:0;border-radius:20px 20px 0 0;background:var(--bg);cursor:pointer}
+.cp-grab{flex:none;display:flex;align-items:center;justify-content:center;width:100%;height:26px;margin:0;padding:0;border:0;border-radius:20px 20px 0 0;background:var(--bg);cursor:pointer}
 .cp-grab span{display:block;width:40px;height:5px;border-radius:3px;background:#4a4d52}
+#panel h1{display:none}
+.cp-head{flex:none;padding:0 16px}
+.sub{margin:0 0 8px}
+.cp-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 16px 8px}
+.cp-tab{display:none}
+.cp-tab.is-active{display:block}
+.cp-foot{flex:none;padding:8px 16px 0;border-top:1px solid var(--line)}
+.cp-foot .row{margin:0 0 4px}
+.cp-foot #process{width:100%;padding:10px 12px}
+#msg{min-height:0;margin:2px 0}
+.cp-foot .hint{margin:4px 0 6px}
+.cp-tabs{display:flex;flex:none;border-top:1px solid var(--line);padding:0 4px max(6px,env(safe-area-inset-bottom))}
+.cp-tabs button{flex:1;min-height:48px;padding:6px 2px;border:0;border-radius:0;background:none;color:var(--muted);font-size:12px}
+.cp-tabs button[aria-current=page]{color:var(--yellow);box-shadow:inset 0 2px 0 var(--yellow)}
+.draw-row{display:flex;gap:12px;align-items:flex-start}
+#grid{flex:none;width:min(58vw,29vh)}
+.draw-side{flex:1;min-width:0}
+#palette{display:grid;grid-template-columns:repeat(2,44px);gap:6px;margin:0 0 10px}
+.draw-side .row{flex-direction:column;gap:6px;margin:0}
+.draw-side button{width:100%;padding:7px 6px}
+#palette button{width:44px;padding:8px}
 .keys{display:none}
 }
 .links{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0;font-size:13px;color:var(--muted)}
