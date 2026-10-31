@@ -14,25 +14,61 @@
 <!-- about:start (generated from the vault note 'About Form' by build.py; do not edit) -->
   <p><a href="./">← Form</a></p>
   <h1>About Form</h1>
-  <p>Form is a small tool based on a publication, <em>11 ways I can make you up</em>. The book starts with one letter, a T built from square blocks, and asks how many ways a single form can be remade by moving its parts.</p>
-  <p>Written and designed by pkwr.</p>
+  <p>A generative tool based on a publication by Patrick Walker.</p>
 
-  <h2>References</h2>
-  <p>Two ideas sit behind it. The first is the Stations of the Cross: one figure, a fixed sequence of stops, each one a pause, and the T standing in for a cross. The second is Paul Klee's way of describing drawing as taking a line for a walk (<em>Pedagogical Sketchbook</em>, 1925). Here a block takes the walk, and its trace is the line left behind.</p>
+  <h2>Summary</h2>
+  <p>Form turns the one rule of a publication, <em>11 ways I can make you up</em>, into a tool. A block on a grid moves and the place it left stays marked. Form shows every way that can happen as a contact sheet, as an animation and as SVG artwork.</p>
 
-  <h2>The rule</h2>
-  <p>A block moves to a new place and the place it left stays marked. Everything in the book comes from that one move, shown in different ways.</p>
-
-  <h2>The sections</h2>
+  <h2>Description</h2>
+  <p>The book starts with one letter, a T built from square blocks, and asks how many ways a single form can be remade by moving its parts. Form starts from any shape: a square, an arch, a half square triangle or a circle, placed and turned on a grid, or a starter symbol picked at random.</p>
+  <p>The rule is the book's one rule. A block moves to a new place and the place it left stays marked. Everything in the book comes from that one move, shown in different ways. Form has all five:</p>
   <p class="s"><span class="n">i</span>Form: the T and the variations made by moving one block.</p>
   <p class="s"><span class="n">ii</span>Direction: each block is drawn as stripes that run along the line it is joined on.</p>
   <p class="s"><span class="n">iii</span>Cumulative Solid: the blocks that moved leave a solid trace behind.</p>
-  <p class="s"><span class="n">iv</span>Cumulative Transparency: the traces build up as tone.</p>
-  <p class="s"><span class="n">v</span>Cumulative Density: the traces build up as texture.</p>
-  <p>The tool has Form, Cumulative Solid, Cumulative Transparency, Cumulative Density and Direction.</p>
+  <p class="s"><span class="n">iv</span>Cumulative Transparency: the earlier variants stay behind as fading ghosts, so tone builds up wherever the same place was filled more than once.</p>
+  <p class="s"><span class="n">v</span>Cumulative Density: the places left behind are hatched, and the hatching is finer the more often a place was left.</p>
+  <p>Form also runs the rule the other way. The title says make you up; Unmake says unmake you. It takes blocks away one at a time, or moves them apart until none touch, so the shape comes apart.</p>
+  <p>Two ideas sit behind it. The first is the Stations of the Cross: one figure, a fixed sequence of stops, each one a pause, and the T standing in for a cross. The second is Paul Klee's way of describing drawing as taking a line for a walk (<em>Pedagogical Sketchbook</em>, 1925). Here a block takes the walk, and its trace is the line left behind.</p>
 
   <h2>Using it</h2>
   <p>Pick a shape, click the grid to place blocks (click a placed block again to turn it, and once more to remove it), then press Process. You get every variation on a contact sheet and as an animation. Both download as SVG, ready to use as artwork. The contact sheet downloads as a portrait page, A3 to A0.</p>
+
+  <h2>How it's made</h2>
+  <p>Form was made in October 2026. It is plain HTML, CSS and JavaScript, with no server, no login and nothing to install. Every shape is drawn in SVG, so the artwork is vector and prints at any size.</p>
+  <p>Making it was a collaboration. Patrick Walker brought the publication and the decisions about what the tool should do and how it should look; an AI coding assistant did the building, working from his direction. The AI is in the making, not the running: every shape and view is a drawing technique in code, not a generative model.</p>
+
+  <h2>Energy &amp; sustainability</h2>
+  <p>Form runs on the device already in front of the person using it, a phone or a laptop. It works in the browser with no server, no render pass and no exported video, and what it draws is light vector shapes. Nothing is uploaded.</p>
+  <p>AI was used to build the tool, not to run it. Its energy was spent once, in development, and not again each time Form is used. The energy of building Form has not been measured separately.</p>
+
+  <h2>Details</h2>
+  <ul>
+    <li>Type: Generative tool based on a publication</li>
+    <li>Publication: <em>11 ways I can make you up</em></li>
+    <li>Author: Patrick Walker</li>
+    <li>Made: 2026</li>
+  </ul>
+
+  <h2>Privacy</h2>
+  <p>Form has no accounts, no sign-in, no cookies, no tracking and no ads. It stores nothing in your browser and counts no visits. It runs in your web browser and has no server of its own. The shapes you draw stay on your device, and the SVG files are made in the browser and saved straight to it.</p>
+  <p>Hosting. The site is served by GitHub Pages. Like any web host, GitHub may record basic technical details of visits, such as IP address and browser; see GitHub's privacy statement. The code and fonts come from this site.</p>
+  <p>Questions about privacy: get in touch via pkwr.co.</p>
+
+  <h2>Rights</h2>
+  <p>© 2026 Patrick Walker, all rights reserved. The code is published so the tool can run in a browser; that is not permission to copy or reuse it. Please ask first. The publication <em>11 ways I can make you up</em> is also © Patrick Walker.</p>
+
+  <h2>Third-party</h2>
+  <ul>
+    <li>IBM Plex Mono: type. SIL Open Font Licence, © 2017 IBM Corp.</li>
+    <li>GitHub Pages: hosting. A service run by GitHub.</li>
+  </ul>
+
+  <h2>Elsewhere</h2>
+  <ul>
+    <li><a href="changelog.html">Changelog</a>: what's new in Form</li>
+    <li><a href="https://spot.pkwr.co">Spot</a>: a generative image-processing tool, the sibling this one is styled after</li>
+    <li><a href="https://pkwr.co">Patrick Walker</a>: projects</li>
+  </ul>
 
   <p class="foot">Made with the same look as <a href="https://spot.pkwr.co">Spot</a>. © 2026 pkwr · <a href="changelog.html">Changelog</a></p>
 <!-- about:end -->

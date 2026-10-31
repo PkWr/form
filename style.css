@@ -142,3 +142,5 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #out .links a{color:#555}
 #out .links a[aria-checked=true]{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
 #sheet svg{max-width:100%}
+.sa-content ul{list-style:none;margin:0 0 .9em;padding:0;border-top:1px solid var(--ink);font-size:12px}
+.sa-content li{padding:8px 0;border-bottom:1px solid #d9d5ce;line-height:1.5}

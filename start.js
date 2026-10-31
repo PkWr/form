@@ -30,7 +30,7 @@
     main.querySelectorAll('a[href="./"]').forEach(function (n) { (n.parentNode.tagName === "P" ? n.parentNode : n).remove(); });
     var box = document.getElementById("startAboutContent");
     box.innerHTML = main.innerHTML;
-    var h1 = box.querySelector("h1"), first = h1 && h1.nextElementSibling;
+    var h1 = box.querySelector("h1"), first = box.querySelector("h2 + p") || (h1 && h1.nextElementSibling);
     if (h1) h1.textContent = "Form";
     if (!first) return;
     // Phones: the panel covers the circle, so it carries its own way in: the first paragraph, an open circle and "More about Form", the rest unfolding below.
