@@ -82,9 +82,53 @@ body.sheet-collapsed #out{padding-bottom:64px}
 .about h2{font-size:13px;margin:28px 0 6px;color:#555}
 .about p{margin:0 0 12px;font-size:14px;line-height:1.6}
 .about a{color:var(--ink)}
-.about .n{display:inline-block;width:2.2em}
+.about .n{display:inline-block;width:2.2em;text-indent:0}
 .about .foot{margin-top:40px;font-size:12px;color:#555}
 .hint a{color:var(--yellow)}
 .about .s{margin:0 0 4px;padding-left:2.4em;text-indent:-2.4em}
 .hint2{margin:0 0 8px;font-size:12px;color:#555}
 .about ul{margin:0 0 12px;padding-left:1.2em;font-size:14px;line-height:1.6}
+
+/* Start screen, as on Spot: black, a round open button, the version bottom left, an About drawer under a yellow strip. */
+#startScreen{display:none}
+html.show-start{overflow:hidden}
+html.show-start #startScreen{display:flex;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;overflow:hidden;background:transparent;transition:opacity .5s ease;--strip-w:44px;--panel-w:max(320px,calc(100vw / 3 - var(--strip-w)))}
+html.start-leaving #startScreen{opacity:0;pointer-events:none}
+#startOpen{width:clamp(140px,26vmin,260px);aspect-ratio:1;border-radius:50%;border:0;background:#ececec;color:#000;box-shadow:0 0 0 200vmax #000;font:400 clamp(18px,3.2vmin,30px)/1 var(--font);font-style:italic;letter-spacing:.04em;cursor:pointer;transition:background-color .35s ease,color .35s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+#startOpen:hover,#startOpen:focus-visible{background:transparent;color:transparent;outline:none;transform:scale(2)}
+#startOpen:focus-visible{box-shadow:inset 0 0 0 3px var(--yellow),0 0 0 200vmax #000}
+.start-version{position:fixed;left:16px;bottom:max(12px,env(safe-area-inset-bottom));z-index:3;font-size:11px;color:rgba(255,255,255,.55);text-decoration:none}
+.start-version:hover,.start-version:focus-visible{color:var(--yellow);outline:none}
+.start-drawer{position:fixed;top:0;right:0;bottom:0;z-index:3;display:flex;transform:translateX(var(--panel-w));transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.start-drawer.is-open{transform:translateX(0)}
+.start-strip{width:var(--strip-w);flex-shrink:0;margin:0;padding:22px 0;border:0;border-radius:0;background:var(--yellow);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;box-shadow:-10px 0 30px rgba(0,0,0,.22);transition:background-color .5s ease}
+.start-drawer.is-open .start-strip{background:#fff}
+.start-strip:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
+.strip-label{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.strip-icon{font-size:22px;line-height:1;transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.start-drawer.is-open .strip-icon{transform:rotate(45deg)}
+@media(prefers-reduced-motion:no-preference){.start-drawer:not(.is-open) .strip-icon{animation:form-nudge 2.4s ease-in-out 1.2s 2}}
+@keyframes form-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-4px)}}
+@media(prefers-reduced-motion:reduce){html.show-start #startScreen,#startOpen,.start-drawer,.strip-icon{transition:none}}
+.start-panel{width:var(--panel-w);max-width:calc(100vw - var(--strip-w));background:#fff;color:var(--ink);overflow-y:auto;display:flex;flex-direction:column}
+.sa-content{padding:28px 28px 8px}
+.sa-content h1{margin:0 0 14px;font-size:clamp(30px,2.6vw,42px);line-height:1;letter-spacing:-.03em;font-weight:300}
+.sa-content h2{margin:22px 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6862}
+.sa-content p{margin:0 0 .9em;font-size:13px;line-height:1.6}
+.sa-content .s{margin:0 0 4px;padding-left:2.4em;text-indent:-2.4em}
+.sa-content .n{display:inline-block;width:2.2em;text-indent:0}
+.sa-content a,.sp-foot a{color:inherit;text-underline-offset:3px}
+.sa-content a:hover,.sa-content a:focus-visible,.sp-foot a:hover,.sp-foot a:focus-visible{background:var(--yellow);outline:none}
+.sp-foot{margin-top:auto;padding:16px 28px 22px;display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#6b6862}
+/* Phones and narrow windows: the panel covers the circle, so it carries its own open circle, the first paragraph first, "More" to unfold. */
+.sa-lead,.sa-open-end{display:none}
+.sa-open{flex:none;width:92px;height:92px;border-radius:50%;border:0;padding:0;background:var(--ink);color:#fff;font:italic 400 17px var(--font);cursor:pointer;transition:transform .2s ease,background-color .15s ease,color .15s ease}
+.sa-open:active{transform:scale(.94)}
+.sa-open:hover,.sa-open:active,.sa-open:focus-visible{background:var(--yellow);color:var(--ink);outline:none}
+.sa-more{border:0;background:none;padding:0;color:var(--ink);font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media(max-width:760px){
+.sa-lead{display:flex;align-items:center;gap:22px;margin:4px 0 28px}
+.sa-open-end{display:block;margin:8px 0 28px}
+.sa-content.is-short .sa-lead ~ :not(.sa-open-end){display:none}
+.sa-content.is-short .sa-open-end{display:none}
+}
