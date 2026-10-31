@@ -30,8 +30,10 @@ function norm(bl, tr) {
 }
 const keyOf = (st, ax, withTr) => st.blocks.map(b => b.x + ',' + b.y + b.s + b.r + (ax ? b.a : '')).join('|') +
   (withTr ? '#' + st.tr.map(t => t.x + ',' + t.y).sort().join('|') : '');
+// Direction: a block's stripes run along the line it is joined on: vertical if it has a block above or below, else horizontal.
+const axisOf = (b, bl) => bl.some(o => o.x === b.x && Math.abs(o.y - b.y) === 1) ? 1 : 0;
 function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
-  const first = norm(start.map(b => ({ ...b, r: 0, a: 1 })), []), seen = new Set([keyOf(first, ax, withTr)]);
+  const first = norm(start.map(b => ({ ...b, r: 0, a: axisOf(b, start) })), []), seen = new Set([keyOf(first, ax, withTr)]);
   let level = [first], prev = level, count = 1, capped = false;
   for (let d = 1; d <= moves && !capped; d++) {
     const next = [];
@@ -42,7 +44,8 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
         for (const o of rest) for (const [dx, dy] of DIRS) { const x = o.x + dx, y = o.y + dy; if (!occ.has(x + ',' + y)) targets.set(x + ',' + y, [x, y]); }
         for (const [tx, ty] of targets.values()) {
           const dx = tx - old.x, dy = ty - old.y, dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3);
-          const nb = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir, a: dir % 2 } : o);
+          const nb = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir } : o);
+          nb[i].a = axisOf(nb[i], nb);
           if (!connected(nb)) continue;
           const n = norm(nb, [...st.tr, { x: old.x, y: old.y, s: old.s, r: old.r }]);
           if (Math.max(...n.blocks.map(b => b.x)) >= G || Math.max(...n.blocks.map(b => b.y)) >= G) continue;
