@@ -152,3 +152,9 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #pieceNote a{color:inherit;text-underline-offset:3px}
 @media(max-width:900px){#pieceNote{padding-right:24px}}
 @media(pointer:coarse),(max-width:600px){#pieceNote{padding:16px 16px 0}}
+#camBar{margin:0 0 10px}
+#camBar .row{margin:6px 0 0}
+#camera[aria-pressed=true]{border-color:var(--yellow);color:var(--yellow)}
+#screen #camera[aria-pressed=true]{color:var(--yellow);background:var(--ink)}
+#screen label{color:#555}
+#screen #camT{margin-top:2px}

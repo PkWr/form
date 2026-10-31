@@ -215,13 +215,13 @@ if (typeof document !== 'undefined') {
   }
   startSymbol();
 
-  function drawGrid() {
+  function drawGrid(live) {
     let h = '';
     for (let i = 0; i <= G; i++) h += `<path d="M${i * U} 0V${G * U}M0 ${i * U}H${G * U}" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>`;
     h += `<g fill="${YEL}">` + grid.map((c, i) => c ? use({ ...c, x: i % G, y: Math.floor(i / G) }, YEL) : '').join('') + '</g>';
     $('grid').setAttribute('viewBox', `0 0 ${G * U} ${G * U}`);
     $('grid').innerHTML = defs() + h;
-    updateCount();
+    if (!live) updateCount(); // the live camera redraws many times a second, so it skips the count
   }
   $('grid').addEventListener('click', e => {
     const r = $('grid').getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * G), y = Math.floor((e.clientY - r.top) / r.height * G), i = y * G + x;
@@ -264,7 +264,7 @@ if (typeof document !== 'undefined') {
   function process() {
     const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
-    if (act === 'make' && !connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
+    if (act === 'make' && !connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge. (Unmake works with separate blocks.)';
     hidden = new Set();
     chain = act === 'unmake' ? unmake(start) : act === 'rearrange' ? scatter(start, G) : variants(start, MOVES, mode === 'direction', TRACED.has(mode));
     const n = chain.states.length - 1;
@@ -287,7 +287,45 @@ if (typeof document !== 'undefined') {
     [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
     G = n; grid = ng; $('msg').textContent = ''; drawGrid(); if (chain) process();
   });
-  $('process').onclick = process;
+  // Camera: your face as blocks. The picture is cut to a square, shrunk to the grid, mirrored, and a cell is filled where it is darker than the average
+  // (the slider moves that cut-off). It is processed on the device, never recorded or sent, and the camera stops when you take the picture.
+  let camStream = null, camVideo = null, camTimer = null, camBefore = null;
+  const camCanvas = document.createElement('canvas');
+  function camTick() {
+    if (!camVideo || camVideo.readyState < 2) return;
+    const vw = camVideo.videoWidth, vh = camVideo.videoHeight, side = Math.min(vw, vh);
+    camCanvas.width = camCanvas.height = G;
+    const cx = camCanvas.getContext('2d', { willReadFrequently: true });
+    cx.setTransform(-1, 0, 0, 1, G, 0); // mirror, as in a mirror
+    cx.drawImage(camVideo, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, G, G);
+    const d = cx.getImageData(0, 0, G, G).data, lum = [];
+    for (let i = 0; i < G * G; i++) lum.push(0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]);
+    const mean = lum.reduce((a, b) => a + b, 0) / lum.length, cut = mean + (+$('camT').value - 50) * 1.2;
+    grid = lum.map(v => v < cut ? mk('square') : null);
+    drawGrid(true);
+  }
+  async function camStart() {
+    if (camStream) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return $('msg').textContent = 'This browser cannot use a camera here. The camera needs a secure (https) page.';
+    try { camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false }); }
+    catch (e) { return $('msg').textContent = 'The camera could not be opened: it was blocked or none was found.'; }
+    camVideo = document.createElement('video'); camVideo.muted = true; camVideo.playsInline = true; camVideo.srcObject = camStream; await camVideo.play().catch(() => {});
+    camBefore = grid; $('camBar').hidden = false; $('camera').setAttribute('aria-pressed', 'true');
+    $('msg').textContent = G < 11 ? 'Camera on. A grid of 11 or 15 shows more of a face.' : 'Camera on. Move the slider for more or fewer blocks, then press Take.';
+    camTimer = setInterval(camTick, 120); camTick();
+  }
+  function camStop(keep) {
+    clearInterval(camTimer); camTimer = null;
+    if (camStream) camStream.getTracks().forEach(t => t.stop());
+    camStream = null; camVideo = null; $('camBar').hidden = true; $('camera').setAttribute('aria-pressed', 'false');
+    if (!keep && camBefore) grid = camBefore;
+    camBefore = null; drawGrid();
+  }
+  $('camera').onclick = () => camStream ? camStop(false) : camStart();
+  $('camTake').onclick = () => { camStop(true); $('msg').textContent = 'Taken. Press Process, or try Unmake: it does not need the blocks to touch.'; };
+  $('camStop').onclick = () => camStop(false);
+  addEventListener('pagehide', () => { if (camStream) camStop(false); });
+  $('process').onclick = () => { if (camStream) camStop(true); process(); };
   $('act').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('act').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));

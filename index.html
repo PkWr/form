@@ -43,8 +43,9 @@
           <svg id="grid" viewBox="0 0 800 800" aria-label="Grid: click a cell to place or remove a block"></svg>
           <div class="draw-shapes">
             <div id="palette" role="radiogroup" aria-label="Shape"></div>
-            <div class="row"><button id="clear">Clear</button><button id="random">Random symbol</button></div>
+            <div class="row"><button id="clear">Clear</button><button id="random">Random symbol</button><button id="camera" aria-pressed="false">Camera</button></div>
           </div>
+          <div id="camBar" hidden><label>Blocks <input id="camT" type="range" min="0" max="100" value="50"></label><div class="row"><button id="camTake">Take</button><button id="camStop">Stop</button></div></div>
           <p class="hint">Click a placed block again to turn it. After four turns it is removed.</p>
         </div>
       </div>
@@ -61,7 +62,7 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Process</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.21<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.22<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
