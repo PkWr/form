@@ -136,8 +136,13 @@ function bbox(chain, mode) {
   return { x: x0 * U, y: y0 * U, w: (Math.max(...all.map(b => b.x)) + 2 - (x0 + 1) + 1) * U, h: (Math.max(...all.map(b => b.y)) + 2 - (y0 + 1) + 1) * U };
 }
 const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${extra}><rect width="${w}" height="${h}" fill="${PAPER}"/>${defs()}${inner}</svg>`;
-function sheetSVG(chain, mode, hidden = new Set(), edit = false) {
-  const bb = bbox(chain, mode), n = chain.states.length, cols = Math.min(n > 36 ? 20 : 6, Math.ceil(Math.sqrt(n))), rows = Math.ceil(n / cols), fh = bb.h + 120;
+// Portrait paper sizes in mm (ISO A series). The contact sheet is laid out on one page of the chosen size and exported at that physical size.
+const PAPERS = { A3: [297, 420], A2: [420, 594], A1: [594, 841], A0: [841, 1189] };
+function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3') {
+  const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06;
+  // Choose the number of columns that makes the variants as large as possible on the page.
+  let cols = 1, best = 0;
+  for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
   let inner = '';
   chain.states.forEach((st, k) => {
     const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh, off = edit && hidden.has(st.id);
@@ -145,7 +150,7 @@ function sheetSVG(chain, mode, hidden = new Set(), edit = false) {
       `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
       `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${st.id}</text></g>`;
   });
-  return svgWrap(cols * bb.w, rows * fh, inner);
+  return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m}) scale(${best})">${inner}</g>`, `width="${pw}mm" height="${ph}mm"`);
 }
 function animSVG(chain, mode, ms) {
   const bb = bbox(chain, mode), n = chain.states.length, T = (n * ms / 1000).toFixed(2);
@@ -212,13 +217,15 @@ if (typeof document !== 'undefined') {
 
   let hidden = new Set();
   const kept = () => ({ ...chain, states: chain.states.filter(st => !hidden.has(st.id)) });
+  let paper = 'A3';
+  const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true, paper); };
   function show() {
     if (!chain) return;
     const kc = kept();
-    if (!kc.states.length) { clearInterval(timer); $('anim').innerHTML = ''; $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true); return; }
+    if (!kc.states.length) { clearInterval(timer); $('anim').innerHTML = ''; renderSheet(); return; }
     const bb = bbox(kc, mode);
     $('anim').setAttribute('viewBox', `0 0 ${bb.w} ${bb.h}`);
-    $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true);
+    renderSheet();
     clearInterval(timer); cur = 0;
     const draw = () => { $('anim').innerHTML = defs() + `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, cur, mode)}</g>`; cur = (cur + 1) % kc.states.length; };
     draw(); timer = setInterval(draw, +$('spd').value);
@@ -268,7 +275,12 @@ if (typeof document !== 'undefined') {
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
   document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; updateCount(); if (chain) process(); });
   $('sheet').addEventListener('click', e => { const g = e.target.closest('[data-id]'); if (!g) return; const id = +g.dataset.id; hidden.has(id) ? hidden.delete(id) : hidden.add(id); show(); });
-  $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}.svg`, sheetSVG(kept(), mode));
+  $('paper').addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
+    [...$('paper').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
+    paper = a.dataset.p; if (chain) renderSheet();
+  });
+  $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper));
   $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value));
   $('dlFrame').onclick = () => { if (!chain) return; const kc = kept(); if (!kc.states.length) return; const bb = bbox(kc, mode), k = (cur + kc.states.length - 1) % kc.states.length; dl(`form-frame-${kc.states[k].id}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g>`)); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');

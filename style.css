@@ -138,3 +138,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .sa-content.is-short .sa-lead ~ :not(.sa-open-end){display:none}
 .sa-content.is-short .sa-open-end{display:none}
 }
+#out .links{color:#555}
+#out .links a{color:#555}
+#out .links a[aria-checked=true]{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+#sheet svg{max-width:100%}
