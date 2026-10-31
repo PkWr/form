@@ -1,6 +1,6 @@
 'use strict';
 // Form — pick blocks on a 16x16 grid; a chain of moves leaves traces; export as SVG.
-let G = 8;
+let G = 9;
 const U = 100, MAXCAP = 500, INK = '#111', PAPER = '#f4f2ee', YEL = '#ffe100';
 // Shape library: paths in a 100x100 cell. sign = turn direction (mirror pairs turn opposite ways).
 const SHAPES = {
