@@ -165,7 +165,7 @@ if (typeof document !== 'undefined') {
   $('size').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    G = +a.dataset.n; chain = null; $('count').textContent = 11; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid();
+    G = +a.dataset.n; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid();
   });
   $('process').onclick = process;
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
