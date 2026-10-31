@@ -151,7 +151,11 @@ if (typeof document !== 'undefined') {
     show();
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
-  $('size').onchange = () => { G = +$('size').value; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid(); };
+  $('size').addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
+    [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
+    G = +a.dataset.n; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid();
+  });
   $('process').onclick = process;
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('len').oninput = () => $('lenOut').textContent = $('len').value;

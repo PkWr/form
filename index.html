@@ -13,7 +13,7 @@
     <p class="sub">11 ways I can make you up</p>
     <svg id="grid" viewBox="0 0 800 800" aria-label="Grid: click a cell to place or remove a block"></svg>
     <div id="palette" role="radiogroup" aria-label="Shape"></div>
-    <label>Grid size <select id="size"><option value="7">7 × 7</option><option value="9" selected>9 × 9</option><option value="11">11 × 11</option><option value="15">15 × 15</option></select></label>
+    <div class="links" id="size" role="radiogroup" aria-label="Grid size"><span>Grid size</span><a href="#" role="radio" data-n="7" aria-checked="false">7</a><a href="#" role="radio" data-n="9" aria-checked="true">9</a><a href="#" role="radio" data-n="11" aria-checked="false">11</a><a href="#" role="radio" data-n="15" aria-checked="false">15</a></div>
     <label>Moves <output id="lenOut">1</output><input id="len" type="range" min="1" max="6" value="1"></label>
     <label>Animation speed <output id="spdOut">400 ms</output><input id="spd" type="range" min="80" max="1500" step="20" value="400"></label>
     <div class="row">
