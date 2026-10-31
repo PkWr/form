@@ -24,11 +24,12 @@ function connected(cells) {
 }
 // Variants: one move = one block jumps to any empty cell touching the rest of the shape.
 // "moves" repeats that; the vacated cells are kept as traces (for Cumulative solid).
-function norm(bl, tr) {
+function norm(bl, tr, ox = 0, oy = 0) {
   const mx = Math.min(...bl.map(b => b.x)), my = Math.min(...bl.map(b => b.y));
   return {
     blocks: bl.map(b => ({ ...b, x: b.x - mx, y: b.y - my, r: SHAPES[b.s].sym ? 0 : b.r })).sort((p, q) => p.y - q.y || p.x - q.x),
     tr: tr.map(t => ({ ...t, x: t.x - mx, y: t.y - my })),
+    ox: ox + mx, oy: oy + my, // where this variant's corner sits in the original grid, so earlier variants can be laid over it
   };
 }
 const keyOf = (st, ax, withTr) => st.blocks.map(b => b.x + ',' + b.y + b.s + b.r + (b.q || 0) + (ax ? b.a : '')).join('|') +
@@ -50,7 +51,7 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
           const nb = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir } : o);
           nb[i].a = axisOf(nb[i], nb);
           if (!connected(nb)) continue;
-          const n = norm(nb, [...st.tr, { x: old.x, y: old.y, s: old.s, r: old.r, q: old.q }]);
+          const n = norm(nb, [...st.tr, { x: old.x, y: old.y, s: old.s, r: old.r, q: old.q }], st.ox, st.oy);
           if (Math.max(...n.blocks.map(b => b.x)) >= G || Math.max(...n.blocks.map(b => b.y)) >= G) continue;
           const k = keyOf(n, ax, withTr); if (seen.has(k)) continue;
           seen.add(k); next.push(n);
@@ -81,19 +82,23 @@ function hatch(tr) {
     return `<g transform="translate(${t.x * U} ${t.y * U})" clip-path="url(#c_${t.s}_${ang(t)})"><use href="#ht${Math.min(8, n.get(t.x + ',' + t.y))}" stroke="${INK}"/></g>`; }).join('');
 }
 const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${ang(b)} 50 50)"/>`;
+// Transparency (onion skin): the blocks of the variants shown just before this one stay as fading ghosts.
+const GHOSTS = [0.3, 0.2, 0.13, 0.09, 0.06, 0.04];
+const ghosts = (chain, k) => GHOSTS.map((o, a) => { const j = k - 1 - a; if (j < 0) return null; const st = chain.states[j], s = chain.states[k];
+  return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
 function frame(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(stripes).join('');
-  return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? s.tr.map(t => use(t, INK, TONE)).join('') : mode === 'dens' ? hatch(s.tr) : '') + s.blocks.map(use).join('');
+  return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : mode === 'dens' ? hatch(s.tr) : '') + s.blocks.map(use).join('');
 }
-function bbox(chain) {
-  const all = chain.states.flatMap(s => [...s.blocks, ...s.tr]);
+function bbox(chain, mode) {
+  const all = chain.states.flatMap((s, k) => [...s.blocks, ...s.tr, ...(mode === 'trans' ? ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy }))) : [])]);
   const x0 = Math.min(...all.map(b => b.x)) - 1, y0 = Math.min(...all.map(b => b.y)) - 1;
   return { x: x0 * U, y: y0 * U, w: (Math.max(...all.map(b => b.x)) + 2 - (x0 + 1) + 1) * U, h: (Math.max(...all.map(b => b.y)) + 2 - (y0 + 1) + 1) * U };
 }
 const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${extra}><rect width="${w}" height="${h}" fill="${PAPER}"/>${defs()}${inner}</svg>`;
 function sheetSVG(chain, mode, hidden = new Set(), edit = false) {
-  const bb = bbox(chain), n = chain.states.length, cols = Math.min(n > 36 ? 20 : 6, Math.ceil(Math.sqrt(n))), rows = Math.ceil(n / cols), fh = bb.h + 120;
+  const bb = bbox(chain, mode), n = chain.states.length, cols = Math.min(n > 36 ? 20 : 6, Math.ceil(Math.sqrt(n))), rows = Math.ceil(n / cols), fh = bb.h + 120;
   let inner = '';
   chain.states.forEach((st, k) => {
     const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh, off = edit && hidden.has(st.id);
@@ -104,7 +109,7 @@ function sheetSVG(chain, mode, hidden = new Set(), edit = false) {
   return svgWrap(cols * bb.w, rows * fh, inner);
 }
 function animSVG(chain, mode, ms) {
-  const bb = bbox(chain), n = chain.states.length, T = (n * ms / 1000).toFixed(2);
+  const bb = bbox(chain, mode), n = chain.states.length, T = (n * ms / 1000).toFixed(2);
   let inner = '';
   chain.states.forEach((_, k) => {
     const a = (k / n).toFixed(4), b = ((k + 1) / n).toFixed(4);
@@ -154,7 +159,7 @@ if (typeof document !== 'undefined') {
     if (!chain) return;
     const kc = kept();
     if (!kc.states.length) { clearInterval(timer); $('anim').innerHTML = ''; $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true); return; }
-    const bb = bbox(kc);
+    const bb = bbox(kc, mode);
     $('anim').setAttribute('viewBox', `0 0 ${bb.w} ${bb.h}`);
     $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true);
     clearInterval(timer); cur = 0;
@@ -190,7 +195,7 @@ if (typeof document !== 'undefined') {
   $('sheet').addEventListener('click', e => { const g = e.target.closest('[data-id]'); if (!g) return; const id = +g.dataset.id; hidden.has(id) ? hidden.delete(id) : hidden.add(id); show(); });
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}.svg`, sheetSVG(kept(), mode));
   $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value));
-  $('dlFrame').onclick = () => { if (!chain) return; const kc = kept(); if (!kc.states.length) return; const bb = bbox(kc), k = (cur + kc.states.length - 1) % kc.states.length; dl(`form-frame-${kc.states[k].id}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g>`)); };
+  $('dlFrame').onclick = () => { if (!chain) return; const kc = kept(); if (!kc.states.length) return; const bb = bbox(kc, mode), k = (cur + kc.states.length - 1) % kc.states.length; dl(`form-frame-${kc.states[k].id}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g>`)); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
