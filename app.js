@@ -128,6 +128,7 @@ if (typeof document !== 'undefined') {
   const SYMBOLS = {
     T: ['XXX', '.X.', '.X.', '.X.'],
     cross: ['.X.', 'XXX', '.X.', '.X.', '.X.'],
+    inverted: ['.X.', '.X.', '.X.', 'XXX', '.X.'],
     plus: ['.X.', 'XXX', '.X.'],
     ankh: ['XXX', 'X.X', 'XXX', '.X.', 'XXX', '.X.'],
     arrow: ['..X..', '.XXX.', 'XXXXX', '..X..', '..X..'],
