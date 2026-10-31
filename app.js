@@ -19,49 +19,44 @@ function connected(cells) {
   while (q.length) { const c = q.pop(); for (const [dx, dy] of DIRS) { const k = (c.x + dx) + ',' + (c.y + dy); if (set.has(k) && !seen.has(k)) { seen.add(k); q.push({ x: c.x + dx, y: c.y + dy }); } } }
   return seen.size === set.size;
 }
-// Chain: each step moves one random block one cell (staying connected), turns it, leaves a trace.
-function buildChain(start, len, seed) {
-  const rand = rng(seed), blocks = start.map(b => ({ ...b })), traces = [], states = [{ blocks: blocks.map(b => ({ ...b })), tc: 0 }];
-  for (let n = 1; n <= len; n++) {
-    const occ = new Set(blocks.map(b => b.x + ',' + b.y)), cand = [];
-    blocks.forEach((b, i) => DIRS.forEach(([dx, dy], d) => {
-      const nx = b.x + dx, ny = b.y + dy;
-      if (nx < 0 || ny < 0 || nx >= G || ny >= G || occ.has(nx + ',' + ny)) return;
-      const after = blocks.map((o, j) => j === i ? { x: nx, y: ny } : o);
-      if (connected(after)) cand.push([i, d, nx, ny]);
-    }));
-    if (!cand.length) break;
-    const [i, d, nx, ny] = cand[Math.floor(rand() * cand.length)], b = blocks[i];
-    traces.push({ ...b }); b.x = nx; b.y = ny; b.r = d; b.a = d % 2;
-    states.push({ blocks: blocks.map(o => ({ ...o })), tc: traces.length });
-  }
-  return { states, traces };
-}
-
-// Max: every distinct shape reachable by one-block slides (up to translation), breadth-first, capped.
-function norm(bl) {  // keeps stripe axis a (default vertical)
+// Variants: one move = one block jumps to any empty cell touching the rest of the shape.
+// "moves" repeats that; the vacated cells are kept as traces (for Cumulative solid).
+function norm(bl, tr) {
   const mx = Math.min(...bl.map(b => b.x)), my = Math.min(...bl.map(b => b.y));
-  return bl.map(b => ({ x: b.x - mx, y: b.y - my, s: b.s, a: b.a ?? 1, r: SHAPES[b.s].sym ? 0 : b.r })).sort((a, c) => a.y - c.y || a.x - c.x);
+  return {
+    blocks: bl.map(b => ({ ...b, x: b.x - mx, y: b.y - my, r: SHAPES[b.s].sym ? 0 : b.r })).sort((p, q) => p.y - q.y || p.x - q.x),
+    tr: tr.map(t => ({ ...t, x: t.x - mx, y: t.y - my })),
+  };
 }
-const keyOf = (bl, ax) => bl.map(b => b.x + ',' + b.y + b.s + b.r + (ax ? b.a : '')).join('|');
-function enumerate(start, cap = MAXCAP, ax = false) {
-  const first = norm(start), seen = new Set([keyOf(first, ax)]), states = [{ blocks: first, tc: 0 }];
-  let capped = false;
-  for (let q = 0; q < states.length && !capped; q++) {
-    const bl = states[q].blocks, occ = new Set(bl.map(b => b.x + ',' + b.y));
-    for (let i = 0; i < bl.length && !capped; i++) for (let d = 0; d < 4 && !capped; d++) {
-      const nx = bl[i].x + DIRS[d][0], ny = bl[i].y + DIRS[d][1];
-      if (occ.has(nx + ',' + ny)) continue;
-      const nb = bl.map((o, j) => j === i ? { ...o, x: nx, y: ny, r: d, a: d % 2 } : o);
-      if (!connected(nb)) continue;
-      const n = norm(nb);
-      if (Math.max(...n.map(b => b.x)) >= G || Math.max(...n.map(b => b.y)) >= G) continue;
-      const k = keyOf(n, ax); if (seen.has(k)) continue;
-      seen.add(k); states.push({ blocks: n, tc: 0 });
-      if (states.length >= cap) capped = true;
+const keyOf = (st, ax, withTr) => st.blocks.map(b => b.x + ',' + b.y + b.s + b.r + (ax ? b.a : '')).join('|') +
+  (withTr ? '#' + st.tr.map(t => t.x + ',' + t.y).sort().join('|') : '');
+function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
+  const first = norm(start.map(b => ({ ...b, r: 0, a: 1 })), []), seen = new Set([keyOf(first, ax, withTr)]);
+  let level = [first], prev = level, count = 1, capped = false;
+  for (let d = 1; d <= moves && !capped; d++) {
+    const next = [];
+    for (const st of level) {
+      const occ = new Set(st.blocks.map(b => b.x + ',' + b.y));
+      for (let i = 0; i < st.blocks.length && !capped; i++) {
+        const old = st.blocks[i], rest = st.blocks.filter((_, j) => j !== i), targets = new Map();
+        for (const o of rest) for (const [dx, dy] of DIRS) { const x = o.x + dx, y = o.y + dy; if (!occ.has(x + ',' + y)) targets.set(x + ',' + y, [x, y]); }
+        for (const [tx, ty] of targets.values()) {
+          const dx = tx - old.x, dy = ty - old.y, dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3);
+          const nb = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir, a: dir % 2 } : o);
+          if (!connected(nb)) continue;
+          const n = norm(nb, [...st.tr, { x: old.x, y: old.y, s: old.s, r: old.r }]);
+          if (Math.max(...n.blocks.map(b => b.x)) >= G || Math.max(...n.blocks.map(b => b.y)) >= G) continue;
+          const k = keyOf(n, ax, withTr); if (seen.has(k)) continue;
+          seen.add(k); next.push(n);
+          if (++count >= cap) { capped = true; break; }
+        }
+      }
+      if (capped) break;
     }
+    if (!next.length) break;
+    prev = level = next;
   }
-  return { states, traces: [], capped, max: true };
+  return { states: [first, ...(prev === first ? [] : prev)], capped };
 }
 
 // ---------- rendering ----------
@@ -75,10 +70,10 @@ const use = (b, c = INK) => `<use stroke="${c}" stroke-width="1.5" href="#${b.s}
 function frame(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(stripes).join('');
-  return (mode === 'solid' ? chain.traces.slice(0, s.tc).map(use).join('') : '') + s.blocks.map(use).join('');
+  return (mode === 'solid' ? s.tr.map(use).join('') : '') + s.blocks.map(use).join('');
 }
 function bbox(chain) {
-  const all = [...chain.traces, ...chain.states.flatMap(s => s.blocks)];
+  const all = chain.states.flatMap(s => [...s.blocks, ...s.tr]);
   const x0 = Math.min(...all.map(b => b.x)) - 1, y0 = Math.min(...all.map(b => b.y)) - 1;
   return { x: x0 * U, y: y0 * U, w: (Math.max(...all.map(b => b.x)) + 2 - (x0 + 1) + 1) * U, h: (Math.max(...all.map(b => b.y)) + 2 - (y0 + 1) + 1) * U };
 }
@@ -147,33 +142,23 @@ if (typeof document !== 'undefined') {
     const start = grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0 }).filter(Boolean);
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
-    chain = buildChain(start, +$('len').value, +$('seed').value);
-    $('msg').textContent = chain.states.length - 1 < +$('len').value ? `Stopped at step ${chain.states.length - 1}: no legal move.` : '';
+    chain = variants(start, +$('len').value, mode === 'direction', mode === 'solid');
+    const n = chain.states.length - 1;
+    $('msg').textContent = n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
-  const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0 }).filter(Boolean);
-  function runMax() {
-    const start = startBlocks();
-    if (!start.length) return $('msg').textContent = 'Place some blocks first.';
-    if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
-    chain = enumerate(start, MAXCAP, mode === 'direction');
-    $('msg').textContent = `${chain.states.length} distinct shapes${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ' (all of them)'}.`;
-    show();
-  }
-  $('max').onclick = runMax;
   $('size').onchange = () => { G = +$('size').value; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid(); };
   $('process').onclick = process;
-  $('reroll').onclick = () => { $('seed').value = Math.floor(Math.random() * 1e6); process(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('len').oninput = () => $('lenOut').textContent = $('len').value;
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
-  document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; if (chain && chain.max) runMax(); else show(); });
-  $('dlSheet').onclick = () => chain && dl(`form-sheet-${mode}-seed${$('seed').value}.svg`, sheetSVG(chain, mode));
-  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}-seed${$('seed').value}.svg`, animSVG(chain, mode, +$('spd').value));
+  document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; if (chain) process(); });
+  $('dlSheet').onclick = () => chain && dl(`form-sheet-${mode}-${$('len').value}moves.svg`, sheetSVG(chain, mode));
+  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}-${$('len').value}moves.svg`, animSVG(chain, mode, +$('spd').value));
   $('dlFrame').onclick = () => { if (!chain) return; const bb = bbox(chain), k = (cur + chain.states.length - 1) % chain.states.length; dl(`form-frame-${k}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(chain, k, mode)}</g>`)); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   drawGrid();
-} else module.exports = { buildChain, enumerate, connected };
+} else module.exports = { variants, connected };
