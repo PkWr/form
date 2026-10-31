@@ -10,6 +10,7 @@ const SHAPES = {
   circle: { d: 'M50 0A50 50 0 1 1 50 100A50 50 0 1 1 50 0Z', sym: 1 },
 };
 const ang = b => SHAPES[b.s].sym ? 0 : (((b.q || 0) + b.r) % 4) * 90;
+const MOVES = 1; // one move per variant; the engine can repeat it (see variants), but the setting was dropped
 const TRACED = new Set(['solid', 'trans', 'dens']);
 const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]]; // right, down, left, up
 
@@ -164,14 +165,14 @@ if (typeof document !== 'undefined') {
   // The subtitle number follows the grid, Moves and view live.
   function updateCount() {
     const st = startBlocks();
-    $('count').textContent = st.length && connected(st) ? variants(st, +$('len').value, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
+    $('count').textContent = st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
   }
   function process() {
     const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
     hidden = new Set();
-    chain = variants(start, +$('len').value, mode === 'direction', TRACED.has(mode));
+    chain = variants(start, MOVES, mode === 'direction', TRACED.has(mode));
     const n = chain.states.length - 1;
     $('msg').textContent = n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
@@ -184,12 +185,11 @@ if (typeof document !== 'undefined') {
   });
   $('process').onclick = process;
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
-  $('len').oninput = () => { $('lenOut').textContent = $('len').value; updateCount(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
   document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; updateCount(); if (chain) process(); });
   $('sheet').addEventListener('click', e => { const g = e.target.closest('[data-id]'); if (!g) return; const id = +g.dataset.id; hidden.has(id) ? hidden.delete(id) : hidden.add(id); show(); });
-  $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${$('len').value}moves.svg`, sheetSVG(kept(), mode));
-  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}-${$('len').value}moves.svg`, animSVG(kept(), mode, +$('spd').value));
+  $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}.svg`, sheetSVG(kept(), mode));
+  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value));
   $('dlFrame').onclick = () => { if (!chain) return; const kc = kept(); if (!kc.states.length) return; const bb = bbox(kc), k = (cur + kc.states.length - 1) % kc.states.length; dl(`form-frame-${kc.states[k].id}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g>`)); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
