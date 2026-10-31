@@ -122,6 +122,7 @@ if (typeof document !== 'undefined') {
     h += `<g fill="${YEL}">` + grid.map((c, i) => c ? use({ ...c, x: i % G, y: Math.floor(i / G) }, YEL) : '').join('') + '</g>';
     $('grid').setAttribute('viewBox', `0 0 ${G * U} ${G * U}`);
     $('grid').innerHTML = defs() + h;
+    updateCount();
   }
   $('grid').addEventListener('click', e => {
     const r = $('grid').getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * G), y = Math.floor((e.clientY - r.top) / r.height * G), i = y * G + x;
@@ -150,14 +151,19 @@ if (typeof document !== 'undefined') {
     const draw = () => { $('anim').innerHTML = defs() + `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, cur, mode)}</g>`; cur = (cur + 1) % kc.states.length; };
     draw(); timer = setInterval(draw, +$('spd').value);
   }
+  const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
+  // The subtitle number follows the grid, Moves and view live.
+  function updateCount() {
+    const st = startBlocks();
+    $('count').textContent = st.length && connected(st) ? variants(st, +$('len').value, mode === 'direction', mode === 'solid' || mode === 'trans').states.length - 1 : 0;
+  }
   function process() {
-    const start = grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
+    const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
     hidden = new Set();
     chain = variants(start, +$('len').value, mode === 'direction', mode === 'solid' || mode === 'trans');
     const n = chain.states.length - 1;
-    $('count').textContent = n;
     $('msg').textContent = n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
   }
@@ -169,9 +175,9 @@ if (typeof document !== 'undefined') {
   });
   $('process').onclick = process;
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
-  $('len').oninput = () => $('lenOut').textContent = $('len').value;
+  $('len').oninput = () => { $('lenOut').textContent = $('len').value; updateCount(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
-  document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; if (chain) process(); });
+  document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; updateCount(); if (chain) process(); });
   $('sheet').addEventListener('click', e => { const g = e.target.closest('[data-id]'); if (!g) return; const id = +g.dataset.id; hidden.has(id) ? hidden.delete(id) : hidden.add(id); show(); });
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${$('len').value}moves.svg`, sheetSVG(kept(), mode));
   $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}-${$('len').value}moves.svg`, animSVG(kept(), mode, +$('spd').value));
