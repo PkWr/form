@@ -240,12 +240,22 @@ if (typeof document !== 'undefined') {
     const n = chain.states.length - 1;
     $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : act === 'rearrange' ? `${n} step${n > 1 ? 's' : ''}. Each moves one block away from the rest.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
+    document.body.classList.add('view-results'); paneSwitch();
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
   $('size').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
+    // The blocks stay: they are re-entered, centred, in the new grid. If they do not fit, the size is left alone.
+    const n = +a.dataset.n, cells = grid.map((c, i) => c && { c, x: i % G, y: Math.floor(i / G) }).filter(Boolean);
+    let ng = Array(n * n).fill(null);
+    if (cells.length) {
+      const x0 = Math.min(...cells.map(p => p.x)), y0 = Math.min(...cells.map(p => p.y)), w = Math.max(...cells.map(p => p.x)) - x0 + 1, h = Math.max(...cells.map(p => p.y)) - y0 + 1;
+      if (w > n || h > n) return $('msg').textContent = `Your shape is ${w} by ${h}; it needs a larger grid than ${n}.`;
+      const ox = Math.floor((n - w) / 2), oy = Math.floor((n - h) / 2);
+      cells.forEach(p => ng[(oy + p.y - y0) * n + ox + p.x - x0] = p.c);
+    }
     [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    G = +a.dataset.n; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startSymbol(); drawGrid();
+    G = n; grid = ng; $('msg').textContent = ''; drawGrid(); if (chain) process();
   });
   $('process').onclick = process;
   $('act').addEventListener('click', e => {
@@ -264,11 +274,24 @@ if (typeof document !== 'undefined') {
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
-  $('panel').querySelector('.cp-tabs').addEventListener('click', e => {
-    const b = e.target.closest('button[data-tab]'); if (!b) return;
-    [...b.parentNode.children].forEach(x => x === b ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current'));
-    document.querySelectorAll('.cp-tab').forEach(t => t.classList.toggle('is-active', t.id === 'tab-' + b.dataset.tab));
+  // Phones: the grid and shapes live on the screen, the settings in the sheet. One element moves between the two places.
+  const small = matchMedia('(pointer: coarse), (max-width: 600px)');
+  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); };
+  small.addEventListener('change', () => { placeDraw(); sizeBody(); });
+  const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 16 + 'px' : ''; };
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
+  function paneSwitch() {
+    const res = document.body.classList.contains('view-results');
+    [...$('paneSwitch').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', (x.dataset.pane === 'results') === res));
+  }
+  $('paneSwitch').addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
+    if (a.dataset.pane === 'results' && !chain) { $('msg').textContent = 'Press Process first.'; return; }
+    document.body.classList.toggle('view-results', a.dataset.pane === 'results'); paneSwitch();
   });
+  placeDraw();
+  if (small.matches) { $('panel').classList.add('collapsed'); $('grab').setAttribute('aria-expanded', 'false'); $('grab').setAttribute('aria-label', 'Open controls'); }
+  sizeBody();
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   drawGrid();
 } else module.exports = { variants, unmake, scatter, connected, sheetSVG };

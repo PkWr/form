@@ -39,38 +39,40 @@ button:hover{border-color:var(--accent-line)}
 .hint{color:var(--muted);font-size:11px;margin:8px 0 0}
 @media(max-width:900px){#out{padding:24px 24px 48vh}#panel{top:auto;height:44vh}}
 .cp-grab{display:none}
-.cp-tabs{display:none}
-.draw-side .row{margin:0 0 12px}
-/* Phones / touch: controls become a bottom sheet, as in Spot: grab handle, tabs at the bottom (Draw, Rule), Process always in reach. */
+#screen{display:none}
+.draw-shapes .row{margin:0 0 12px}
+/* Phones / touch: the grid and the shapes sit on the screen; the controls are a short bottom sheet (grab handle, settings, Process always in reach), as in Spot. */
 @media(pointer:coarse),(max-width:600px){
-#out{padding:16px 16px calc(clamp(450px,64vh,600px) + 24px)}
-body.sheet-collapsed #out{padding-bottom:64px}
-#panel{display:flex;flex-direction:column;overflow:hidden;top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;height:clamp(450px,64vh,600px);padding:0;border-width:1px 0 0;border-radius:20px 20px 0 0}
-#panel.collapsed{height:auto;padding-bottom:max(6px,env(safe-area-inset-bottom))}
-#panel.collapsed>:not(.cp-grab){display:none}
+#screen{display:block;padding:16px 16px 0}
+#paneSwitch{margin:0 0 10px;font-size:13px}
+#paneSwitch a{color:#555}
+#paneSwitch a[aria-checked=true]{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+#drawBox .sub{margin:0 0 8px;color:#555}
+#drawBox #grid{width:100%}
+.draw-shapes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0}
+.draw-shapes #palette{margin:0;gap:6px}
+.draw-shapes .row{margin:0;flex-wrap:nowrap}
+#screen #palette button{background:#e3dfd8;border-radius:8px}
+#screen #palette svg{fill:var(--ink)}
+#screen #palette button[aria-checked=true]{background:var(--ink)}
+#screen #palette button[aria-checked=true] svg{fill:var(--yellow)}
+#screen .row button{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#screen .hint{color:#555;margin:6px 0 0}
+body:not(.view-results) #out{display:none}
+body.view-results #drawBox{display:none}
+#out{padding:0 16px 16px}
+#out h2:first-child{margin-top:8px}
+#panel{display:flex;flex-direction:column;overflow:hidden;top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;height:auto;max-height:min(62vh,540px);padding:0;border-width:1px 0 0;border-radius:20px 20px 0 0}
+#panel.collapsed .cp-body{display:none}
 .cp-grab{flex:none;display:flex;align-items:center;justify-content:center;width:100%;height:26px;margin:0;padding:0;border:0;border-radius:20px 20px 0 0;background:var(--bg);cursor:pointer}
 .cp-grab span{display:block;width:40px;height:5px;border-radius:3px;background:#4a4d52}
-#panel h1{display:none}
-.cp-head{flex:none;padding:0 16px}
-.sub{margin:0 0 8px}
-.cp-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 16px 8px}
-.cp-tab{display:none}
-.cp-tab.is-active{display:block}
-.cp-foot{flex:none;padding:8px 16px 0;border-top:1px solid var(--line)}
+.cp-head{display:none}
+.cp-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 16px 8px}
+.cp-foot{flex:none;padding:8px 16px max(6px,env(safe-area-inset-bottom));border-top:1px solid var(--line)}
 .cp-foot .row{margin:0 0 4px}
 .cp-foot #process{width:100%;padding:10px 12px}
 #msg{min-height:0;margin:2px 0}
-.cp-foot .hint{margin:4px 0 6px}
-.cp-tabs{display:flex;flex:none;border-top:1px solid var(--line);padding:0 4px max(6px,env(safe-area-inset-bottom))}
-.cp-tabs button{flex:1;min-height:48px;padding:6px 2px;border:0;border-radius:0;background:none;color:var(--muted);font-size:12px}
-.cp-tabs button[aria-current=page]{color:var(--yellow);box-shadow:inset 0 2px 0 var(--yellow)}
-.draw-row{display:flex;gap:12px;align-items:flex-start}
-#grid{flex:none;width:min(58vw,29vh)}
-.draw-side{flex:1;min-width:0}
-#palette{display:grid;grid-template-columns:repeat(2,44px);gap:6px;margin:0 0 10px}
-.draw-side .row{flex-direction:column;gap:6px;margin:0}
-.draw-side button{width:100%;padding:7px 6px}
-#palette button{width:44px;padding:8px}
+.cp-foot .hint{margin:4px 0 0}
 .keys{display:none}
 }
 .links{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0;font-size:13px;color:var(--muted)}
