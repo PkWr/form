@@ -69,8 +69,11 @@ body.view-results #drawBox{display:none}
 .cp-head{display:none}
 .cp-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 16px 8px}
 .cp-foot{flex:none;padding:8px 16px max(6px,env(safe-area-inset-bottom));border-top:1px solid var(--line)}
-.cp-foot .row{margin:0 0 4px}
-.cp-foot #process{width:100%;padding:10px 12px}
+#processRow .row{margin:0 0 4px}
+#processRow #process{width:100%;padding:12px}
+#screen #processRow{margin:4px 0 8px}
+#screen #process{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+#screen #msg{color:var(--ink)}
 #msg{min-height:0;margin:2px 0}
 .cp-foot .hint{margin:4px 0 0}
 .keys{display:none}
@@ -144,3 +147,8 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #sheet svg{max-width:100%}
 .sa-content ul{list-style:none;margin:0 0 .9em;padding:0;border-top:1px solid var(--ink);font-size:12px}
 .sa-content li{padding:8px 0;border-bottom:1px solid #d9d5ce;line-height:1.5}
+#pieceNote{padding:24px 412px 0 24px;font-size:12px;line-height:1.6;color:#333}
+#pieceNote p{margin:0 0 8px;max-width:720px;overflow-wrap:anywhere}
+#pieceNote a{color:inherit;text-underline-offset:3px}
+@media(max-width:900px){#pieceNote{padding-right:24px}}
+@media(pointer:coarse),(max-width:600px){#pieceNote{padding:16px 16px 0}}

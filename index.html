@@ -27,9 +27,11 @@
   </div>
 </div>
 <main>
+  <section id="pieceNote" hidden aria-label="Source and caption"></section>
   <section id="screen">
     <div class="links" id="paneSwitch" role="radiogroup" aria-label="Show"><a href="#" role="radio" data-pane="draw" aria-checked="true">Draw</a><a href="#" role="radio" data-pane="results" aria-checked="false">Results</a></div>
     <div id="drawHostScreen"></div>
+    <div id="processHostScreen"></div>
   </section>
   <section id="panel">
     <button class="cp-grab" id="grab" aria-label="Collapse controls" aria-expanded="true"><span></span></button>
@@ -58,9 +60,8 @@
       <label>Animation speed <output id="spdOut">400 ms</output><input id="spd" type="range" min="80" max="1500" step="20" value="400"></label>
     </div>
     <div class="cp-foot">
-      <div class="row"><button id="process">Process</button></div>
-      <p id="msg" role="status"></p>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.19<!-- version:end --></a></p>
+      <div id="processRow"><div class="row"><button id="process">Process</button></div><p id="msg" role="status"></p></div>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.20<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">

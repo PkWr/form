@@ -105,6 +105,24 @@ function scatter(start, size) {
   return { states: states.map((st, id) => ({ ...st, id })), capped: false };
 }
 
+// ---------- framed piece ----------
+// A piece is a fixed starting shape run in Unmake with its source and caption always shown, and written into every download. It is reached only by its own address (?piece=unmake), is not in the random starters, and is not linked from the site.
+const PIECES = {
+  unmake: {
+    rows: ['X.XXX', 'X.X..', 'XXXXX', '..X.X', 'XXX.X'],
+    ref: 'United States Holocaust Memorial Museum. (n.d.). History of the swastika. Holocaust Encyclopedia. https://encyclopedia.ushmm.org/content/en/article/history-of-the-swastika',
+    text: 'The symbol starts whole. Each iteration removes a block from it. The animation does not end until it has come apart. It is shown only to be taken apart, and the frames are never meant to stand alone.',
+  },
+};
+let NOTE = null; // the active piece, when there is one
+const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function wrapText(t, n) { const out = []; let line = ''; t.split(' ').forEach(w => { if ((line + ' ' + w).trim().length > n) { out.push(line); line = w; } else line = (line + ' ' + w).trim(); }); if (line) out.push(line); return out; }
+// The source and caption as SVG text under a drawing W wide. h is the height to reserve; svg(y0) draws it starting at y0.
+function noteBlock(W) {
+  const fs = Math.max(11, W / 70), n = Math.floor(W * 0.9 / (fs * 0.6)), lines = [...wrapText(NOTE.ref, n), '', ...wrapText(NOTE.text, n)];
+  return { h: (lines.length + 2) * fs * 1.5, svg: y0 => lines.map((l, i) => l ? `<text x="${W * 0.05}" y="${y0 + fs * 2 + i * fs * 1.5}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(l)}</text>` : '').join('') };
+}
+
 // ---------- rendering ----------
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
@@ -139,10 +157,10 @@ const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000
 // Portrait paper sizes in mm (ISO A series). The contact sheet is laid out on one page of the chosen size and exported at that physical size.
 const PAPERS = { A3: [297, 420], A2: [420, 594], A1: [594, 841], A0: [841, 1189] };
 function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3') {
-  const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06;
+  const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06, nb = NOTE ? noteBlock(W) : null, band = nb ? nb.h : 0;
   // Choose the number of columns that makes the variants as large as possible on the page.
   let cols = 1, best = 0;
-  for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
+  for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m - band) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
   let inner = '';
   chain.states.forEach((st, k) => {
     const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh, off = edit && hidden.has(st.id);
@@ -150,7 +168,7 @@ function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3') {
       `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
       `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${st.id}</text></g>`;
   });
-  return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m}) scale(${best})">${inner}</g>`, `width="${pw}mm" height="${ph}mm"`);
+  return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m}) scale(${best})">${inner}</g>` + (nb ? nb.svg(H - band - m / 2) : ''), `width="${pw}mm" height="${ph}mm"`);
 }
 function animSVG(chain, mode, ms) {
   const bb = bbox(chain, mode), n = chain.states.length, T = (n * ms / 1000).toFixed(2);
@@ -159,7 +177,8 @@ function animSVG(chain, mode, ms) {
     const a = (k / n).toFixed(4), b = ((k + 1) / n).toFixed(4);
     inner += `<g fill="${INK}" opacity="0" transform="translate(${-bb.x} ${-bb.y})"><animate attributeName="opacity" dur="${T}s" repeatCount="indefinite" calcMode="discrete" keyTimes="0;${a};${b};1" values="0;1;0;0"/>${frame(chain, k, mode)}</g>`;
   });
-  return svgWrap(bb.w, bb.h, inner);
+  const nb = NOTE ? noteBlock(bb.w) : null;
+  return svgWrap(bb.w, bb.h + (nb ? nb.h : 0), inner + (nb ? nb.svg(bb.h) : ''));
 }
 
 // ---------- UI ----------
@@ -282,13 +301,13 @@ if (typeof document !== 'undefined') {
   });
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper));
   $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value));
-  $('dlFrame').onclick = () => { if (!chain) return; const kc = kept(); if (!kc.states.length) return; const bb = bbox(kc, mode), k = (cur + kc.states.length - 1) % kc.states.length; dl(`form-frame-${kc.states[k].id}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g>`)); };
+  $('dlFrame').onclick = () => { if (!chain) return; const kc = kept(); if (!kc.states.length) return; const bb = bbox(kc, mode), k = (cur + kc.states.length - 1) % kc.states.length; dl(`form-frame-${kc.states[k].id}.svg`, (() => { const nb = NOTE ? noteBlock(bb.w) : null; return svgWrap(bb.w, bb.h + (nb ? nb.h : 0), `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g>` + (nb ? nb.svg(bb.h) : '')); })()); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   // Phones: the grid and shapes live on the screen, the settings in the sheet. One element moves between the two places.
   const small = matchMedia('(pointer: coarse), (max-width: 600px)');
-  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); };
+  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); });
   const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 16 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
@@ -305,5 +324,17 @@ if (typeof document !== 'undefined') {
   if (small.matches) { $('panel').classList.add('collapsed'); $('grab').setAttribute('aria-expanded', 'false'); $('grab').setAttribute('aria-label', 'Open controls'); }
   sizeBody();
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
+  const pieceName = new URLSearchParams(location.search).get('piece');
+  if (PIECES[pieceName]) {
+    const P = PIECES[pieceName]; NOTE = P;
+    grid = Array(G * G).fill(null);
+    const ox = Math.floor((G - P.rows[0].length) / 2), oy = Math.floor((G - P.rows.length) / 2);
+    P.rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'X') grid[(oy + y) * G + ox + x] = mk('square'); }));
+    act = 'unmake'; verb(); [...$('act').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.a === 'unmake'));
+    $('spd').value = 250; $('spdOut').textContent = '250 ms'; sync($('spd'));
+    $('pieceNote').innerHTML = `<p>${P.ref.replace(/(https?:\/\/\S+)/, '<a href="$1">$1</a>')}</p><p>${P.text}</p>`;
+    $('pieceNote').hidden = false; document.body.classList.add('piece');
+    drawGrid(); process();
+  }
   drawGrid();
 } else module.exports = { variants, unmake, scatter, connected, sheetSVG };
