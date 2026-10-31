@@ -32,43 +32,49 @@ function buildChain(start, len, seed) {
     }));
     if (!cand.length) break;
     const [i, d, nx, ny] = cand[Math.floor(rand() * cand.length)], b = blocks[i];
-    traces.push({ ...b }); b.x = nx; b.y = ny; b.r = d;
+    traces.push({ ...b }); b.x = nx; b.y = ny; b.r = d; b.a = d % 2;
     states.push({ blocks: blocks.map(o => ({ ...o })), tc: traces.length });
   }
   return { states, traces };
 }
 
 // Max: every distinct shape reachable by one-block slides (up to translation), breadth-first, capped.
-function norm(bl) {
+function norm(bl) {  // keeps stripe axis a (default vertical)
   const mx = Math.min(...bl.map(b => b.x)), my = Math.min(...bl.map(b => b.y));
-  return bl.map(b => ({ x: b.x - mx, y: b.y - my, s: b.s, r: SHAPES[b.s].sym ? 0 : b.r })).sort((a, c) => a.y - c.y || a.x - c.x);
+  return bl.map(b => ({ x: b.x - mx, y: b.y - my, s: b.s, a: b.a ?? 1, r: SHAPES[b.s].sym ? 0 : b.r })).sort((a, c) => a.y - c.y || a.x - c.x);
 }
-const keyOf = bl => bl.map(b => b.x + ',' + b.y + b.s + b.r).join('|');
-function enumerate(start, cap = MAXCAP) {
-  const first = norm(start), seen = new Set([keyOf(first)]), states = [{ blocks: first, tc: 0 }];
+const keyOf = (bl, ax) => bl.map(b => b.x + ',' + b.y + b.s + b.r + (ax ? b.a : '')).join('|');
+function enumerate(start, cap = MAXCAP, ax = false) {
+  const first = norm(start), seen = new Set([keyOf(first, ax)]), states = [{ blocks: first, tc: 0 }];
   let capped = false;
   for (let q = 0; q < states.length && !capped; q++) {
     const bl = states[q].blocks, occ = new Set(bl.map(b => b.x + ',' + b.y));
     for (let i = 0; i < bl.length && !capped; i++) for (let d = 0; d < 4 && !capped; d++) {
       const nx = bl[i].x + DIRS[d][0], ny = bl[i].y + DIRS[d][1];
       if (occ.has(nx + ',' + ny)) continue;
-      const nb = bl.map((o, j) => j === i ? { ...o, x: nx, y: ny, r: d } : o);
+      const nb = bl.map((o, j) => j === i ? { ...o, x: nx, y: ny, r: d, a: d % 2 } : o);
       if (!connected(nb)) continue;
       const n = norm(nb);
       if (Math.max(...n.map(b => b.x)) >= G || Math.max(...n.map(b => b.y)) >= G) continue;
-      const k = keyOf(n); if (seen.has(k)) continue;
+      const k = keyOf(n, ax); if (seen.has(k)) continue;
       seen.add(k); states.push({ blocks: n, tc: 0 });
       if (states.length >= cap) capped = true;
     }
   }
-  return { states, traces: [], capped };
+  return { states, traces: [], capped, max: true };
 }
 
 // ---------- rendering ----------
-const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>`).join('') + '</defs>';
+const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
+  [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
+  '<g id="hs"><rect y="10" width="100" height="20"/><rect y="40" width="100" height="20"/><rect y="70" width="100" height="20"/></g>' +
+  '<g id="vs"><rect x="10" width="20" height="100"/><rect x="40" width="20" height="100"/><rect x="70" width="20" height="100"/></g></defs>';
+// Direction: each block is three stripes running along its last move (vertical until it moves).
+const stripes = b => `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${((SHAPES[b.s].sign * 90 * b.r) % 360 + 360) % 360})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
 const use = (b, c = INK) => `<use stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${SHAPES[b.s].sign * 90 * b.r} 50 50)"/>`;
 function frame(chain, k, mode) {
   const s = chain.states[k];
+  if (mode === 'direction') return s.blocks.map(stripes).join('');
   return (mode === 'solid' ? chain.traces.slice(0, s.tc).map(use).join('') : '') + s.blocks.map(use).join('');
 }
 function bbox(chain) {
@@ -151,7 +157,7 @@ if (typeof document !== 'undefined') {
     const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
-    chain = enumerate(start);
+    chain = enumerate(start, MAXCAP, mode === 'direction');
     $('msg').textContent = `${chain.states.length} distinct shapes${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ' (all of them)'}.`;
     show();
   }
@@ -162,7 +168,7 @@ if (typeof document !== 'undefined') {
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('len').oninput = () => $('lenOut').textContent = $('len').value;
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
-  document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; show(); });
+  document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; if (chain && chain.max) runMax(); else show(); });
   $('dlSheet').onclick = () => chain && dl(`form-sheet-${mode}-seed${$('seed').value}.svg`, sheetSVG(chain, mode));
   $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}-seed${$('seed').value}.svg`, animSVG(chain, mode, +$('spd').value));
   $('dlFrame').onclick = () => { if (!chain) return; const bb = bbox(chain), k = (cur + chain.states.length - 1) % chain.states.length; dl(`form-frame-${k}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(chain, k, mode)}</g>`)); };
