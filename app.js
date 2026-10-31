@@ -124,6 +124,9 @@ function noteBlock(W) {
 }
 
 // ---------- rendering ----------
+// The count travels with the artwork: every export carries a title line such as "36 ways I can make you up".
+const waysLabel = (n, verb) => `${n} way${n === 1 ? '' : 's'} I can ${verb}`;
+function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs * 2.4, svg: `<text x="${W * 0.05}" y="${fs * 1.5}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(text)}</text>` }; }
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
   [1, 2, 3, 4, 5, 6, 7, 8].map(k => { const s = 40 / k; let d = ''; for (let x = -100; x <= 100; x += s) d += `M${+x.toFixed(2)} 0L${+(x + 100).toFixed(2)} 100`; return `<path id="ht${k}" fill="none" stroke-width="3.5" d="${d}"/>`; }).join('') +
@@ -156,11 +159,11 @@ function bbox(chain, mode) {
 const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${extra}><rect width="${w}" height="${h}" fill="${PAPER}"/>${defs()}${inner}</svg>`;
 // Portrait paper sizes in mm (ISO A series). The contact sheet is laid out on one page of the chosen size and exported at that physical size.
 const PAPERS = { A3: [297, 420], A2: [420, 594], A1: [594, 841], A0: [841, 1189] };
-function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3') {
-  const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06, nb = NOTE ? noteBlock(W) : null, band = nb ? nb.h : 0;
+function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', title = '') {
+  const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06, nb = NOTE ? noteBlock(W) : null, band = nb ? nb.h : 0, tb = title ? titleBlock(W, title) : null, top = tb ? tb.h : 0;
   // Choose the number of columns that makes the variants as large as possible on the page.
   let cols = 1, best = 0;
-  for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m - band) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
+  for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m - band - top) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
   let inner = '';
   chain.states.forEach((st, k) => {
     const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh, off = edit && hidden.has(st.id);
@@ -168,17 +171,17 @@ function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3') {
       `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
       `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${st.id}</text></g>`;
   });
-  return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m}) scale(${best})">${inner}</g>` + (nb ? nb.svg(H - band - m / 2) : ''), `width="${pw}mm" height="${ph}mm"`);
+  return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m + top}) scale(${best})">${inner}</g>` + (tb ? `<g transform="translate(0 ${m * 0.35})">${tb.svg}</g>` : '') + (nb ? nb.svg(H - band - m / 2) : ''), `width="${pw}mm" height="${ph}mm"`);
 }
-function animSVG(chain, mode, ms) {
+function animSVG(chain, mode, ms, title = '') {
   const bb = bbox(chain, mode), n = chain.states.length, T = (n * ms / 1000).toFixed(2);
   let inner = '';
   chain.states.forEach((_, k) => {
     const a = (k / n).toFixed(4), b = ((k + 1) / n).toFixed(4);
     inner += `<g fill="${INK}" opacity="0" transform="translate(${-bb.x} ${-bb.y})"><animate attributeName="opacity" dur="${T}s" repeatCount="indefinite" calcMode="discrete" keyTimes="0;${a};${b};1" values="0;1;0;0"/>${frame(chain, k, mode)}</g>`;
   });
-  const nb = NOTE ? noteBlock(bb.w) : null;
-  return svgWrap(bb.w, bb.h + (nb ? nb.h : 0), inner + (nb ? nb.svg(bb.h) : ''));
+  const nb = NOTE ? noteBlock(bb.w) : null, tb = title ? titleBlock(bb.w, title) : null, top = tb ? tb.h : 0;
+  return svgWrap(bb.w, top + bb.h + (nb ? nb.h : 0), (tb ? tb.svg : '') + `<g transform="translate(0 ${top})">${inner}</g>` + (nb ? nb.svg(top + bb.h) : ''));
 }
 
 // ---------- UI ----------
@@ -237,7 +240,8 @@ if (typeof document !== 'undefined') {
   let hidden = new Set();
   const kept = () => ({ ...chain, states: chain.states.filter(st => !hidden.has(st.id)) });
   let paper = 'A3';
-  const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true, paper); };
+  const titleText = c => waysLabel(c.states.filter(s => s.id !== 0).length, act === 'make' ? 'make you up' : 'unmake you');
+  const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true, paper, titleText({ states: chain.states.filter(s => !hidden.has(s.id)) })); };
   function show() {
     if (!chain) return;
     const kc = kept();
@@ -299,9 +303,13 @@ if (typeof document !== 'undefined') {
     [...$('paper').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
     paper = a.dataset.p; if (chain) renderSheet();
   });
-  $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper));
-  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value));
-  $('dlFrame').onclick = () => { if (!chain) return; const kc = kept(); if (!kc.states.length) return; const bb = bbox(kc, mode), k = (cur + kc.states.length - 1) % kc.states.length; dl(`form-frame-${kc.states[k].id}.svg`, (() => { const nb = NOTE ? noteBlock(bb.w) : null; return svgWrap(bb.w, bb.h + (nb ? nb.h : 0), `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g>` + (nb ? nb.svg(bb.h) : '')); })()); };
+  $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
+  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value, titleText(kept())));
+  $('dlFrame').onclick = () => {
+    if (!chain) return; const kc = kept(); if (!kc.states.length) return;
+    const bb = bbox(kc, mode), k = (cur + kc.states.length - 1) % kc.states.length, tb = titleBlock(bb.w, titleText(kc)), nb = NOTE ? noteBlock(bb.w) : null;
+    dl(`form-frame-${kc.states[k].id}.svg`, svgWrap(bb.w, tb.h + bb.h + (nb ? nb.h : 0), tb.svg + `<g transform="translate(0 ${tb.h})"><g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g></g>` + (nb ? nb.svg(tb.h + bb.h) : '')));
+  };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
