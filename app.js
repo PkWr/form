@@ -65,8 +65,8 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
 // ---------- rendering ----------
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
-  '<g id="hs"><rect y="10" width="100" height="20"/><rect y="40" width="100" height="20"/><rect y="70" width="100" height="20"/></g>' +
-  '<g id="vs"><rect x="10" width="20" height="100"/><rect x="40" width="20" height="100"/><rect x="70" width="20" height="100"/></g></defs>';
+  '<g id="hs" shape-rendering="crispEdges"><rect y="0" width="100" height="20"/><rect y="40" width="100" height="20"/><rect y="80" width="100" height="20"/></g>' +
+  '<g id="vs" shape-rendering="crispEdges"><rect x="0" width="20" height="100"/><rect x="40" width="20" height="100"/><rect x="80" width="20" height="100"/></g></defs>';
 // Direction: each block is three stripes running along its last move (vertical until it moves).
 const stripes = b => `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${((SHAPES[b.s].sign * 90 * b.r) % 360 + 360) % 360})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
 const use = (b, c = INK) => `<use stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${SHAPES[b.s].sign * 90 * b.r} 50 50)"/>`;
