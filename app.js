@@ -42,7 +42,7 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
       for (let i = 0; i < st.blocks.length && !capped; i++) {
         const old = st.blocks[i], rest = st.blocks.filter((_, j) => j !== i), targets = new Map();
         for (const o of rest) for (const [dx, dy] of DIRS) { const x = o.x + dx, y = o.y + dy; if (!occ.has(x + ',' + y)) targets.set(x + ',' + y, [x, y]); }
-        for (const [tx, ty] of targets.values()) {
+        for (const [tx, ty] of [...targets.values()].sort((p, q) => Math.abs(p[0] - old.x) + Math.abs(p[1] - old.y) - Math.abs(q[0] - old.x) - Math.abs(q[1] - old.y) || p[1] - q[1] || p[0] - q[0])) {
           const dx = tx - old.x, dy = ty - old.y, dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3);
           const nb = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir } : o);
           nb[i].a = axisOf(nb[i], nb);
@@ -59,7 +59,7 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
     if (!next.length) break;
     prev = level = next;
   }
-  return { states: [first, ...(prev === first ? [] : prev)], capped };
+  return { states: [first, ...(prev === first ? [] : prev)].map((st, id) => ({ ...st, id })), capped };
 }
 
 // ---------- rendering ----------
@@ -81,13 +81,14 @@ function bbox(chain) {
   return { x: x0 * U, y: y0 * U, w: (Math.max(...all.map(b => b.x)) + 2 - (x0 + 1) + 1) * U, h: (Math.max(...all.map(b => b.y)) + 2 - (y0 + 1) + 1) * U };
 }
 const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${extra}><rect width="${w}" height="${h}" fill="${PAPER}"/>${defs()}${inner}</svg>`;
-function sheetSVG(chain, mode) {
+function sheetSVG(chain, mode, hidden = new Set(), edit = false) {
   const bb = bbox(chain), n = chain.states.length, cols = Math.min(n > 36 ? 20 : 6, Math.ceil(Math.sqrt(n))), rows = Math.ceil(n / cols), fh = bb.h + 120;
   let inner = '';
-  chain.states.forEach((_, k) => {
-    const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh;
-    inner += `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
-      `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${k}</text>`;
+  chain.states.forEach((st, k) => {
+    const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh, off = edit && hidden.has(st.id);
+    inner += `<g data-id="${st.id}" opacity="${off ? 0.12 : 1}">` + (edit ? `<rect x="${cx}" y="${cy}" width="${bb.w}" height="${fh}" fill="transparent" style="cursor:pointer"/>` : '') +
+      `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
+      `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${st.id}</text></g>`;
   });
   return svgWrap(cols * bb.w, rows * fh, inner);
 }
@@ -132,19 +133,24 @@ if (typeof document !== 'undefined') {
     [...$('palette').children].forEach(c => c.setAttribute('aria-checked', c === b));
   });
 
+  let hidden = new Set();
+  const kept = () => ({ ...chain, states: chain.states.filter(st => !hidden.has(st.id)) });
   function show() {
     if (!chain) return;
-    const bb = bbox(chain);
+    const kc = kept();
+    if (!kc.states.length) { clearInterval(timer); $('anim').innerHTML = ''; $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true); return; }
+    const bb = bbox(kc);
     $('anim').setAttribute('viewBox', `0 0 ${bb.w} ${bb.h}`);
-    $('sheet').innerHTML = sheetSVG(chain, mode);
+    $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true);
     clearInterval(timer); cur = 0;
-    const draw = () => { $('anim').innerHTML = defs() + `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(chain, cur, mode)}</g>`; cur = (cur + 1) % chain.states.length; };
+    const draw = () => { $('anim').innerHTML = defs() + `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, cur, mode)}</g>`; cur = (cur + 1) % kc.states.length; };
     draw(); timer = setInterval(draw, +$('spd').value);
   }
   function process() {
     const start = grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0 }).filter(Boolean);
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
+    hidden = new Set();
     chain = variants(start, +$('len').value, mode === 'direction', mode === 'solid');
     const n = chain.states.length - 1;
     $('msg').textContent = n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
@@ -161,9 +167,10 @@ if (typeof document !== 'undefined') {
   $('len').oninput = () => $('lenOut').textContent = $('len').value;
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
   document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; if (chain) process(); });
-  $('dlSheet').onclick = () => chain && dl(`form-sheet-${mode}-${$('len').value}moves.svg`, sheetSVG(chain, mode));
-  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}-${$('len').value}moves.svg`, animSVG(chain, mode, +$('spd').value));
-  $('dlFrame').onclick = () => { if (!chain) return; const bb = bbox(chain), k = (cur + chain.states.length - 1) % chain.states.length; dl(`form-frame-${k}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(chain, k, mode)}</g>`)); };
+  $('sheet').addEventListener('click', e => { const g = e.target.closest('[data-id]'); if (!g) return; const id = +g.dataset.id; hidden.has(id) ? hidden.delete(id) : hidden.add(id); show(); });
+  $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${$('len').value}moves.svg`, sheetSVG(kept(), mode));
+  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}-${$('len').value}moves.svg`, animSVG(kept(), mode, +$('spd').value));
+  $('dlFrame').onclick = () => { if (!chain) return; const kc = kept(); if (!kc.states.length) return; const bb = bbox(kc), k = (cur + kc.states.length - 1) % kc.states.length; dl(`form-frame-${kc.states[k].id}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g>`)); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
