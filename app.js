@@ -125,6 +125,8 @@ function noteBlock(W) {
 
 // ---------- rendering ----------
 // The count travels with the artwork: every export carries a title line such as "36 ways I can make you up".
+// Iterations are numbered in lower-case Roman numerals, as the sections of the book are. The original has no number.
+const roman = n => { let r = ''; [[1000, 'm'], [900, 'cm'], [500, 'd'], [400, 'cd'], [100, 'c'], [90, 'xc'], [50, 'l'], [40, 'xl'], [10, 'x'], [9, 'ix'], [5, 'v'], [4, 'iv'], [1, 'i']].forEach(([v, t]) => { while (n >= v) { r += t; n -= v; } }); return r; };
 const waysLabel = (n, verb) => `${n} way${n === 1 ? '' : 's'} I can ${verb}`;
 function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs * 2.4, svg: `<text x="${W * 0.05}" y="${fs * 1.5}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(text)}</text>` }; }
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
@@ -169,7 +171,7 @@ function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', t
     const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh, off = edit && hidden.has(st.id);
     inner += `<g data-id="${st.id}" opacity="${off ? 0.12 : 1}">` + (edit ? `<rect x="${cx}" y="${cy}" width="${bb.w}" height="${fh}" fill="transparent" style="cursor:pointer"/>` : '') +
       `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
-      `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${st.id}</text></g>`;
+      `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${st.id ? roman(st.id) : ''}</text></g>`;
   });
   return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m + top}) scale(${best})">${inner}</g>` + (tb ? `<g transform="translate(0 ${m * 0.35})">${tb.svg}</g>` : '') + (nb ? nb.svg(H - band - m / 2) : ''), `width="${pw}mm" height="${ph}mm"`);
 }
@@ -341,6 +343,17 @@ if (typeof document !== 'undefined') {
     [...$('paper').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
     paper = a.dataset.p; if (chain) renderSheet();
   });
+  // The publication: an A5 book of this shape and its variants, in the design of the original, as a PDF. Imposed means two pages to an A4 landscape sheet in booklet order.
+  function dlBook(imposed) {
+    if (!chain) return $('msg').textContent = 'Press Process first.';
+    const kc = kept(), orig = chain.states.find(s => s.id === 0), vs = kc.states.filter(s => s.id !== 0);
+    if (!orig || !vs.length) return $('msg').textContent = 'There are no variants to put in a book.';
+    const bytes = makeBook({ states: [orig, ...vs] }, { imposed, verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, date: new Date().toISOString().slice(0, 10) });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    a.download = `form-publication-A5${imposed ? '-imposed' : ''}.pdf`; a.click(); URL.revokeObjectURL(a.href);
+  }
+  $('dlBookImposed').onclick = () => dlBook(true);
+  $('dlBook').onclick = () => dlBook(false);
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
   $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value, titleText(kept())));
   $('dlFrame').onclick = () => {
