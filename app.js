@@ -10,6 +10,7 @@ const SHAPES = {
   circle: { d: 'M50 0A50 50 0 1 1 50 100A50 50 0 1 1 50 0Z', sym: 1 },
 };
 const ang = b => SHAPES[b.s].sym ? 0 : (((b.q || 0) + b.r) % 4) * 90;
+const TRACED = new Set(['solid', 'trans', 'dens']);
 const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]]; // right, down, left, up
 
 // ---------- engine ----------
@@ -66,15 +67,23 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
 // ---------- rendering ----------
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
+  [1, 2, 3, 4, 5, 6, 7, 8].map(k => { const s = 40 / k; let d = ''; for (let x = -100; x <= 100; x += s) d += `M${+x.toFixed(2)} 0L${+(x + 100).toFixed(2)} 100`; return `<path id="ht${k}" fill="none" stroke-width="3.5" d="${d}"/>`; }).join('') +
   '<g id="hs" shape-rendering="crispEdges"><rect y="0" width="100" height="20"/><rect y="40" width="100" height="20"/><rect y="80" width="100" height="20"/></g>' +
   '<g id="vs" shape-rendering="crispEdges"><rect x="0" width="20" height="100"/><rect x="40" width="20" height="100"/><rect x="80" width="20" height="100"/></g></defs>';
 // Direction: each block is three stripes running along its last move (vertical until it moves).
 const stripes = b => `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
+// Density: a cell left k times is hatched at k times the line density, inside the shape that left it.
+function hatch(tr) {
+  const n = new Map(), seen = new Set();
+  tr.forEach(t => n.set(t.x + ',' + t.y, (n.get(t.x + ',' + t.y) || 0) + 1));
+  return tr.map(t => { const key = t.x + ',' + t.y + t.s + ang(t); if (seen.has(key)) return ''; seen.add(key);
+    return `<g transform="translate(${t.x * U} ${t.y * U})" clip-path="url(#c_${t.s}_${ang(t)})"><use href="#ht${Math.min(8, n.get(t.x + ',' + t.y))}" stroke="${INK}"/></g>`; }).join('');
+}
 const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${ang(b)} 50 50)"/>`;
 function frame(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(stripes).join('');
-  return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
+  return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? s.tr.map(t => use(t, INK, TONE)).join('') : mode === 'dens' ? hatch(s.tr) : '') + s.blocks.map(use).join('');
 }
 function bbox(chain) {
   const all = chain.states.flatMap(s => [...s.blocks, ...s.tr]);
@@ -155,14 +164,14 @@ if (typeof document !== 'undefined') {
   // The subtitle number follows the grid, Moves and view live.
   function updateCount() {
     const st = startBlocks();
-    $('count').textContent = st.length && connected(st) ? variants(st, +$('len').value, mode === 'direction', mode === 'solid' || mode === 'trans').states.length - 1 : 0;
+    $('count').textContent = st.length && connected(st) ? variants(st, +$('len').value, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
   }
   function process() {
     const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
     hidden = new Set();
-    chain = variants(start, +$('len').value, mode === 'direction', mode === 'solid' || mode === 'trans');
+    chain = variants(start, +$('len').value, mode === 'direction', TRACED.has(mode));
     const n = chain.states.length - 1;
     $('msg').textContent = n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
@@ -187,4 +196,4 @@ if (typeof document !== 'undefined') {
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   drawGrid();
-} else module.exports = { variants, connected };
+} else module.exports = { variants, connected, sheetSVG };
