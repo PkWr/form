@@ -1,7 +1,7 @@
 'use strict';
 // Form — pick blocks on a 16x16 grid; a chain of moves leaves traces; export as SVG.
 let G = 9;
-const U = 100, MAXCAP = 500, INK = '#111', PAPER = '#f4f2ee', YEL = '#ffe100';
+const U = 100, MAXCAP = 500, TONE = 0.22, INK = '#111', PAPER = '#f4f2ee', YEL = '#ffe100';
 // Shape library: paths in a 100x100 cell. sign = turn direction (mirror pairs turn opposite ways).
 const SHAPES = {
   square: { d: 'M0 0H100V100H0Z', sign: 1, sym: 1 },
@@ -69,11 +69,11 @@ const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id=
   '<g id="vs" shape-rendering="crispEdges"><rect x="0" width="20" height="100"/><rect x="40" width="20" height="100"/><rect x="80" width="20" height="100"/></g></defs>';
 // Direction: each block is three stripes running along its last move (vertical until it moves).
 const stripes = b => `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${((SHAPES[b.s].sign * 90 * b.r) % 360 + 360) % 360})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
-const use = (b, c = INK) => `<use stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${SHAPES[b.s].sign * 90 * b.r} 50 50)"/>`;
+const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${SHAPES[b.s].sign * 90 * b.r} 50 50)"/>`;
 function frame(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(stripes).join('');
-  return (mode === 'solid' ? s.tr.map(use).join('') : '') + s.blocks.map(use).join('');
+  return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
 }
 function bbox(chain) {
   const all = chain.states.flatMap(s => [...s.blocks, ...s.tr]);
@@ -151,7 +151,7 @@ if (typeof document !== 'undefined') {
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
     hidden = new Set();
-    chain = variants(start, +$('len').value, mode === 'direction', mode === 'solid');
+    chain = variants(start, +$('len').value, mode === 'direction', mode === 'solid' || mode === 'trans');
     const n = chain.states.length - 1;
     $('msg').textContent = n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
@@ -174,5 +174,6 @@ if (typeof document !== 'undefined') {
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
+  $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   drawGrid();
 } else module.exports = { variants, connected };
