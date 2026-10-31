@@ -81,6 +81,30 @@ function unmake(start, order) {
   return { states: states.map((st, id) => ({ ...st, id })), capped: false };
 }
 
+// Unmake by rearranging: each step moves one block that still touches another to an empty cell inside the grid that touches nothing, leaving its old
+// cell marked. Every move leaves the mover alone and cannot join anything, so the shape comes apart and the moves stop when no block touches another.
+function scatter(start, size) {
+  const first = norm(start.map(b => ({ ...b, r: 0, a: axisOf(b, start) })), []);
+  const pick = a => a[Math.floor(Math.random() * a.length)], near = (p, q) => Math.abs(p.x - q.x) + Math.abs(p.y - q.y) === 1;
+  let blocks = first.blocks, tr = [];
+  const states = [first];
+  for (let guard = 0; guard < 200; guard++) {
+    const touching = blocks.filter(b => blocks.some(o => near(o, b)));
+    if (!touching.length) break;
+    const b = pick(touching), others = blocks.filter(o => o !== b), cells = [];
+    for (let x = 0; x < size; x++) for (let y = 0; y < size; y++) {
+      const c = { x: x - first.ox, y: y - first.oy };
+      if (!blocks.some(o => o.x === c.x && o.y === c.y) && !others.some(o => near(o, c))) cells.push(c);
+    }
+    if (!cells.length) break;
+    const c = pick(cells), dx = c.x - b.x, dy = c.y - b.y, dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3);
+    tr = [...tr, { x: b.x, y: b.y, s: b.s, r: b.r, q: b.q }];
+    blocks = blocks.map(o => o === b ? { ...o, x: c.x, y: c.y, r: SHAPES[o.s].sym ? 0 : dir, a: 0 } : o);
+    states.push({ blocks, tr, ox: first.ox, oy: first.oy });
+  }
+  return { states: states.map((st, id) => ({ ...st, id })), capped: false };
+}
+
 // ---------- rendering ----------
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
@@ -201,20 +225,20 @@ if (typeof document !== 'undefined') {
   }
   const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
   // The subtitle number follows the grid, Moves and view live.
-  let act = 'make'; // the rule: make (a block moves) or unmake (a block is taken away)
+  let act = 'make'; // the rule: make (a block moves and stays joined), unmake (a block is taken away) or rearrange (a block moves away from the rest)
   const verb = () => $('verb').textContent = act === 'make' ? 'make you up' : 'unmake you';
   function updateCount() {
     const st = startBlocks();
-    $('count').textContent = act === 'unmake' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
+    $('count').textContent = act !== 'make' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
   }
   function process() {
     const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (act === 'make' && !connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
     hidden = new Set();
-    chain = act === 'unmake' ? unmake(start) : variants(start, MOVES, mode === 'direction', TRACED.has(mode));
+    chain = act === 'unmake' ? unmake(start) : act === 'rearrange' ? scatter(start, G) : variants(start, MOVES, mode === 'direction', TRACED.has(mode));
     const n = chain.states.length - 1;
-    $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
+    $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : act === 'rearrange' ? `${n} step${n > 1 ? 's' : ''}. Each moves one block away from the rest.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
@@ -242,4 +266,4 @@ if (typeof document !== 'undefined') {
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   drawGrid();
-} else module.exports = { variants, unmake, connected, sheetSVG };
+} else module.exports = { variants, unmake, scatter, connected, sheetSVG };

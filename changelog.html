@@ -15,6 +15,11 @@
   <p><a href="./">← Form</a></p>
   <h1>Changelog</h1>
 
+  <h2>v0.12, 2026-10-31</h2>
+  <ul>
+    <li>Unmake now has two ways. Unmake: take away removes one block per step. Unmake: rearrange moves one block per step to an empty cell that touches nothing, leaving its old cell marked, and stops when no block touches another. Rearranging keeps every block, so the shape comes apart without anything being lost. The step count after Process says how many moves it took.</li>
+  </ul>
+
   <h2>v0.11, 2026-10-31</h2>
   <ul>
     <li>New Rule setting, Make or Unmake. Make is the book's rule. Unmake is its reverse: each step takes one block away, in a random order, and it never comes back. The last frame is empty. The subtitle reads "N ways I can unmake you", where N is the number of blocks (the steps). Process again for a new order. The cumulative views work on it: a removed cell stays marked.</li>
