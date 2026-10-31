@@ -1,6 +1,6 @@
 'use strict';
 // Form — pick blocks on a 16x16 grid; a chain of moves leaves traces; export as SVG.
-const G = 16, U = 100, INK = '#231f20', PAPER = '#dcdcd0';
+const G = 16, U = 100, INK = '#111', PAPER = '#f4f2ee', YEL = '#ffe100';
 // Shape library: paths in a 100x100 cell. sign = turn direction (mirror pairs turn opposite ways).
 const SHAPES = {
   square: { d: 'M0 0H100V100H0Z', sign: 1 },
@@ -39,7 +39,7 @@ function buildChain(start, len, seed) {
 
 // ---------- rendering ----------
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>`).join('') + '</defs>';
-const use = b => `<use stroke="${INK}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${SHAPES[b.s].sign * 90 * b.r} 50 50)"/>`;
+const use = (b, c = INK) => `<use stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${SHAPES[b.s].sign * 90 * b.r} 50 50)"/>`;
 function frame(chain, k, mode) {
   const s = chain.states[k];
   return (mode === 'solid' ? chain.traces.slice(0, s.tc).map(use).join('') : '') + s.blocks.map(use).join('');
@@ -81,8 +81,8 @@ if (typeof document !== 'undefined') {
 
   function drawGrid() {
     let h = '';
-    for (let i = 0; i <= G; i++) h += `<path d="M${i * U} 0V${G * U}M0 ${i * U}H${G * U}" stroke="${INK}" stroke-opacity=".25" stroke-width="2"/>`;
-    h += `<g fill="${INK}">` + grid.map((c, i) => c ? use({ ...c, x: i % G, y: Math.floor(i / G) }) : '').join('') + '</g>';
+    for (let i = 0; i <= G; i++) h += `<path d="M${i * U} 0V${G * U}M0 ${i * U}H${G * U}" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>`;
+    h += `<g fill="${YEL}">` + grid.map((c, i) => c ? use({ ...c, x: i % G, y: Math.floor(i / G) }, YEL) : '').join('') + '</g>';
     $('grid').innerHTML = defs() + h;
   }
   $('grid').addEventListener('click', e => {
@@ -123,5 +123,8 @@ if (typeof document !== 'undefined') {
   $('dlSheet').onclick = () => chain && dl(`form-sheet-${mode}-seed${$('seed').value}.svg`, sheetSVG(chain, mode));
   $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}-seed${$('seed').value}.svg`, animSVG(chain, mode, +$('spd').value));
   $('dlFrame').onclick = () => { if (!chain) return; const bb = bbox(chain), k = (cur + chain.states.length - 1) % chain.states.length; dl(`form-frame-${k}.svg`, svgWrap(bb.w, bb.h, `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(chain, k, mode)}</g>`)); };
+  const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
+  document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
+  addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   drawGrid();
 } else module.exports = { buildChain, connected };
