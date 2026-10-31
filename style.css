@@ -39,3 +39,4 @@ button:hover{border-color:var(--accent-line)}
 #msg{min-height:1.4em;color:var(--yellow);font-size:12px}
 .hint{color:var(--muted);font-size:11px;margin:8px 0 0}
 @media(max-width:900px){#out{padding:24px 24px 48vh}#panel{top:auto;height:44vh}}
+select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 6px;margin-left:8px}

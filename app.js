@@ -1,12 +1,13 @@
 'use strict';
 // Form — pick blocks on a 16x16 grid; a chain of moves leaves traces; export as SVG.
-const G = 16, U = 100, INK = '#111', PAPER = '#f4f2ee', YEL = '#ffe100';
+let G = 8;
+const U = 100, MAXCAP = 500, INK = '#111', PAPER = '#f4f2ee', YEL = '#ffe100';
 // Shape library: paths in a 100x100 cell. sign = turn direction (mirror pairs turn opposite ways).
 const SHAPES = {
-  square: { d: 'M0 0H100V100H0Z', sign: 1 },
+  square: { d: 'M0 0H100V100H0Z', sign: 1, sym: 1 },
   archR:  { d: 'M0 0A100 100 0 0 1 100 100L0 100Z', sign: 1 },
   archL:  { d: 'M100 0A100 100 0 0 0 0 100L100 100Z', sign: -1 },
-  circle: { d: 'M50 0A50 50 0 1 1 50 100A50 50 0 1 1 50 0Z', sign: 1 },
+  circle: { d: 'M50 0A50 50 0 1 1 50 100A50 50 0 1 1 50 0Z', sign: 1, sym: 1 },
 };
 const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]]; // right, down, left, up
 
@@ -37,6 +38,32 @@ function buildChain(start, len, seed) {
   return { states, traces };
 }
 
+// Max: every distinct shape reachable by one-block slides (up to translation), breadth-first, capped.
+function norm(bl) {
+  const mx = Math.min(...bl.map(b => b.x)), my = Math.min(...bl.map(b => b.y));
+  return bl.map(b => ({ x: b.x - mx, y: b.y - my, s: b.s, r: SHAPES[b.s].sym ? 0 : b.r })).sort((a, c) => a.y - c.y || a.x - c.x);
+}
+const keyOf = bl => bl.map(b => b.x + ',' + b.y + b.s + b.r).join('|');
+function enumerate(start, cap = MAXCAP) {
+  const first = norm(start), seen = new Set([keyOf(first)]), states = [{ blocks: first, tc: 0 }];
+  let capped = false;
+  for (let q = 0; q < states.length && !capped; q++) {
+    const bl = states[q].blocks, occ = new Set(bl.map(b => b.x + ',' + b.y));
+    for (let i = 0; i < bl.length && !capped; i++) for (let d = 0; d < 4 && !capped; d++) {
+      const nx = bl[i].x + DIRS[d][0], ny = bl[i].y + DIRS[d][1];
+      if (occ.has(nx + ',' + ny)) continue;
+      const nb = bl.map((o, j) => j === i ? { ...o, x: nx, y: ny, r: d } : o);
+      if (!connected(nb)) continue;
+      const n = norm(nb);
+      if (Math.max(...n.map(b => b.x)) >= G || Math.max(...n.map(b => b.y)) >= G) continue;
+      const k = keyOf(n); if (seen.has(k)) continue;
+      seen.add(k); states.push({ blocks: n, tc: 0 });
+      if (states.length >= cap) capped = true;
+    }
+  }
+  return { states, traces: [], capped };
+}
+
 // ---------- rendering ----------
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>`).join('') + '</defs>';
 const use = (b, c = INK) => `<use stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${SHAPES[b.s].sign * 90 * b.r} 50 50)"/>`;
@@ -51,7 +78,7 @@ function bbox(chain) {
 }
 const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${extra}><rect width="${w}" height="${h}" fill="${PAPER}"/>${defs()}${inner}</svg>`;
 function sheetSVG(chain, mode) {
-  const bb = bbox(chain), n = chain.states.length, cols = Math.min(6, Math.ceil(Math.sqrt(n))), rows = Math.ceil(n / cols), fh = bb.h + 120;
+  const bb = bbox(chain), n = chain.states.length, cols = Math.min(n > 36 ? 20 : 6, Math.ceil(Math.sqrt(n))), rows = Math.ceil(n / cols), fh = bb.h + 120;
   let inner = '';
   chain.states.forEach((_, k) => {
     const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh;
@@ -73,16 +100,21 @@ function animSVG(chain, mode, ms) {
 // ---------- UI ----------
 if (typeof document !== 'undefined') {
   const $ = id => document.getElementById(id);
-  const grid = Array(G * G).fill(null);
+  let grid = Array(G * G).fill(null);
   let shape = 'square', chain = null, mode = 'form', cur = 0, timer = null;
   const mk = (s, m = {}) => ({ s, r: 0, ...m });
-  // starting shape: a T
-  [[6, 5], [7, 5], [8, 5], [7, 6], [7, 7], [7, 8]].forEach(([x, y]) => grid[y * G + x] = mk('square'));
+  function startT() {
+    grid = Array(G * G).fill(null);
+    const ox = Math.floor((G - 3) / 2), oy = Math.floor((G - 5) / 2);
+    [[0, 0], [1, 0], [2, 0], [1, 1], [1, 2], [1, 3]].forEach(([x, y]) => grid[(oy + y) * G + ox + x] = mk('square'));
+  }
+  startT();
 
   function drawGrid() {
     let h = '';
     for (let i = 0; i <= G; i++) h += `<path d="M${i * U} 0V${G * U}M0 ${i * U}H${G * U}" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>`;
     h += `<g fill="${YEL}">` + grid.map((c, i) => c ? use({ ...c, x: i % G, y: Math.floor(i / G) }, YEL) : '').join('') + '</g>';
+    $('grid').setAttribute('viewBox', `0 0 ${G * U} ${G * U}`);
     $('grid').innerHTML = defs() + h;
   }
   $('grid').addEventListener('click', e => {
@@ -114,6 +146,17 @@ if (typeof document !== 'undefined') {
     show();
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
+  const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0 }).filter(Boolean);
+  function runMax() {
+    const start = startBlocks();
+    if (!start.length) return $('msg').textContent = 'Place some blocks first.';
+    if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
+    chain = enumerate(start);
+    $('msg').textContent = `${chain.states.length} distinct shapes${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ' (all of them)'}.`;
+    show();
+  }
+  $('max').onclick = runMax;
+  $('size').onchange = () => { G = +$('size').value; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid(); };
   $('process').onclick = process;
   $('reroll').onclick = () => { $('seed').value = Math.floor(Math.random() * 1e6); process(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
@@ -127,4 +170,4 @@ if (typeof document !== 'undefined') {
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   drawGrid();
-} else module.exports = { buildChain, connected };
+} else module.exports = { buildChain, enumerate, connected };
