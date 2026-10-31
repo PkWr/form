@@ -66,6 +66,21 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
   return { states: [first, ...(prev === first ? [] : prev)].map((st, id) => ({ ...st, id })), capped };
 }
 
+// Unmake: the reverse rule. One block is taken away per step, in a random order, and never comes back. The place it left stays marked (a trace),
+// so the cumulative views still work. Blocks keep their positions (no re-centring), and the last state is empty.
+function unmake(start, order) {
+  const first = norm(start.map(b => ({ ...b, r: 0, a: axisOf(b, start) })), []);
+  const idx = first.blocks.map((_, i) => i);
+  if (order) idx.sort((p, q) => order[p] - order[q]);
+  else for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  const states = [first];
+  idx.forEach((bi, k) => {
+    const gone = new Set(idx.slice(0, k + 1));
+    states.push({ blocks: first.blocks.filter((_, i) => !gone.has(i)), tr: first.blocks.filter((_, i) => gone.has(i)).map(b => ({ x: b.x, y: b.y, s: b.s, r: b.r, q: b.q })), ox: first.ox, oy: first.oy });
+  });
+  return { states: states.map((st, id) => ({ ...st, id })), capped: false };
+}
+
 // ---------- rendering ----------
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
@@ -186,18 +201,20 @@ if (typeof document !== 'undefined') {
   }
   const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
   // The subtitle number follows the grid, Moves and view live.
+  let act = 'make'; // the rule: make (a block moves) or unmake (a block is taken away)
+  const verb = () => $('verb').textContent = act === 'make' ? 'make you up' : 'unmake you';
   function updateCount() {
     const st = startBlocks();
-    $('count').textContent = st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
+    $('count').textContent = act === 'unmake' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
   }
   function process() {
     const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
-    if (!connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
+    if (act === 'make' && !connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge.';
     hidden = new Set();
-    chain = variants(start, MOVES, mode === 'direction', TRACED.has(mode));
+    chain = act === 'unmake' ? unmake(start) : variants(start, MOVES, mode === 'direction', TRACED.has(mode));
     const n = chain.states.length - 1;
-    $('msg').textContent = n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
+    $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
@@ -207,6 +224,11 @@ if (typeof document !== 'undefined') {
     G = +a.dataset.n; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startSymbol(); drawGrid();
   });
   $('process').onclick = process;
+  $('act').addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
+    [...$('act').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
+    act = a.dataset.a; verb(); updateCount(); if (chain) process();
+  });
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
@@ -220,4 +242,4 @@ if (typeof document !== 'undefined') {
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   drawGrid();
-} else module.exports = { variants, connected, sheetSVG };
+} else module.exports = { variants, unmake, connected, sheetSVG };
