@@ -124,12 +124,29 @@ if (typeof document !== 'undefined') {
   let grid = Array(G * G).fill(null);
   let shape = 'square', chain = null, mode = 'form', cur = 0, timer = null;
   const mk = s => ({ s, r: 0, q: 0 });
-  function startT() {
+  // Starter symbols, drawn in square blocks (X). One is picked at random on load; the Random symbol button picks another.
+  const SYMBOLS = {
+    T: ['XXX', '.X.', '.X.', '.X.'],
+    cross: ['.X.', 'XXX', '.X.', '.X.', '.X.'],
+    plus: ['.X.', 'XXX', '.X.'],
+    ankh: ['XXX', 'X.X', 'XXX', '.X.', 'XXX', '.X.'],
+    arrow: ['..X..', '.XXX.', 'XXXXX', '..X..', '..X..'],
+    H: ['X.X', 'XXX', 'X.X'],
+    ring: ['XXX', 'X.X', 'XXX'],
+    tower: ['X.X.X', 'XXXXX', '.XXX.', '.XXX.'],
+    U: ['X.X', 'X.X', 'XXX'],
+    L: ['X.', 'X.', 'X.', 'XX'],
+    stairs: ['X..', 'XX.', 'XXX'],
+  };
+  let lastSymbol = '';
+  function startSymbol() {
+    const names = Object.keys(SYMBOLS).filter(n => n !== lastSymbol), name = lastSymbol = names[Math.floor(Math.random() * names.length)], rows = SYMBOLS[name];
     grid = Array(G * G).fill(null);
-    const ox = Math.floor((G - 3) / 2), oy = Math.floor((G - 5) / 2);
-    [[0, 0], [1, 0], [2, 0], [1, 1], [1, 2], [1, 3]].forEach(([x, y]) => grid[(oy + y) * G + ox + x] = mk('square'));
+    const ox = Math.floor((G - rows[0].length) / 2), oy = Math.floor((G - rows.length) / 2);
+    rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'X') grid[(oy + y) * G + ox + x] = mk('square'); }));
+    return name;
   }
-  startT();
+  startSymbol();
 
   function drawGrid() {
     let h = '';
@@ -186,9 +203,10 @@ if (typeof document !== 'undefined') {
   $('size').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    G = +a.dataset.n; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid();
+    G = +a.dataset.n; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startSymbol(); drawGrid();
   });
   $('process').onclick = process;
+  $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
   document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; updateCount(); if (chain) process(); });
