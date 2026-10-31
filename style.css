@@ -160,3 +160,5 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #screen #camT{margin-top:2px}
 #out label.inline{color:#231F20}
 #out input[type=checkbox]{accent-color:var(--ink)}
+#out label.msg{display:block;margin:10px 0 6px;color:#555;font-size:12px}
+#out textarea{display:block;width:100%;max-width:520px;margin-top:4px;font:inherit;font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:6px;padding:6px 8px;resize:vertical}

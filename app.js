@@ -344,11 +344,23 @@ if (typeof document !== 'undefined') {
     paper = a.dataset.p; if (chain) renderSheet();
   });
   // The publication: an A5 book of this shape and its variants, in the design of the original, as a PDF. Imposed means two pages to an A4 landscape sheet in booklet order.
-  function dlBook(imposed) {
+  // The preface is read from the About page (the one copy of that text): from Summary to Using it, with the numbered views as a list.
+  async function fetchPreface() {
+    const html = await (await fetch('about.html')).text(), main = new DOMParser().parseFromString(html, 'text/html').querySelector('main'), out = [];
+    let on = false;
+    [...main.children].forEach(el => {
+      if (el.tagName === 'H2') on = /^Summary$|^Description$/.test(el.textContent.trim());
+      else if (on && el.tagName === 'P') { const n = el.querySelector('.n'); out.push(n ? n.textContent + '. ' + el.textContent.slice(n.textContent.length) : el.textContent.trim()); }
+    });
+    return out;
+  }
+  async function dlBook(imposed) {
     if (!chain) return $('msg').textContent = 'Press Process first.';
     const kc = kept(), orig = chain.states.find(s => s.id === 0), vs = kc.states.filter(s => s.id !== 0);
     if (!orig || !vs.length) return $('msg').textContent = 'There are no variants to put in a book.';
-    const bytes = makeBook({ states: [orig, ...vs] }, { imposed, verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) });
+    let preface = [];
+    if ($('prefacePage').checked) { try { preface = await fetchPreface(); } catch (e) { return $('msg').textContent = 'The preface could not be read from the About page.'; } }
+    const bytes = makeBook({ states: [orig, ...vs] }, { imposed, preface, message: $('personalMsg').value.trim(), verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) });
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
     a.download = `form-publication-A5${imposed ? '-imposed' : ''}.pdf`; a.click(); URL.revokeObjectURL(a.href);
   }

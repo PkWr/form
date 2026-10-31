@@ -27,7 +27,14 @@ function textWidth(t, f, size) {
   if (typeof document !== 'undefined') { measureCtx = measureCtx || document.createElement('canvas').getContext('2d'); measureCtx.font = FONTS[f][1]; return measureCtx.measureText(t).width * size / 100; }
   return t.length * size * (f === 3 ? 0.6 : 0.5);
 }
-const pdfStr = t => t.replace(/[^\x20-\x7e]/g, '?').replace(/([\\()])/g, '\\$1');
+const WIN = { '\u2018': '\x91', '\u2019': '\x92', '\u201c': '\x93', '\u201d': '\x94', '\u2013': '\x96', '\u2014': '\x97', '\u2026': '\x85' };
+const pdfStr = t => t.replace(/[\u2018\u2019\u201c\u201d\u2013\u2014\u2026]/g, c => WIN[c]).replace(/[^\x20-\x7e\x80-\xff]/g, '?').replace(/([\\()])/g, '\\$1');
+// Wrap text to a width in points, keeping the author's line breaks.
+function wrapWidth(t, f, size, maxW) {
+  const out = [];
+  t.split('\n').forEach(par => { let line = ''; par.split(' ').forEach(w => { const test = line ? line + ' ' + w : w; if (line && textWidth(test, f, size) > maxW) { out.push(line); line = w; } else line = test; }); out.push(line); });
+  return out;
+}
 
 function makeBook(bc, opt) {
   const N = bc.states.length - 1, W = A5W, H = A5H, gs = new Set();
@@ -77,6 +84,23 @@ function makeBook(bc, opt) {
     }
     return page(th, body);
   };
+  // A personal message: one page, centred, in the author's own words.
+  const messagePage = t => {
+    const L = THEME.light; let size = 11, lines;
+    for (; size >= 6; size -= 0.5) { lines = wrapWidth(t, 2, size, 0.62 * W); if (lines.length * size * 1.5 < 0.6 * H) break; }
+    const y0 = 0.4 * H - lines.length * size * 1.5 / 2;
+    return page(L, lines.map((l, i) => l ? text(l, 2, size, W / 2, y0 + (i + 1) * size * 1.5, L.ink) : '').join(''));
+  };
+  // A preface about the project: one page, set from the About text (paragraphs, with the numbered views as a short list).
+  const prefacePage = paras => {
+    const L = THEME.light, mx = 0.16 * W, mw = W - 2 * mx; let size = 7.5, out;
+    for (; size >= 5.5; size -= 0.25) {
+      out = text('Preface', 0, 8, mx, 0.1 * H, L.ink, 'l'); let y = 0.1 * H + size * 2.6;
+      paras.forEach(p => { const list = /^[ivx]+\. /.test(p), lines = wrapWidth(p, 2, size, mw - (list ? 12 : 0)); lines.forEach((l, i) => { out += text(l, 2, size, mx + (list ? 12 : 0), y, L.ink, 'l'); y += size * 1.5; }); y += list ? size * 0.3 : size * 0.8; });
+      if (y < 0.86 * H) break;
+    }
+    return page(L, out);
+  };
   const pages = [];
   // cover
   { const bb = bbox(bc, 'form'), bw = bb.w / U, bh = bb.h / U, c = Math.min(0.11 * W, 0.76 * W / bw, 0.5 * H / bh);
@@ -85,6 +109,8 @@ function makeBook(bc, opt) {
     pages.push(page(THEME.light, frameOps(0, 'form', W / 2 - (x0 + x1) / 2 * cc, 0.435 * H - (y0 + y1) / 2 * cc, cc, THEME.light.ink) +
       text(title, 0, 8, W / 2, H * 0.808, THEME.light.ink) + text('Form', 2, 8, W / 2, H * 0.826, THEME.light.ink))); }
   if (opt.endpapers) pages.push(endpaper(false));
+  if (opt.message) pages.push(messagePage(opt.message));
+  if (opt.preface && opt.preface.length) pages.push(prefacePage(opt.preface));
   // the five treatments, each with the original on top and the variants in a grid
   VIEWS.forEach(([view, name], vi) => {
     const bb = bbox(bc, view), bw = bb.w / U, bh = bb.h / U, per = 48, pc = Math.max(1, Math.ceil(N / per));
@@ -139,6 +165,6 @@ function pdfBuild(pageOps, imposed, gs) {
   objs.forEach((s, i) => { offs.push(out.length); out += `${i + 1} 0 obj\n${s}\nendobj\n`; });
   const xref = out.length;
   out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('') + `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
-  return new TextEncoder().encode(out);
+  return Uint8Array.from(out, c => c.charCodeAt(0) & 255);
 }
 if (typeof module !== 'undefined' && typeof document === 'undefined') module.exports = { makeBook, imposition };
