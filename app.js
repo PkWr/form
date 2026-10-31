@@ -157,6 +157,7 @@ if (typeof document !== 'undefined') {
     hidden = new Set();
     chain = variants(start, +$('len').value, mode === 'direction', mode === 'solid' || mode === 'trans');
     const n = chain.states.length - 1;
+    $('count').textContent = n;
     $('msg').textContent = n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
   }
@@ -164,7 +165,7 @@ if (typeof document !== 'undefined') {
   $('size').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    G = +a.dataset.n; chain = null; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid();
+    G = +a.dataset.n; chain = null; $('count').textContent = 11; clearInterval(timer); $('sheet').innerHTML = ''; $('anim').innerHTML = ''; startT(); drawGrid();
   });
   $('process').onclick = process;
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
