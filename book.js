@@ -128,8 +128,8 @@ function buildPages(bc, opt) {
       const ks = []; for (let k = 1 + p * per; k <= Math.min(N, (p + 1) * per); k++) ks.push(k);
       const rx = 0.78 * W, ry = 0.445 * H, f = fit(ks.length, bw, bh, rx, ry, (view === 'dens' ? 0.075 : 0.0373) * W);
       const left = 0.11 * W + (rx - f.cols * f.s * bw) / 2; let body = '';
-      const [x0, x1, y0] = extents(bc.states[0].blocks, bc.states[0]);
-      body += frameOps(0, view, W / 2 - (x0 + x1) / 2 * 0.0373 * W, 0.12 * H - y0 * 0.0373 * W, 0.0373 * W, THEME.light.ink);
+      const [x0, x1, y0, y1] = extents(bc.states[0].blocks, bc.states[0]), oc = Math.min(0.0373 * W, 0.14 * H / (y1 - y0)); // the original is drawn no taller than the band above the grid, so a tall shape (a letter) cannot run into the variants
+      body += frameOps(0, view, W / 2 - (x0 + x1) / 2 * oc, 0.12 * H - y0 * oc, oc, THEME.light.ink);
       ks.forEach((k, i) => { body += frameOps(k, view, left + (i % f.cols) * f.s * bw - bb.x / U * f.s, 0.275 * H + Math.floor(i / f.cols) * f.s * bh - bb.y / U * f.s, f.s, THEME.light.ink); });
       body += text(ROMAN[vi] + (pc > 1 ? '   ' + (p + 1) + ' of ' + pc : ''), 2, 6, W / 2, H * 0.805, THEME.light.ink) + text(name, 0, 8, W / 2, H * 0.824, THEME.light.ink);
       pages.push(page(THEME.light, body));
