@@ -518,7 +518,7 @@ if (typeof document !== 'undefined') {
   // The treatments sit with the results on every screen size, which keeps the panel short.
   const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('viewHostOut').prepend($('viewBox')); $('colourHostPanel').prepend($('colours')); $('spdHostPanel').prepend($('spd').closest('label')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); }); phone.addEventListener('change', () => { placeDraw(); sizeBody(); });
-  const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 16 + 'px' : ''; };
+  const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 4 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
   // The results are a short path, one step at a time: the animation, the contact sheet, then make a book or a print.
   // One linear flow: Animation, Sheet, Print, GIF or video, Book. Steps 3 to 5 share one panel and show one card each.

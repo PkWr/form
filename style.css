@@ -323,3 +323,13 @@ body.view-outputs #viewHostOut,body.view-outputs #colourHostOut{display:none}
 .draw-ui .draw-shapes>.row{order:3;margin:0;flex-wrap:nowrap}
 .draw-ui{gap:8px 12px}
 .draw-ui #size a{padding:2px 7px}
+/* Grid size sits above the grid it changes. */
+#drawBox>#size{margin:0 0 8px;font-size:13px;color:#555}
+#drawBox>#size a{padding:2px 8px;border-radius:999px;color:#555;text-decoration:none}
+#drawBox>#size a[aria-checked=true]{background:var(--ink);color:var(--yellow)}
+@media(max-height:700px){#drawBox #grid{width:min(100%,calc(100svh - 348px));margin-left:auto;margin-right:auto;display:block}}
+/* Shapes, Clear and Random share one row, on phones too. */
+.draw-ui{gap:8px}
+.draw-ui .draw-shapes>.row{gap:6px}
+.draw-ui .draw-shapes>.row button{padding:8px 11px}
+@media(max-width:600px){.draw-ui #palette{gap:4px}.draw-ui #palette button{width:36px;height:36px;padding:6px}}
