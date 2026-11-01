@@ -276,3 +276,9 @@ body.view-results #processRow .row{display:none}
 #steps a{flex:1 1 0;min-width:0;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:11px;text-align:center;word-break:normal}
 #steps a svg{width:20px;height:20px}
 #steps{max-width:460px}
+/* One button system. Tool: ink, 13px (downloads, Clear, Random, Camera, Preview). Step: ink, 14px, taller (Next). Go: yellow, same size as Step (the make button). Back: outline. All 8px radius, same line height. */
+#screen .row button,#out .row button{font-size:13px;line-height:1.2;padding:8px 14px;min-height:38px}
+#screen .row.nav button,#out .row.nav button,#process{font-size:14px;line-height:1.2;padding:10px 16px;min-height:44px}
+#out .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
+.row.nav{align-items:center}
+button#process,#processRow .row button{font-size:14px;line-height:1.2;padding:10px 16px;min-height:44px}
