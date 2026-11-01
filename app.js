@@ -505,16 +505,19 @@ if (typeof document !== 'undefined') {
   const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 16 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
   // The results are a short path, one step at a time: the animation, the contact sheet, then make a book or a print.
+  // One linear flow: Animation, Sheet, Print, GIF or video, Book. Steps 3 to 5 share one panel and show one card each.
+  const CARDS = { 3: 'print', 4: 'social', 5: 'book' }, NEXT = { 1: 'Next: choose your variants', 2: 'Next: make a print', 3: 'Next: a GIF or a video', 4: 'Next: make a book' };
   function goStep(n) {
-    document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + n));
+    const panel = n > 2 ? 3 : n;
+    document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
     [...$('steps').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.s === String(n)));
+    if (n > 2) {
+      document.querySelectorAll('#step3 .card').forEach(c => c.classList.toggle('on', c.dataset.m === CARDS[n]));
+      const nx = document.querySelector('#step3 .next'), bk = document.querySelector('#step3 .back');
+      nx.hidden = n === 5; nx.dataset.go = n + 1; nx.textContent = NEXT[n]; bk.dataset.go = n - 1;
+    }
     scrollTo(0, 0);
   }
-  $('makeTabs').addEventListener('click', e => {
-    const t = e.target.closest('a'); if (!t) return; e.preventDefault();
-    [...$('makeTabs').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === t));
-    document.querySelectorAll('#step3 .card').forEach(c => c.classList.toggle('on', c.dataset.m === t.dataset.m));
-  });
   $('steps').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); goStep(+a.dataset.s); });
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   function paneSwitch() {

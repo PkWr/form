@@ -59,11 +59,11 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make you up</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.43<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.44<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
-    <div class="links ico" id="steps" role="radiogroup" aria-label="Results"><a href="#" role="radio" data-s="1" aria-checked="true" title="Animation"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg><span>Animation</span></a><a href="#" role="radio" data-s="2" aria-checked="false" title="Sheet"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg><span>Sheet</span></a><a href="#" role="radio" data-s="3" aria-checked="false" title="Make"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M3 5h8v14H3zM13 5h8v14h-8z"/></svg><span>Make</span></a></div>
+    <div class="links ico" id="steps" role="radiogroup" aria-label="Results"><a href="#" role="radio" data-s="1" aria-checked="true" title="Animation"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg><span>Animation</span></a><a href="#" role="radio" data-s="2" aria-checked="false" title="Sheet"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg><span>Sheet</span></a><a href="#" role="radio" data-s="3" aria-checked="false" title="Print"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M6 3h9l4 4v14H6z" opacity=".35"/><path d="M8 11h8v1.6H8zM8 14.5h8v1.6H8zM8 18h5v1.6H8z"/></svg><span>Print</span></a><a href="#" role="radio" data-s="4" aria-checked="false" title="GIF or video for socials"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="3" opacity=".35"/><path d="M9 7l8 5-8 5z"/></svg><span>GIF</span></a><a href="#" role="radio" data-s="5" aria-checked="false" title="Book"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M3 5h8v14H3zM13 5h8v14h-8z"/></svg><span>Book</span></a></div>
     <div id="viewHostOut"></div>
     <div id="colourHostOut"></div>
     <div class="step on" id="step1">
@@ -76,11 +76,10 @@
       <h2>Contact sheet</h2>
       <p class="hint2">Click a variant to hide or keep it. Hidden ones are left out of everything that follows. Hide all but one to make a print of a single frame.</p>
       <div id="sheet"></div>
-      <div class="row nav"><button class="back" data-go="1">Back</button><button class="next" data-go="3">Next: make a book, a print or a GIF</button></div>
+      <div class="row nav"><button class="back" data-go="1">Back</button><button class="next" data-go="3">Next: make a print</button></div>
     </div>
     <div class="step" id="step3">
-      <h2>What do you want to make?</h2>
-      <div class="links ico" id="makeTabs" role="radiogroup" aria-label="What to make"><a href="#" role="radio" data-m="print" aria-checked="true" title="Print"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M6 3h9l4 4v14H6z" opacity=".35"/><path d="M8 11h8v1.6H8zM8 14.5h8v1.6H8zM8 18h5v1.6H8z"/></svg><span>Print</span></a><a href="#" role="radio" data-m="social" aria-checked="false" title="GIF or video for socials"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="3" opacity=".35"/><path d="M9 7l8 5-8 5z"/></svg><span>GIF or video</span></a><a href="#" role="radio" data-m="book" aria-checked="false" title="Book"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M3 5h8v14H3zM13 5h8v14h-8z"/></svg><span>Book</span></a></div>
+            <!-- stepper replaces the make tabs -->
       <div class="cards">
         <div class="card on" id="cardPrint" data-m="print">
           <h3>Make a print</h3>
@@ -104,7 +103,7 @@
           <div class="row"><button id="dlBookImposed"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Download the book, imposed (PDF)</button><button id="dlBook"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Download the pages (PDF)</button></div>
         </div>
       </div>
-      <div class="row nav"><button class="back" data-go="2">Back</button></div>
+      <div class="row nav"><button class="back" data-go="2">Back</button><button class="next" data-go="4">Next</button></div>
     </div>
   </section>
 </main>
