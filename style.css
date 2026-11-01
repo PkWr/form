@@ -359,3 +359,7 @@ body[data-step="2"] #dlWrap #paper{display:flex}
 #out .row.nav #dlBar .dlbtn{font-size:10px;line-height:1.1;padding:4px 10px;min-height:0}
 #out .row.nav #dlBar{gap:4px}
 #out .row.nav #dlBar .dlbtn{padding:4px 6px;min-width:40px}
+/* The animation's format is a choice, shown like the print size: on its own line above the icon. */
+#dlWrap #animFormat{display:none;margin:0;font-size:13px;flex:0 0 auto}
+body[data-step="1"] #dlWrap #animFormat{display:flex}
+.row.nav #dlWrap #animFormat{order:-1;flex:0 0 100%;justify-content:flex-end;margin:0 0 4px}

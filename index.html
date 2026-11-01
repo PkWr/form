@@ -7,7 +7,7 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=v0.74">
+<link rel="stylesheet" href="style.css?v=v0.75">
 </head>
 <body>
 <script>if (!location.search) document.documentElement.classList.add("show-start");</script>
@@ -29,7 +29,7 @@
 <main>
   <section id="pieceNote" hidden aria-label="Source and caption"></section>
   <section id="screen">
-    <div id="paneSwitch" aria-live="polite"><span id="stepNow">Step 1 of 4 · Draw</span><span id="dlWrap"><div class="links" id="paper" role="radiogroup" aria-label="Print size, portrait"><span>Size</span><a href="#" role="radio" data-p="A3" aria-checked="true">A3</a><a href="#" role="radio" data-p="A2" aria-checked="false">A2</a><a href="#" role="radio" data-p="A1" aria-checked="false">A1</a><a href="#" role="radio" data-p="A0" aria-checked="false">A0</a></div><span id="dlBar"><button id="dlAnim" class="dlbtn" data-for="1" title="Download the animated SVG" aria-label="Download the animated SVG"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SVG</span></button><button id="dlSheet" class="dlbtn" data-for="2" title="Download the print (SVG)" aria-label="Download the print (SVG)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SVG</span></button><button id="dlGif" class="dlbtn" data-for="1" title="Download the GIF" aria-label="Download the GIF"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>GIF</span></button><button id="dlVideo" class="dlbtn" data-for="1" title="Download the video" aria-label="Download the video"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Video</span></button><button id="dlBookImposed" class="dlbtn" data-for="3" title="Download the book, imposed (PDF)" aria-label="Download the book, imposed (PDF)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Imposed</span></button><button id="dlBook" class="dlbtn" data-for="3" title="Download the pages (PDF)" aria-label="Download the pages (PDF)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Pages</span></button></span></span></div>
+    <div id="paneSwitch" aria-live="polite"><span id="stepNow">Step 1 of 4 · Draw</span><span id="dlWrap"><div class="links" id="animFormat" role="radiogroup" aria-label="Download format"><span>Format</span><a href="#" role="radio" data-f="svg" aria-checked="true">SVG</a><a href="#" role="radio" data-f="gif" aria-checked="false">GIF</a><a href="#" role="radio" data-f="video" aria-checked="false">Video</a></div><div class="links" id="paper" role="radiogroup" aria-label="Print size, portrait"><span>Size</span><a href="#" role="radio" data-p="A3" aria-checked="true">A3</a><a href="#" role="radio" data-p="A2" aria-checked="false">A2</a><a href="#" role="radio" data-p="A1" aria-checked="false">A1</a><a href="#" role="radio" data-p="A0" aria-checked="false">A0</a></div><span id="dlBar"><button id="dlAnim" class="dlbtn" data-for="1" title="Download the animated SVG" aria-label="Download the animated SVG"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SVG</span></button><button id="dlSheet" class="dlbtn" data-for="2" title="Download the print (SVG)" aria-label="Download the print (SVG)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SVG</span></button><button id="dlBookImposed" class="dlbtn" data-for="3" title="Download the book, imposed (PDF)" aria-label="Download the book, imposed (PDF)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Imposed</span></button><button id="dlBook" class="dlbtn" data-for="3" title="Download the pages (PDF)" aria-label="Download the pages (PDF)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Pages</span></button></span></span></div>
     <div id="drawHostScreen"></div>
     <div id="processHostScreen"></div>
   </section>
@@ -65,7 +65,7 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make and unmake you</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.74<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.75<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
@@ -103,10 +103,10 @@
   <div class="bp-stage" id="bpStage"></div>
   <div class="bp-nav"><button id="bpPrev">Previous</button><span id="bpPos"></span><button id="bpNext">Next</button></div>
 </div>
-<script src="app.js?v=v0.74"></script>
-<script src="book.js?v=v0.74"></script>
-<script src="gif.js?v=v0.74"></script>
-<script src="preview.js?v=v0.74"></script>
-<script src="start.js?v=v0.74"></script>
+<script src="app.js?v=v0.75"></script>
+<script src="book.js?v=v0.75"></script>
+<script src="gif.js?v=v0.75"></script>
+<script src="preview.js?v=v0.75"></script>
+<script src="start.js?v=v0.75"></script>
 </body>
 </html>

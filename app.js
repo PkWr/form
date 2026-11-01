@@ -474,7 +474,6 @@ if (typeof document !== 'undefined') {
       $('msg').textContent = `GIF ready: ${S.idxs.length} frames.`;
     } finally { socialBusy = false; }
   }
-  $('dlGif').onclick = dlGif;
   // A video, recorded in the browser from a canvas playing the frames in real time, repeated to run at least six seconds. MP4 where the browser can write it, otherwise WebM.
   async function dlVideo() {
     if (socialBusy) return; const S = socialSetup(); if (!S) return;
@@ -503,11 +502,15 @@ if (typeof document !== 'undefined') {
       $('msg').textContent = ext === 'mp4' ? 'Video ready.' : 'Video ready, but this browser made WebM; Instagram and TikTok need MP4. Try Safari or a recent Chrome.';
     } finally { socialBusy = false; }
   }
-  $('dlVideo').onclick = dlVideo;
   $('dlBookImposed').onclick = () => dlBook(true);
   $('dlBook').onclick = () => dlBook(false);
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
-  $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value, titleText(kept())));
+  // One download for the animation; the format (SVG, GIF or video) is chosen beside it, like the print size.
+  let animFmt = 'svg';
+  $('animFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); animFmt = a.dataset.f;
+    [...$('animFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); $('dlAnim').querySelector('span').textContent = a.textContent; });
+  $('dlAnim').onclick = () => { if (!chain) return; if (animFmt === 'gif') return dlGif(); if (animFmt === 'video') return dlVideo();
+    dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value, titleText(kept()))); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
