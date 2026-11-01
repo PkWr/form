@@ -306,7 +306,19 @@ if (typeof document !== 'undefined') {
   // The subtitle number follows the grid, Moves and view live.
   let act = 'make'; // the rule: make (a block moves and stays joined), unmake (a block is taken away) or rearrange (a block moves away from the rest)
   const RULE_NOTES = { make: 'One block moves and stays joined to the rest. Its old place stays marked.', unmake: 'One block is taken away at a time. Nothing is added back.', rearrange: 'One block moves away from the rest, to somewhere else on the grid.' };
-  const verb = () => { $('ruleNote').textContent = RULE_NOTES[act]; $('verb').textContent = VERBS[act]; $('process').textContent = VERBS[act][0].toUpperCase() + VERBS[act].slice(1); };
+  const verb = () => { $('verb').textContent = VERBS[act]; $('process').textContent = VERBS[act][0].toUpperCase() + VERBS[act].slice(1); };
+  // Rule screen: a looping preview of what the chosen rule does to the drawn shape. Nothing is kept; the yellow button makes the real thing.
+  let ptimer = 0;
+  function previewRule() {
+    clearInterval(ptimer); const el = $('rulePreview'), st = startBlocks();
+    if (!st.length) { el.innerHTML = ''; $('ruleNote').textContent = 'There is nothing drawn yet. Go back and place some blocks.'; return; }
+    if (act === 'make' && !connected(st)) { el.innerHTML = ''; $('ruleNote').textContent = 'Make needs blocks that touch edge to edge. Go back to edit the shape, or try Unmake or Remake.'; return; }
+    const c = act === 'unmake' ? unmake(st) : act === 'rearrange' ? scatter(st, G) : variants(st, MOVES, mode === 'direction', TRACED.has(mode));
+    $('ruleNote').textContent = RULE_NOTES[act] + ' ' + (c.states.length - 1) + ' outcomes.';
+    const bb = bbox(c, mode); el.setAttribute('viewBox', `0 0 ${bb.w} ${bb.h}`); let i = 0;
+    const draw = () => { el.innerHTML = defs() + `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(c, i, mode)}</g>`; i = (i + 1) % c.states.length; };
+    draw(); ptimer = setInterval(draw, +$('spd').value);
+  }
   function updateCount() {
     const st = startBlocks();
     $('count').textContent = act !== 'make' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
@@ -379,7 +391,7 @@ if (typeof document !== 'undefined') {
   $('act').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('act').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    act = a.dataset.a; verb(); updateCount(); if (chain) process(true);
+    act = a.dataset.a; verb(); updateCount(); if (document.body.classList.contains('step-rule')) previewRule(); else if (chain) process(true);
   });
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
@@ -529,7 +541,7 @@ if (typeof document !== 'undefined') {
   function paneSwitch() { const p = paneNow(); [...$('paneSwitch').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.pane === p)); }
   function showPane(p) {
     document.body.classList.toggle('view-results', p === 'results'); document.body.classList.toggle('step-rule', p === 'rule');
-    paneSwitch(); scrollTo(0, 0);
+    paneSwitch(); scrollTo(0, 0); if (p === 'rule') previewRule(); else clearInterval(ptimer);
   }
   $('paneSwitch').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();

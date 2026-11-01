@@ -300,3 +300,6 @@ body:not(.step-rule) #processRow .row{display:none}
 #screen .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
 /* Camera is hidden for now; the code stays. */
 #camera,#camBar{display:none!important}
+/* The rule screen shows a preview of the outcome instead of the grid; Back returns to the grid to edit. */
+body.step-rule #drawBox #grid{display:none}
+#rulePreview{display:block;width:100%;height:clamp(180px,38vh,360px);margin:0 0 10px;border:1px solid var(--ink);border-radius:8px;background:var(--paper)}

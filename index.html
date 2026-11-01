@@ -51,9 +51,10 @@
           <div id="drawNav" class="row nav"><button class="next" id="toRule">Next: choose a rule</button></div>
           <div id="ruleBox">
             <h2>Choose a rule</h2>
+            <svg id="rulePreview" viewBox="0 0 100 100" aria-label="Preview of the outcome"></svg>
             <div class="links ico" id="act" role="radiogroup" aria-label="Rule"><a href="#" role="radio" data-a="make" aria-checked="true" title="Make"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="3" y="13" width="8" height="8"/><rect x="11" y="13" width="8" height="8"/><rect x="11" y="5" width="8" height="8"/><rect x="3" y="5" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1.6 1.2"/></svg><span>Make</span></a><a href="#" role="radio" data-a="unmake" aria-checked="false" title="Unmake"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="3" y="13" width="8" height="8"/><rect x="11" y="13" width="8" height="8"/><rect x="11" y="5" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1.6 1.2"/></svg><span>Unmake</span></a><a href="#" role="radio" data-a="rearrange" aria-checked="false" title="Remake"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="2" y="2" width="6" height="6"/><rect x="15" y="4" width="6" height="6"/><rect x="7" y="15" width="6" height="6"/><rect x="17" y="16" width="5" height="5"/></svg><span>Remake</span></a></div>
             <p id="ruleNote" class="hint2"></p>
-            <div class="row nav"><button class="back" id="backDraw">Back</button></div>
+            <div class="row nav"><button class="back" id="backDraw">Back: edit the shape</button></div>
           </div>
         </div>
       </div>
@@ -66,7 +67,7 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make you up</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.52<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.53<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
