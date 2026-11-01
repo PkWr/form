@@ -138,14 +138,14 @@ function buildPages(bc, opt) {
   // dark plates: the original, then every variant one to a page (or in grids when there are many)
   { const sl = slot('form'), d = THEME.dark;
     pages.push(page(d, frameOps(0, 'form', sl.X, sl.Y, sl.c, d.ink) + text(N + " ways", 2, 6, W / 2, H * 0.805, d.dim) + text('Form', 0, 8, W / 2, H * 0.824, d.dim), true));
-    if (N <= 16) for (let k = 1; k <= N; k++) pages.push(page(d, frameOps(k, 'form', sl.X, sl.Y, sl.c, d.ink)));
+    if (N <= 16) for (let k = 1; k <= N; k++) { if (bc.states[k].blocks.length) pages.push(page(d, frameOps(k, 'form', sl.X, sl.Y, sl.c, d.ink))); } // a step with nothing left is not given a page of its own
     else { const bb = bbox(bc, 'form'), bw = bb.w / U, bh = bb.h / U;
-      for (let p = 0; p * 12 < N; p++) { const ks = []; for (let k = 1 + p * 12; k <= Math.min(N, p * 12 + 12); k++) ks.push(k);
+      for (let p = 0; p * 12 < N; p++) { const ks = []; for (let k = 1 + p * 12; k <= Math.min(N, p * 12 + 12); k++) if (bc.states[k].blocks.length) ks.push(k);
         const rx = 0.78 * W, ry = 0.62 * H, f = fit(ks.length, bw, bh, rx, ry, 0.0373 * W), left = 0.11 * W + (rx - f.cols * f.s * bw) / 2;
         pages.push(page(d, ks.map((k, i) => frameOps(k, 'form', left + (i % f.cols) * f.s * bw - bb.x / U * f.s, 0.1 * H + Math.floor(i / f.cols) * f.s * bh - bb.y / U * f.s, f.s, d.ink)).join(''))); } }
   }
   // blank pages so the booklet is a multiple of four, then the colophon as the last page
-  while ((pages.length + (opt.endpapers ? 1 : 0) + 1) % 4) pages.push(page(THEME.dark, ''));
+  while ((pages.length + (opt.endpapers ? 1 : 0) + 1) % 4) pages.push(page(THEME.dark, '', true)); // padding pages are truly blank: no title
   if (opt.endpapers) pages.push(endpaper(true));
   const total = pages.length + 1, L = THEME.light;
   pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
