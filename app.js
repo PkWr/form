@@ -3,6 +3,11 @@
 let G = 9;
 const U = 100, MAXCAP = 500, TONE = 0.22, YEL = '#ffe100';
 let INK = '#111111', PAPER = '#f4f2ee'; // the artwork's colours, set from the Colour setting
+const mixHex = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+// Isometric: a second view beside the treatments. Every treatment is drawn as normal and the whole drawing is then laid onto the isometric plane (x' = (x - y) cos 30, y' = (x + y) / 2),
+// with each current block given a little thickness, drawn under the tops as a few copies of the block shifted down in a mid tone.
+let ISO = false;
+const ISO_D = 0.4, ISO_M = 'matrix(0.866 0.5 -0.866 0.5 0 0)';
 // Shape library: paths in a 100x100 cell. sym = looks the same turned. A placed block has a base turn q (0 to 3, from clicking) and r (0 to 3, the direction of its last move).
 const SHAPES = {
   square: { d: 'M0 0H100V100H0Z', sym: 1 },
@@ -164,6 +169,12 @@ const GHOSTS = [0.3, 0.2, 0.13, 0.09, 0.06, 0.04];
 const ghosts = (chain, k) => GHOSTS.map((o, a) => { const j = k - 1 - a; if (j < 0) return null; const st = chain.states[j], s = chain.states[k];
   return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
 function frame(chain, k, mode) {
+  if (!ISO) return frame0(chain, k, mode);
+  const s = chain.states[k], side = mixHex(INK, PAPER, 0.5);
+  const sides = [1 / 3, 2 / 3, 1].map(t => `<g transform="translate(0 ${n3(t * ISO_D * U)}) ${ISO_M}" fill="${side}">${s.blocks.map(b => use(b, side)).join('')}</g>`).join('');
+  return sides + `<g transform="${ISO_M}">${frame0(chain, k, mode)}</g>`;
+}
+function frame0(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(b => stripes(b, s.blocks)).join('');
   if (mode === 'dens') return densLayers(chain, k);
@@ -171,6 +182,11 @@ function frame(chain, k, mode) {
 }
 function bbox(chain, mode) {
   const all = chain.states.flatMap((s, k) => [...s.blocks, ...s.tr, ...(mode === 'dens' ? (chain.orig || chain.states[0]).blocks.map(b => ({ x: b.x + (chain.orig || chain.states[0]).ox - s.ox, y: b.y + (chain.orig || chain.states[0]).oy - s.oy })) : []), ...(mode === 'trans' ? ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy }))) : [])]);
+  if (ISO) { // projected extents of every cell corner, plus the thickness
+    let xa = 1e9, xb = -1e9, ya = 1e9, yb = -1e9;
+    all.forEach(p => { for (let i = 0; i < 4; i++) { const cx = p.x + (i & 1), cy = p.y + (i >> 1), qx = (cx - cy) * 0.866, qy = (cx + cy) * 0.5; if (qx < xa) xa = qx; if (qx > xb) xb = qx; if (qy < ya) ya = qy; if (qy > yb) yb = qy; } });
+    return { x: (xa - 0.6) * U, y: (ya - 0.6) * U, w: (xb - xa + 1.2) * U, h: (yb - ya + ISO_D + 1.2) * U };
+  }
   const x0 = Math.min(...all.map(b => b.x)) - 1, y0 = Math.min(...all.map(b => b.y)) - 1;
   return { x: x0 * U, y: y0 * U, w: (Math.max(...all.map(b => b.x)) + 2 - (x0 + 1) + 1) * U, h: (Math.max(...all.map(b => b.y)) + 2 - (y0 + 1) + 1) * U };
 }
@@ -358,6 +374,11 @@ if (typeof document !== 'undefined') {
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
+  $('projIcons').addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
+    [...$('projIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
+    ISO = a.dataset.proj === 'iso'; if (chain) show();
+  });
   $('viewIcons').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('viewIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
