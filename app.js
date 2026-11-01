@@ -516,9 +516,9 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     const kc = kept(); if (!kc.states.length) { $('msg').textContent = 'There are no variants to use.'; return null; }
     const W = 720, H = gifFmt === 'sq' ? 720 : 1280, skip = Math.max(1, Math.ceil(kc.states.length / 120)), idxs = []; for (let k = 0; k < kc.states.length; k += skip) idxs.push(k);
     const bb = bbox(kc, mode), fs = W / 38, perLine = Math.floor(W * 0.92 / (fs * 0.6)), lines = NOTE ? [...wrapText(NOTE.ref, perLine), ...wrapText(NOTE.text, perLine)] : [];
-    const band = 100 + (lines.length ? lines.length * fs * 1.45 + 24 : 0), availW = W * 0.84, availH = H - band - H * 0.06, sc = Math.min(availW / bb.w, availH / bb.h), tx = (W - bb.w * sc) / 2, ty = H * 0.06 + (availH - bb.h * sc) / 2, title = titleText(kc);
+    const band = (lines.length ? lines.length * fs * 1.45 + 24 : 0), availW = W * 0.84, availH = H - band - H * 0.06, sc = Math.min(availW / bb.w, availH / bb.h), tx = (W - bb.w * sc) / 2, ty = H * 0.06 + (availH - bb.h * sc) / 2;
     const notes = lines.map((l, i) => `<text x="${W * 0.04}" y="${H - band + 30 + i * fs * 1.45}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(l)}</text>`).join('');
-    const svgAt = n => `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${PAPER}"/>${defs()}<g transform="translate(${tx} ${ty}) scale(${sc})"><g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, idxs[n], mode)}</g></g>${notes}<text x="${W / 2}" y="${H - 46}" text-anchor="middle" font-family="monospace" font-style="italic" font-size="${fs * 1.15}" fill="${INK}">${esc(title)}</text><text x="${W / 2}" y="${H - 18}" text-anchor="middle" font-family="monospace" font-size="${fs * 0.7}" fill="${INK}" opacity=".6">Made with Form, form.pkwr.co</text></svg>`;
+    const svgAt = n => `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${PAPER}"/>${defs()}<g transform="translate(${tx} ${ty}) scale(${sc})"><g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, idxs[n], mode)}</g></g>${notes}</svg>`;
     return { W, H, idxs, svgAt, delay: Math.max(20, +$('spd').value) };
   }
   const loadSvg = async svg => { const img = new Image(); img.src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })); await img.decode(); return img; };
@@ -579,7 +579,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
   $('animFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); animFmt = a.dataset.f;
     [...$('animFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); $('dlAnim').setAttribute('aria-label', 'Download the animation as ' + a.textContent); });
   $('dlAnim').onclick = () => { if (!chain) return; if (animFmt === 'gif') return dlGif(); if (animFmt === 'video') return dlVideo();
-    dl(fname(`anim-${mode}.svg`), animSVG(kept(), mode, +$('spd').value, titleText(kept()))); };
+    dl(fname(`anim-${mode}.svg`), animSVG(kept(), mode, +$('spd').value)); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
