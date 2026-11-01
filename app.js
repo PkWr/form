@@ -264,6 +264,30 @@ if (typeof document !== 'undefined') {
     U: ['X.X', 'X.X', 'XXX'],
     L: ['X.', 'X.', 'X.', 'XX'],
     stairs: ['X..', 'XX.', 'XXX'],
+    // Letterforms (block capitals and a few lower-case) and more shapes. Each is joined edge to edge, so Make works on it.
+    'letter A': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'X...X'],
+    'letter B': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'XXXXX'],
+    'letter C': ['XXXXX', 'X....', 'X....', 'X....', 'X....', 'X....', 'XXXXX'],
+    'letter D': ['XXXX.', 'X..XX', 'X...X', 'X...X', 'X...X', 'X..XX', 'XXXX.'],
+    'letter E': ['XXXXX', 'X....', 'X....', 'XXXX.', 'X....', 'X....', 'XXXXX'],
+    'letter F': ['XXXXX', 'X....', 'X....', 'XXXX.', 'X....', 'X....', 'X....'],
+    'letter G': ['XXXXX', 'X....', 'X....', 'X.XXX', 'X...X', 'X...X', 'XXXXX'],
+    'letter H': ['X...X', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'X...X'],
+    'letter L': ['X....', 'X....', 'X....', 'X....', 'X....', 'X....', 'XXXXX'],
+    'letter O': ['XXXXX', 'X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'XXXXX'],
+    'letter P': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X....', 'X....', 'X....'],
+    'letter S': ['XXXXX', 'X....', 'X....', 'XXXXX', '....X', '....X', 'XXXXX'],
+    'letter T': ['XXXXX', '..X..', '..X..', '..X..', '..X..', '..X..', '..X..'],
+    'letter U': ['X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'XXXXX'],
+    'letter Z': ['XXXXX', '....X', '....X', '..XXX', 'XXX..', 'X....', 'XXXXX'],
+    'lower f': ['XXX', 'X..', 'XXX', 'X..', 'X..', 'X..', 'X..'],
+    'lower e': ['XXXXX', 'X...X', 'XXXXX', 'X....', 'XXXXX'],
+    'lower a': ['XXXXX', '....X', 'XXXXX', 'X...X', 'XXXXX'],
+    'heart': ['.X.X.', 'XXXXX', 'XXXXX', '.XXX.', '..X..'],
+    'diamond': ['..X..', '.XXX.', 'XXXXX', '.XXX.', '..X..'],
+    'flag': ['XXXX', 'XXXX', 'X...', 'X...', 'X...'],
+    'step': ['X....', 'XX...', 'XXX..', 'XXXX.', 'XXXXX'],
+    'letter Y': ['X...X', 'XX.XX', '.XXX.', '..X..', '..X..'],
   };
   let lastSymbol = '';
   function startSymbol() {
@@ -544,7 +568,7 @@ if (typeof document !== 'undefined') {
     const panel = n > 2 ? 3 : n;
     document.querySelector('#step' + panel + ' .row.nav').append($('dlWrap')); $(n === 1 ? 'animFormat' : n === 2 ? 'paper' : 'bookFormat').append($('dlBar')); // the download icon sits at the end of the choice that decides what it downloads
     document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
-    if (n > 2) { document.querySelector('#step3 .next').hidden = true; document.querySelector('#step3 .back').dataset.go = n - 1; showBook(); } else clearInterval(bookTimer);
+    if (n > 2) { $('startAgain').hidden = false; document.querySelector('#step3 .back').dataset.go = n - 1; showBook(); } else { clearInterval(bookTimer); $('startAgain').hidden = true; }
     scrollTo(0, 0);
   }
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
@@ -559,10 +583,12 @@ if (typeof document !== 'undefined') {
   function showPane(p) {
     document.body.classList.toggle('view-results', p === 'results' || p === 'outputs');
     document.body.classList.toggle('view-outputs', p === 'outputs');
-    if (p === 'draw') { document.body.dataset.step = '0'; $('paneSwitch').append($('dlWrap')); } else if (p === 'outputs') goStep(2); else if (p === 'results' && curStep > 1) goStep(1);
+    if (p === 'draw') { document.body.dataset.step = '0'; clearInterval(bookTimer); $('paneSwitch').append($('dlWrap')); } else if (p === 'outputs') goStep(2); else if (p === 'results' && curStep > 1) goStep(1);
     paneSwitch(); scrollTo(0, 0);
   }
   $('backRule').onclick = () => showPane('draw');
+  // Start again: back to Draw with a fresh starter symbol, as on a first visit, and nothing kept from the last run.
+  $('startAgain').onclick = () => { clearInterval(timer); chain = null; hidden = new Set(); startSymbol(); drawGrid(); $('msg').textContent = ''; showPane('draw'); };
   placeDraw();
   if (small.matches) { $('panel').classList.add('collapsed'); $('grab').setAttribute('aria-expanded', 'false'); $('grab').setAttribute('aria-label', 'Open controls'); }
   sizeBody();
