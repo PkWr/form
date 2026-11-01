@@ -342,10 +342,20 @@ if (typeof document !== 'undefined') {
     'flag': ['XXXX', 'XXXX', 'X...', 'X...', 'X...'],
     'step': ['X....', 'XX...', 'XXX..', 'XXXX.', 'XXXXX'],
     'letter Y': ['X...X', 'XX.XX', '.XXX.', '..X..', '..X..'],
+    // Signs of the kind collected in Rudolf Koch's The Book of Signs (1930), drawn here as block shapes (our own simplified versions, not copies of his plates).
+    'Koch: St Andrew cross': ['X...X', 'XX.XX', '.XXX.', 'XX.XX', 'X...X'],
+    'Koch: anchor': ['..X..', 'XXXXX', '..X..', 'X.X.X', 'XXXXX'],
+    'Koch: life rune': ['X...X', 'XX.XX', '.XXX.', '..X..', '..X..'],
+    'Koch: trident': ['X.X.X', 'X.X.X', 'XXXXX', '..X..', '..X..'],
+    'Koch: sun wheel': ['.XXX.', 'X.X.X', 'XXXXX', 'X.X.X', '.XXX.'],
+    'Koch: crescent': ['.XXXX', 'XX...', 'X....', 'XX...', '.XXXX'],
+    'Koch: hourglass': ['XXXXX', '.XXX.', '..X..', '.XXX.', 'XXXXX'],
+    'Koch: Lorraine cross': ['..X..', 'XXXXX', '..X..', 'XXXXX', '..X..', '..X..'],
+    'Koch: triple cross': ['..X..', 'XXXXX', '..X..', 'XXXXX', '..X..', 'XXXXX', '..X..'],
   };
   let lastSymbol = '';
-  function startSymbol() {
-    const names = Object.keys(SYMBOLS).filter(n => n !== lastSymbol), name = lastSymbol = names[Math.floor(Math.random() * names.length)], rows = SYMBOLS[name];
+  function startSymbol() { // only symbols that fit the grid are picked (a 5 grid is too small for the 7-row letters)
+    const names = Object.keys(SYMBOLS).filter(n => n !== lastSymbol && SYMBOLS[n].length <= G && SYMBOLS[n][0].length <= G), name = lastSymbol = names[Math.floor(Math.random() * names.length)], rows = SYMBOLS[name];
     grid = Array(G * G).fill(null);
     const ox = Math.floor((G - rows[0].length) / 2), oy = Math.floor((G - rows.length) / 2);
     rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'X') grid[(oy + y) * G + ox + x] = mk('square'); }));
