@@ -145,9 +145,14 @@ const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id=
 // Direction stripes: three lines of equal width with equal gaps, flush to the cell edge on open sides (as in the book). Where a block with stripes the same way
 // touches this one, that side is inset by half a gap, so the two blocks together make an even gap and not a doubled line. Line width follows: 20% of the cell flush
 // both sides, about 18% with one side inset, about 17% with both. Square blocks draw unclipped and a hair long so joined lines have no seam.
+// All the blocks in a run along the stripes (a vertical stack, or a horizontal row) share one geometry: a side counts as touching if any block in the run has a parallel block beside it there,
+// so each line runs straight through the whole run instead of stepping where one block has a neighbour and the next does not.
+const stripeCells = new WeakMap();
 function stripeRects(b, all, over) {
-  const v = b.a === 1, has = (dx, dy) => all.some(o => o.x === b.x + dx && o.y === b.y + dy && o.a === b.a);
-  const nl = v ? has(-1, 0) : has(0, -1), nr = v ? has(1, 0) : has(0, 1), w = 100 / (5 + 0.5 * nl + 0.5 * nr), L = nl ? w / 2 : 0, e = over ? 0.6 : 0;
+  let cells = stripeCells.get(all); if (!cells) { cells = new Map(all.map(o => [o.x + ',' + o.y, o])); stripeCells.set(all, cells); }
+  const v = b.a === 1, at = (x, y) => { const o = cells.get(x + ',' + y); return o && o.a === b.a ? o : null; };
+  const run = [b]; for (const d of [-1, 1]) for (let x = b.x, y = b.y; ;) { if (v) y += d; else x += d; const o = at(x, y); if (!o) break; run.push(o); }
+  const nl = run.some(o => v ? at(o.x - 1, o.y) : at(o.x, o.y - 1)), nr = run.some(o => v ? at(o.x + 1, o.y) : at(o.x, o.y + 1)), w = 100 / (5 + 0.5 * nl + 0.5 * nr), L = nl ? w / 2 : 0, e = over ? 0.6 : 0;
   return [0, 1, 2].map(i => { const p = L + i * 2 * w; return v ? [p, -e, w, 100 + 2 * e] : [-e, p, 100 + 2 * e, w]; });
 }
 const stripes = (b, all) => { const sq = b.s === 'square'; return `<g transform="translate(${b.x * U} ${b.y * U})"${sq ? '' : ` clip-path="url(#c_${b.s}_${ang(b)})"`}>${stripeRects(b, all, sq).map(([x, y, w, h]) => `<rect x="${n3(x)}" y="${n3(y)}" width="${n3(w)}" height="${n3(h)}"/>`).join('')}</g>`; };
