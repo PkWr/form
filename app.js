@@ -511,7 +511,7 @@ if (typeof document !== 'undefined') {
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
   // The results are a short path, one step at a time: the animation, the contact sheet, then make a book or a print.
   // One linear flow: Animation, Sheet, Print, GIF or video, Book. Steps 3 to 5 share one panel and show one card each.
-  const CARDS = { 3: 'social', 4: 'book' }, NEXT = { 1: 'Next: the contact sheet', 2: 'Next: a GIF or a video', 3: 'Next: make a book' };
+  const CARDS = { 3: 'book' }, NEXT = { 1: 'Next: the contact sheet', 2: 'Next: make a book' };
   let curStep = 1;
   // Animation is the result. The contact sheet, the GIF or video and the book are outputs, each optional, in that order, with the book last.
   function goStep(n) {
@@ -521,15 +521,15 @@ if (typeof document !== 'undefined') {
     if (n > 2) {
       document.querySelectorAll('#step3 .card').forEach(c => c.classList.toggle('on', c.dataset.m === CARDS[n]));
       const nx = document.querySelector('#step3 .next'), bk = document.querySelector('#step3 .back');
-      nx.hidden = n === 4; nx.dataset.go = n + 1; nx.textContent = NEXT[n]; bk.dataset.go = n - 1;
+      nx.hidden = true; bk.dataset.go = n - 1;
     }
     scrollTo(0, 0);
   }
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   // Three screens in order: Draw, Rule, Results. The rule is chosen after the shape is drawn, never while building.
   const paneNow = () => document.body.classList.contains('view-outputs') ? 'outputs' : document.body.classList.contains('view-results') ? 'results' : 'draw';
-  // One path, in order, with no jumping ahead: Draw, Animation, Contact sheet, GIF or video, Book.
-  const STEP_NAMES = ['Draw', 'Animation', 'Contact sheet', 'GIF or video', 'Book'];
+  // One path, in order, with no jumping ahead: Draw, Animation, Contact sheet, Book.
+  const STEP_NAMES = ['Draw', 'Animation', 'Contact sheet', 'Book'];
   function paneSwitch() {
     const p = paneNow(), n = p === 'draw' ? 1 : 1 + curStep;
     $('stepNow').textContent = `Step ${n} of ${STEP_NAMES.length} · ${STEP_NAMES[n - 1]}`;

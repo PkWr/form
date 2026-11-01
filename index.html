@@ -29,7 +29,7 @@
 <main>
   <section id="pieceNote" hidden aria-label="Source and caption"></section>
   <section id="screen">
-    <div id="paneSwitch" aria-live="polite"><span id="stepNow">Step 1 of 5 · Draw</span><span id="dlBar"><button id="dlAnim" class="dlbtn" data-for="1" title="Download the animated SVG" aria-label="Download the animated SVG"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SVG</span></button><button id="dlSheet" class="dlbtn" data-for="2" title="Download the print (SVG)" aria-label="Download the print (SVG)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SVG</span></button><button id="dlGif" class="dlbtn" data-for="3" title="Download the GIF" aria-label="Download the GIF"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>GIF</span></button><button id="dlVideo" class="dlbtn" data-for="3" title="Download the video" aria-label="Download the video"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Video</span></button><button id="dlBookImposed" class="dlbtn" data-for="4" title="Download the book, imposed (PDF)" aria-label="Download the book, imposed (PDF)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Imposed</span></button><button id="dlBook" class="dlbtn" data-for="4" title="Download the pages (PDF)" aria-label="Download the pages (PDF)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Pages</span></button></span></div>
+    <div id="paneSwitch" aria-live="polite"><span id="stepNow">Step 1 of 4 · Draw</span><span id="dlBar"><button id="dlAnim" class="dlbtn" data-for="1" title="Download the animated SVG" aria-label="Download the animated SVG"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SVG</span></button><button id="dlSheet" class="dlbtn" data-for="2" title="Download the print (SVG)" aria-label="Download the print (SVG)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SVG</span></button><button id="dlGif" class="dlbtn" data-for="1" title="Download the GIF" aria-label="Download the GIF"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>GIF</span></button><button id="dlVideo" class="dlbtn" data-for="1" title="Download the video" aria-label="Download the video"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Video</span></button><button id="dlBookImposed" class="dlbtn" data-for="3" title="Download the book, imposed (PDF)" aria-label="Download the book, imposed (PDF)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Imposed</span></button><button id="dlBook" class="dlbtn" data-for="3" title="Download the pages (PDF)" aria-label="Download the pages (PDF)"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Pages</span></button></span></div>
     <div id="drawHostScreen"></div>
     <div id="processHostScreen"></div>
   </section>
@@ -52,6 +52,7 @@
           </div>
       </div>
             <div id="projHostPanel"><div class="links ico" id="projIcons" role="radiogroup" aria-label="Projection"><a href="#" role="radio" data-proj="flat" aria-checked="true" title="Flat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4" y="4" width="16" height="16"/></svg><span>Flat</span></a><a href="#" role="radio" data-proj="iso" aria-checked="false" title="Isometric"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 3l8.5 4.9v10.2L12 23 3.5 18.1V7.9z" opacity=".35"/><path d="M12 3l8.5 4.9L12 12.8 3.5 7.9z"/></svg><span>Isometric</span></a></div></div>
+      <div id="gifHostPanel"><div class="links" id="gifFormat" role="radiogroup" aria-label="GIF shape"><span>Shape</span><a href="#" role="radio" data-g="sq" aria-checked="true">Square 1:1</a><a href="#" role="radio" data-g="st" aria-checked="false">Story 9:16</a></div></div>
       <div id="spdHostPanel"><label>Animation speed <output id="spdOut">400 ms</output><input id="spd" type="range" min="80" max="1500" step="20" value="400"></label></div>
       <div id="colourHostPanel">
       <div id="colours"><span class="lab">Colour</span><label class="swatch">Paper <input type="color" id="paperCol" value="#f4f2ee"></label><label class="swatch">Ink <input type="color" id="inkCol" value="#111111"></label><div id="presets" role="group" aria-label="Colour presets"></div></div>
@@ -59,7 +60,7 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make and unmake you</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.68<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.69<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
@@ -75,17 +76,12 @@
       <h2>Contact sheet</h2>
       <div id="sheet"></div>
       <div class="links" id="paper" role="radiogroup" aria-label="Print size, portrait"><span>Size</span><a href="#" role="radio" data-p="A3" aria-checked="true">A3</a><a href="#" role="radio" data-p="A2" aria-checked="false">A2</a><a href="#" role="radio" data-p="A1" aria-checked="false">A1</a><a href="#" role="radio" data-p="A0" aria-checked="false">A0</a></div>
-      <div class="row nav"><button class="back" data-go="1">Back</button><button class="next" data-go="3">Next: a GIF or a video</button></div>
+      <div class="row nav"><button class="back" data-go="1">Back</button><button class="next" data-go="3">Next: make a book</button></div>
     </div>
     <div class="step" id="step3">
             <!-- stepper replaces the make tabs -->
       <div class="cards">
-                <div class="card on" id="cardGif" data-m="social">
-          <h3>Make a GIF or a video for socials</h3>
-          <p class="hint2">The animation as a looping GIF, or as a video for Instagram and TikTok. The title line and a small credit are on every frame. The video is recorded as it plays, so it takes as long as it runs.</p>
-          <div class="links" id="gifFormat" role="radiogroup" aria-label="GIF shape"><span>Shape</span><a href="#" role="radio" data-g="sq" aria-checked="true">Square 1:1</a><a href="#" role="radio" data-g="st" aria-checked="false">Story 9:16</a></div>
-          </div>
-        <div class="card" id="cardBook" data-m="book">
+        <div class="card on" id="cardBook" data-m="book">
           <h3>Make a book</h3>
           <p class="hint2">An A5 book of this shape in the design of the original, with no bleed. Imposed puts two pages on each A4 landscape sheet in booklet order: print double sided, flip on short edge, fold and staple. Pages is the plain A5 pages for reading on screen.</p>
           <div class="checks"><label class="inline"><input type="checkbox" id="prefacePage"> Preface about the project: one page</label>
@@ -94,7 +90,7 @@
           <div class="row"><button id="bookPreviewBtn"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>Preview the book</button></div>
           </div>
       </div>
-      <div class="row nav"><button class="back" data-go="2">Back</button><button class="next" data-go="4">Next</button></div>
+      <div class="row nav"><button class="back" data-go="2">Back</button><button class="next" data-go="4" hidden>Next</button></div>
     </div>
   </section>
 </main>

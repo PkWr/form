@@ -340,4 +340,4 @@ body:not(.view-outputs) #steps a[data-s="2"],body:not(.view-outputs) #steps a[da
 #dlBar{display:flex;gap:6px}
 #dlBar .dlbtn{display:none;flex-direction:column;align-items:center;gap:1px;padding:4px 10px;min-height:0;font-size:10px;line-height:1.1;background:var(--ink);color:var(--paper);border:1px solid var(--ink);border-radius:8px}
 #dlBar .dlbtn svg{width:18px;height:18px}
-body[data-step="1"] #dlBar [data-for="1"],body[data-step="2"] #dlBar [data-for="2"],body[data-step="3"] #dlBar [data-for="3"],body[data-step="4"] #dlBar [data-for="4"]{display:flex}
+body[data-step="1"] #dlBar [data-for="1"],body[data-step="2"] #dlBar [data-for="2"],body[data-step="3"] #dlBar [data-for="3"]{display:flex}
