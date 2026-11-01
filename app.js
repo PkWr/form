@@ -510,7 +510,7 @@ if (typeof document !== 'undefined') {
   // One download for the animation; the format (SVG, GIF or video) is chosen beside it, like the print size.
   let animFmt = 'svg';
   $('animFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); animFmt = a.dataset.f;
-    [...$('animFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); $('dlAnim').querySelector('span').textContent = a.textContent; });
+    [...$('animFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); $('dlAnim').setAttribute('aria-label', 'Download the animation as ' + a.textContent); });
   $('dlAnim').onclick = () => { if (!chain) return; if (animFmt === 'gif') return dlGif(); if (animFmt === 'video') return dlVideo();
     dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value, titleText(kept()))); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
