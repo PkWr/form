@@ -303,3 +303,6 @@ body:not(.step-rule) #processRow .row{display:none}
 /* The rule screen shows a preview of the outcome instead of the grid; Back returns to the grid to edit. */
 body.step-rule #drawBox #grid{display:none}
 #rulePreview{display:block;width:100%;height:clamp(180px,38vh,360px);margin:0 0 10px;border:1px solid var(--ink);border-radius:8px;background:var(--paper)}
+/* Results (animation, sheet) come first; Outputs (print, GIF, book) are a screen of their own after them. */
+body:not(.view-outputs) #steps a[data-s="3"],body:not(.view-outputs) #steps a[data-s="4"],body:not(.view-outputs) #steps a[data-s="5"],body.view-outputs #steps a[data-s="1"],body.view-outputs #steps a[data-s="2"]{display:none}
+body.view-outputs #viewHostOut,body.view-outputs #colourHostOut{display:none}

@@ -522,8 +522,10 @@ if (typeof document !== 'undefined') {
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
   // The results are a short path, one step at a time: the animation, the contact sheet, then make a book or a print.
   // One linear flow: Animation, Sheet, Print, GIF or video, Book. Steps 3 to 5 share one panel and show one card each.
-  const CARDS = { 3: 'print', 4: 'social', 5: 'book' }, NEXT = { 1: 'Next: choose your variants', 2: 'Next: make a print', 3: 'Next: a GIF or a video', 4: 'Next: make a book' };
+  const CARDS = { 3: 'print', 4: 'social', 5: 'book' }, NEXT = { 1: 'Next: choose your variants', 2: 'Next: outputs', 3: 'Next: a GIF or a video', 4: 'Next: make a book' };
+  let curStep = 1;
   function goStep(n) {
+    curStep = n; document.body.classList.toggle('view-outputs', n > 2); paneSwitch();
     const panel = n > 2 ? 3 : n;
     document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
     [...$('steps').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.s === String(n)));
@@ -537,15 +539,17 @@ if (typeof document !== 'undefined') {
   $('steps').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); goStep(+a.dataset.s); });
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   // Three screens in order: Draw, Rule, Results. The rule is chosen after the shape is drawn, never while building.
-  const paneNow = () => document.body.classList.contains('view-results') ? 'results' : document.body.classList.contains('step-rule') ? 'rule' : 'draw';
+  const paneNow = () => document.body.classList.contains('view-outputs') ? 'outputs' : document.body.classList.contains('view-results') ? 'results' : document.body.classList.contains('step-rule') ? 'rule' : 'draw';
   function paneSwitch() { const p = paneNow(); [...$('paneSwitch').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.pane === p)); }
   function showPane(p) {
-    document.body.classList.toggle('view-results', p === 'results'); document.body.classList.toggle('step-rule', p === 'rule');
+    document.body.classList.toggle('view-results', p === 'results' || p === 'outputs'); document.body.classList.toggle('step-rule', p === 'rule');
+    document.body.classList.toggle('view-outputs', p === 'outputs');
+    if (p === 'outputs') goStep(3); else if (p === 'results' && curStep > 2) goStep(1);
     paneSwitch(); scrollTo(0, 0); if (p === 'rule') previewRule(); else clearInterval(ptimer);
   }
   $('paneSwitch').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
-    if (a.dataset.pane === 'results' && !chain) { $('msg').textContent = 'Press the yellow button first.'; return; }
+    if ((a.dataset.pane === 'results' || a.dataset.pane === 'outputs') && !chain) { $('msg').textContent = 'Press the yellow button first.'; return; }
     showPane(a.dataset.pane);
   });
   $('toRule').onclick = () => showPane('rule');
