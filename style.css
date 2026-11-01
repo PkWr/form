@@ -194,3 +194,8 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #act{margin:0}
 #act a{min-width:58px}
 #viewHostPanel{margin:0 0 8px}
+#colours{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:10px 0 4px;color:var(--muted);font-size:12px}
+#colours .swatch{display:flex;align-items:center;gap:6px;margin:0;color:var(--text)}
+#colours input[type=color]{width:34px;height:26px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
+#presets{display:flex;gap:8px;margin-left:auto}
+.preset{width:26px;height:26px;padding:0;border-radius:50%;border:1px solid #555;cursor:pointer}

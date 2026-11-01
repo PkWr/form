@@ -36,7 +36,10 @@ function wrapWidth(t, f, size, maxW) {
   return out;
 }
 
+// The book follows the Colour setting: light pages are paper with ink, dark plates the other way round (the original is two colours too).
+const mixHex = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
 function makeBook(bc, opt) {
+  Object.assign(THEME.light, { bg: PAPER, ink: INK, dim: INK }); Object.assign(THEME.dark, { bg: INK, ink: PAPER, dim: mixHex(INK, PAPER, 0.45) });
   const N = bc.states.length - 1, W = A5W, H = A5H, gs = new Set();
   const title = waysLabel(N, opt.verb), note = opt.note || null;
   const alpha = o => { const p = Math.round(o * 100); gs.add(p); return `/G${p} gs `; };

@@ -1,7 +1,8 @@
 'use strict';
 // Form — pick blocks on a 16x16 grid; a chain of moves leaves traces; export as SVG.
 let G = 9;
-const U = 100, MAXCAP = 500, TONE = 0.22, INK = '#111', PAPER = '#f4f2ee', YEL = '#ffe100';
+const U = 100, MAXCAP = 500, TONE = 0.22, YEL = '#ffe100';
+let INK = '#111111', PAPER = '#f4f2ee'; // the artwork's colours, set from the Colour setting
 // Shape library: paths in a 100x100 cell. sym = looks the same turned. A placed block has a base turn q (0 to 3, from clicking) and r (0 to 3, the direction of its last move).
 const SHAPES = {
   square: { d: 'M0 0H100V100H0Z', sym: 1 },
@@ -489,6 +490,17 @@ if (typeof document !== 'undefined') {
   placeDraw();
   if (small.matches) { $('panel').classList.add('collapsed'); $('grab').setAttribute('aria-expanded', 'false'); $('grab').setAttribute('aria-label', 'Open controls'); }
   sizeBody();
+  // Colour: paper and ink for the artwork (the results, every download and the book). The app's own screen keeps its colours.
+  const PRESETS = [['Default', '#f4f2ee', '#111111'], ['Book', '#deddd2', '#231f20'], ['Night', '#231f20', '#deddd2'], ['Yellow', '#ffe100', '#111111']];
+  $('presets').innerHTML = PRESETS.map(([n, p, i]) => `<button type="button" class="preset" title="${n}" aria-label="${n}" data-p="${p}" data-i="${i}" style="background:linear-gradient(135deg,${p} 50%,${i} 50%)"></button>`).join('');
+  function setColours(p, i) {
+    PAPER = p; INK = i; $('paperCol').value = p; $('inkCol').value = i; $('anim').style.background = p;
+    if (chain) show();
+  }
+  $('paperCol').addEventListener('input', () => setColours($('paperCol').value, INK));
+  $('inkCol').addEventListener('input', () => setColours(PAPER, $('inkCol').value));
+  $('presets').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setColours(b.dataset.p, b.dataset.i); });
+  $('anim').style.background = PAPER;
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   const pieceName = new URLSearchParams(location.search).get('piece');
   if (PIECES[pieceName]) {
