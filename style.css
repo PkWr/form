@@ -439,3 +439,22 @@ button#process{width:min(100%,calc(100vh - 360px))}
 #screen #processRow .row button#process{flex:0 0 auto;max-width:min(100%,calc(100vh - 360px))}
 @media(max-height:700px){#screen #processRow .row button#process{max-width:min(100%,calc(100svh - 348px))}}
 #screen #processRow .row{display:block}
+/* The yellow make button belongs to Draw only: it must not show above the results (v0.98 let it). */
+body.view-results #screen #processRow .row{display:none}
+/* Wide desktop: the same place in the side panel holds the drawing tools while you draw and the treatments once you have the results. */
+@media(min-width:901px) and (pointer:fine){
+body:not([data-step]) #viewIcons,body[data-step="0"] #viewIcons{display:none}
+body[data-step="1"] #drawTools,body[data-step="2"] #drawTools,body[data-step="3"] #drawTools{display:none}
+#panel #viewIcons{max-width:none;margin:8px 0 4px;font-size:12px;color:#9a9a9a;gap:2px}
+#panel #viewIcons a{flex:1;min-width:0;background:none;color:#8d8d8d;padding:6px 1px 8px;gap:6px}
+#panel #viewIcons a:hover{background:none;color:#cfcfcf}
+#panel #viewIcons a[aria-checked=true]{background:none;color:#fff}
+#panel #viewIcons a[aria-checked=true] span{text-decoration:underline;text-decoration-color:var(--yellow);text-decoration-thickness:3px;text-underline-offset:5px}
+#panel #viewIcons a svg{width:30px;height:30px}
+}
+@media(min-width:901px) and (pointer:fine){
+#panel{width:340px}
+body{padding-right:388px}
+#panel #viewIcons{font-size:11px;letter-spacing:-.01em}
+}
+@media(min-width:901px) and (pointer:fine){#panel #viewIcons a span{white-space:nowrap;word-break:keep-all}#panel #viewIcons{font-size:10.5px}}

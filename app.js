@@ -556,7 +556,7 @@ if (typeof document !== 'undefined') {
   // The treatments sit with the results on every screen size, which keeps the panel short.
   const wide = matchMedia('(min-width: 901px) and (pointer: fine)');
   // On a wide desktop window the drawing tools (shapes, Clear, Random and the hint) sit in the side panel, beside the grid; elsewhere they stay under the grid.
-  const placeTools = () => { if (wide.matches) $('toolsHostPanel').append($('drawTools')); else $('grid').after($('drawTools')); };
+  const placeTools = () => { if (wide.matches) { $('toolsHostPanel').append($('drawTools'), $('viewIcons')); } else { $('grid').after($('drawTools')); $('anim').after($('viewIcons')); } };
   wide.addEventListener('change', placeTools);
   const placeDraw = () => { placeTools(); $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('colourHostPanel').prepend($('colours')); $('spdHostPanel').prepend($('spd').closest('label')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); }); phone.addEventListener('change', () => { placeDraw(); sizeBody(); });
