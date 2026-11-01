@@ -475,3 +475,9 @@ body{padding-right:388px}
 #out #sheet svg{height:92%;width:auto;max-width:92%}
 #drawBox #grid,#anim,#bookFrame,#sheet{margin-left:0;margin-right:0}
 #out .row.nav .next{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+
+/* Contact sheet: page shadow like the book, and click for a large preview in the same viewer */
+#sheet{cursor:pointer}
+#sheet svg{box-shadow:0 1px 6px rgba(0,0,0,.25)}
+#bookPreview.sheet .bp-nav,#bookPreview.sheet #bpMode{display:none}
+#bookPreview.sheet .bp-stage svg{display:block;height:100%;width:auto;max-width:100%;box-shadow:0 6px 30px rgba(0,0,0,.5)}

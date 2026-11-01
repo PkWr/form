@@ -531,6 +531,7 @@ if (typeof document !== 'undefined') {
     const draw = () => { drawSides(st, bookPages, items[i].sides, w, h); i = (i + 1) % items.length; };
     draw(); bookTimer = setInterval(draw, 1100);
   }
+  $('sheet').onclick = () => { if (chain && $('sheet').firstElementChild) openSheetPreview($('sheet').innerHTML); };
   $('bookFrame').onclick = () => { if (bookPages) openBookPreview(bookPages); };
   // The book has no options besides its format: no preface and no end papers.
   $('bookFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); bookFmt = a.dataset.f; [...$('bookFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); });

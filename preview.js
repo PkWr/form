@@ -78,6 +78,7 @@ function bpItems() {
   return bookItems(n);
 }
 function bpShow() {
+  if (BP.sheet) return;
   const items = bpItems(); BP.i = Math.max(0, Math.min(items.length - 1, BP.i));
   const it = items[BP.i], stage = bpEl('bpStage'), sides = it.sides.length, dpr = window.devicePixelRatio || 1;
   const h = Math.max(120, Math.min(stage.clientHeight - 24, (stage.clientWidth - 24) / (sides * A5W / A5H))), w = h * A5W / A5H;
@@ -92,8 +93,12 @@ function bpShow() {
   bpEl('bpPrev').disabled = BP.i === 0; bpEl('bpNext').disabled = BP.i === items.length - 1;
   [...bpEl('bpMode').querySelectorAll('a')].forEach(a => a.setAttribute('aria-checked', a.dataset.v === BP.mode));
 }
+function openSheetPreview(svg) { // the contact sheet, large, in the same viewer: one page, no spreads or arrows
+  BP = { pages: [], mode: 'read', i: 0, sheet: true }; const v = bpEl('bookPreview'); v.classList.add('sheet'); v.hidden = false; document.body.style.overflow = 'hidden';
+  bpEl('bpStage').innerHTML = svg; bpEl('bpClose').focus();
+}
 function openBookPreview(pages) {
-  BP = { pages, mode: 'read', i: 0 }; bpEl('bookPreview').hidden = false; document.body.style.overflow = 'hidden'; bpShow(); bpEl('bpNext').focus();
+  bpEl('bookPreview').classList.remove('sheet'); BP = { pages, mode: 'read', i: 0 }; bpEl('bookPreview').hidden = false; document.body.style.overflow = 'hidden'; bpShow(); bpEl('bpNext').focus();
 }
 function closeBookPreview() { bpEl('bookPreview').hidden = true; document.body.style.overflow = ''; }
 if (typeof document !== 'undefined') {
