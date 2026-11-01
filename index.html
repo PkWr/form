@@ -59,7 +59,7 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Process</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.40<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.41<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
@@ -100,6 +100,7 @@
           <div class="checks"><label class="inline"><input type="checkbox" id="prefacePage"> Preface about the project: one page</label>
           <label class="inline"><input type="checkbox" id="endPapers"> End papers: two pages, a pattern of the iterations, white on yellow</label></div>
           <label class="msg">Personal message: one page, in your own words (optional)<textarea id="personalMsg" rows="2" maxlength="600" placeholder="For ..."></textarea></label>
+          <div class="row"><button id="bookPreviewBtn"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>Preview the book</button></div>
           <div class="row"><button id="dlBookImposed"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Download the book, imposed (PDF)</button><button id="dlBook"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Download the pages (PDF)</button></div>
         </div>
       </div>
@@ -107,9 +108,15 @@
     </div>
   </section>
 </main>
+<div id="bookPreview" hidden role="dialog" aria-modal="true" aria-label="Book preview">
+  <div class="bp-bar"><button id="bpClose">Close</button><div class="links ico" id="bpMode" role="radiogroup" aria-label="View"><a href="#" role="radio" data-v="read" aria-checked="true"><span>Reading</span></a><a href="#" role="radio" data-v="sheets" aria-checked="false"><span>Printer's sheets</span></a></div></div>
+  <div class="bp-stage" id="bpStage"></div>
+  <div class="bp-nav"><button id="bpPrev">Previous</button><span id="bpPos"></span><button id="bpNext">Next</button></div>
+</div>
 <script src="app.js"></script>
 <script src="book.js"></script>
 <script src="gif.js"></script>
+<script src="preview.js"></script>
 <script src="start.js"></script>
 </body>
 </html>

@@ -402,16 +402,22 @@ if (typeof document !== 'undefined') {
     });
     return out;
   }
-  async function dlBook(imposed) {
-    if (!chain) return $('msg').textContent = 'Press Process first.';
+  // The book's inputs (shared by the download and the preview): the kept variants, the preface read from About, the message, the colours.
+  async function bookInputs(imposed) {
+    if (!chain) { $('msg').textContent = 'Press Process first.'; return null; }
     const kc = kept(), orig = chain.states.find(s => s.id === 0), vs = kc.states.filter(s => s.id !== 0);
-    if (!orig || !vs.length) return $('msg').textContent = 'There are no variants to put in a book.';
+    if (!orig || !vs.length) { $('msg').textContent = 'There are no variants to put in a book.'; return null; }
     let preface = [];
-    if ($('prefacePage').checked) { try { preface = await fetchPreface(); } catch (e) { return $('msg').textContent = 'The preface could not be read from the About page.'; } }
-    const bytes = makeBook({ states: [orig, ...vs], orig }, { imposed, preface, message: $('personalMsg').value.trim(), verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) });
+    if ($('prefacePage').checked) { try { preface = await fetchPreface(); } catch (e) { $('msg').textContent = 'The preface could not be read from the About page.'; return null; } }
+    return [{ states: [orig, ...vs], orig }, { imposed, preface, message: $('personalMsg').value.trim(), verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) }];
+  }
+  async function dlBook(imposed) {
+    const inp = await bookInputs(imposed); if (!inp) return;
+    const bytes = makeBook(inp[0], inp[1]);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
     a.download = `form-publication-A5${imposed ? '-imposed' : ''}.pdf`; a.click(); URL.revokeObjectURL(a.href);
   }
+  $('bookPreviewBtn').onclick = async () => { const inp = await bookInputs(false); if (!inp) return; openBookPreview(buildPages(inp[0], inp[1]).pages); };
   // A looping GIF of the animation for socials: each variant is drawn as an SVG, rasterised, mapped to 32 steps between paper and ink, and written by gifEncode.
   let gifFmt = 'sq';
   $('gifFormat').addEventListener('click', e => { const g = e.target.closest('a'); if (!g) return; e.preventDefault(); [...$('gifFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === g)); gifFmt = g.dataset.g; });

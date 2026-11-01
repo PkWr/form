@@ -37,7 +37,8 @@ function wrapWidth(t, f, size, maxW) {
 }
 
 // The book follows the Colour setting: light pages are paper with ink, dark plates the other way round (the original is two colours too).
-function makeBook(bc, opt) {
+// The pages as drawing instructions (used by the PDF and by the on-screen preview).
+function buildPages(bc, opt) {
   Object.assign(THEME.light, { bg: PAPER, ink: INK, dim: INK }); Object.assign(THEME.dark, { bg: INK, ink: PAPER, dim: mixHex(INK, PAPER, 0.45) });
   const N = bc.states.length - 1, W = A5W, H = A5H, gs = new Set();
   const title = waysLabel(N, opt.verb), note = opt.note || null;
@@ -157,8 +158,10 @@ function makeBook(bc, opt) {
   pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
     text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch, no bleed.', 2, 6.5, W / 2, H * 0.83, L.ink) +
     text('\u00a9 2026 Patrick Walker. Free to share and print for non-commercial use, with credit.', 2, 6.5, W / 2, H * 0.845, L.ink) + text('Ask before commercial use.', 2, 6.5, W / 2, H * 0.86, L.ink), true));
-  return pdfBuild(pages, opt.imposed, gs, { title, date: opt.date || '' });
+  return { pages, gs, title };
 }
+
+function makeBook(bc, opt) { const r = buildPages(bc, opt); return pdfBuild(r.pages, opt.imposed, r.gs, { title: r.title, date: opt.date || '' }); }
 
 // Booklet imposition: for n pages (a multiple of four) the sides of the sheets, each as [left page, right page], 0-based.
 function imposition(n) { const out = []; for (let i = 0; i < n / 4; i++) { out.push([n - 1 - 2 * i, 2 * i]); out.push([2 * i + 1, n - 2 - 2 * i]); } return out; }
