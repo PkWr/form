@@ -63,7 +63,8 @@ window.__space = { nM, nU, scale, total, set: t => { clock = t; } };
 // ---- View in AR: iPhone through AR Quick Look (a USDZ file made here), Android through WebXR (the shape is placed on a tap) ----
 const arBtn = document.getElementById('ar');
 async function setupAR() {
-  const a = document.createElement('a');
+  const a = document.createElement('a'); arBtn.hidden = false; // always shown, so a phone that cannot do AR says why
+  arBtn.onclick = () => msg('This browser cannot open AR. iPhone: use Safari. Android: use Chrome, with Google Play Services for AR installed. (' + (navigator.xr ? 'WebXR present, AR not supported' : 'no WebXR') + ')');
   if (a.relList && a.relList.supports && a.relList.supports('ar')) {
     arBtn.hidden = false; arBtn.onclick = () => {
       const blob = new Blob([makeUSDZ({ start, moves, unmade, mt, ut })], { type: 'model/vnd.usdz+zip' }), link = document.createElement('a');
