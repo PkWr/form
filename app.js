@@ -546,7 +546,7 @@ if (typeof document !== 'undefined') {
   function showPane(p) {
     document.body.classList.toggle('view-results', p === 'results' || p === 'outputs');
     document.body.classList.toggle('view-outputs', p === 'outputs');
-    if (p === 'outputs') goStep(2); else if (p === 'results' && curStep > 1) goStep(1);
+    if (p === 'draw') document.body.dataset.step = '0'; else if (p === 'outputs') goStep(2); else if (p === 'results' && curStep > 1) goStep(1);
     paneSwitch(); scrollTo(0, 0);
   }
   $('backRule').onclick = () => showPane('draw');

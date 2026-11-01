@@ -117,6 +117,8 @@ def main():
              + '\n  <p class="foot"><a href="about.html">About</a></p>\n</main>\n</body>\n</html>\n')
     page_i = (HERE / "index.html").read_text(encoding="utf-8")
     new_i = between(page_i, "<!-- version:start -->", "<!-- version:end -->", version, "index.html")
+    # Browsers keep old copies of the stylesheet and scripts; tying them to the version makes every release load together.
+    new_i = re.sub(r'(style\.css|app\.js|book\.js|gif\.js|preview\.js|start\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', new_i)
     changed = False
     for name, old, new in (("about.html", page_a, new_a),
                            ("changelog.html", (HERE / "changelog.html").read_text(encoding="utf-8") if (HERE / "changelog.html").exists() else "", new_c),
