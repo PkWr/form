@@ -31,16 +31,6 @@
     <li>Isometric has its own controls in the control panel, shown only when Isometric is chosen: Depth (how thick the shape is), Angle (30 degrees is true isometric; 10 to 55 reaches flatter and steeper views), and a tick for a random angle for each step. With the tick, every step of the animation, every cell of the contact sheet and every page of the book has its own angle, and the same angles are used wherever it is shown.</li>
   </ul>
 
-  <h2>v0.53, 2026-11-01</h2>
-  <ul>
-    <li>Choosing a rule is a page of its own. The grid gives way to a looping preview of what the chosen rule does to your shape, and it changes as you pick Make, Unmake or Remake. A line says how many outcomes it makes. Back returns to the grid to edit the shape; the yellow button makes the real thing.</li>
-  </ul>
-
-  <h2>v0.41, 2026-11-01</h2>
-  <ul>
-    <li>Preview the book. The Book choice has a Preview the book button that opens the book on screen before you download it: in reading order as spreads (the cover alone, then pairs of pages, then the back cover), or as the printer's sheets in the order they are printed. Arrow keys step through it. It shows the same pages the PDF will hold, with your colours, end papers, preface and message, and on a phone it shows one page at a time.</li>
-  </ul>
-
   <h2>v0.37, 2026-11-01</h2>
   <ul>
     <li>Isometric view. A Flat or Isometric switch sits beside the treatments, so Form, Direction, Solid, Ghost and Density can each be seen flat or laid onto the isometric plane, with the blocks given a little thickness in a mid tone. The stripes, ghosts and fine lines all follow the plane. It applies on screen, to every download, to the GIF and video, and to the book, which centres the cover on the projected shape.</li>
@@ -66,25 +56,10 @@
     <li>A GIF for social media. It is a looping GIF of the animation, with the title line on every frame, as a square (720 by 720) or a story (9:16, 720 by 1280). It is made on the device with no library, uses 32 steps between paper and ink, and takes at most 120 frames. A 93-frame square GIF is under 500 KB.</li>
   </ul>
 
-  <h2>v0.25, 2026-10-31</h2>
-  <ul>
-    <li>Two optional pages for the publication. A preface about the project, one page set from the About text (the Summary and Description), and a personal message, one page in your own words (typed in a box, up to 600 characters, accents kept). They come after the front end paper and before the treatments, message first, and the book stays a multiple of four pages.</li>
-  </ul>
-
-  <h2>v0.24, 2026-10-31</h2>
-  <ul>
-    <li>End papers option for the publication. Tick it and the book gains two pages, a pattern made from the iterations, white on yellow: the front one inside the front cover runs through the variants in order, the back one inside the back cover runs through them in reverse. The pattern runs to the page edge, since there is no bleed. The book is still a multiple of four pages.</li>
-  </ul>
-
   <h2>v0.23, 2026-10-31</h2>
   <ul>
     <li>Publication. Two new buttons make a book of the current shape in the design of the original publication: a cover, the five treatments each with the shape on top and its variants in a grid, dark plates with the shape and its variants, and a colophon, all A5 with no bleed. Imposed is a PDF with two pages on each A4 landscape sheet in booklet order (print double sided, flip on short edge, fold and staple). Pages is the plain A5 pages. Hidden variants are left out, and every page carries the line "N ways I can make you up" (or "unmake you").</li>
     <li>The iterations on the contact sheet are numbered in lower-case Roman numerals (i, ii, iii), as the sections of the book are. The original has no number.</li>
-  </ul>
-
-  <h2>v0.22, 2026-10-31</h2>
-  <ul>
-    <li>A Camera button. It shows what the camera sees, mirrored, as blocks on the grid, live: a cell is filled where the picture is darker than average, and the Blocks slider moves that cut-off. Take freezes it, Stop puts the old grid back, and Process takes the picture too. It is worked out on the device and never recorded or sent. A grid of 11 or 15 shows more of a face, and Unmake suits it best because it does not need the blocks to touch. The Make message now says so.</li>
   </ul>
 
   <h2>v0.21, 2026-10-31</h2>
@@ -104,12 +79,7 @@
 
   <h2>v0.14, 2026-10-31</h2>
   <ul>
-    <li>A start page, as on Spot: a black screen with a round open button, the version bottom left, and a yellow Form · About strip that slides the About text out from the right. The text is read from the About page, so there is one copy. On phones the panel carries its own open button and a More about Form link. It shows on every visit unless the address has a query (for example ?x), and Enter or Space also opens it.</li>
-  </ul>
-
-  <h2>v0.11, 2026-10-31</h2>
-  <ul>
-    <li>New Rule setting, Make or Unmake. Make is the book's rule. Unmake is its reverse: each step takes one block away, in a random order, and it never comes back. The last frame is empty. The subtitle reads "N ways I can unmake you", where N is the number of blocks (the steps). Process again for a new order. The cumulative views work on it: a removed cell stays marked.</li>
+    <li>A start page, as on Spot: a black screen with the F mark, three blocks that keep moving and turn yellow when you point at them, the version bottom left, and a yellow Form · About strip that slides the About text out from the right. The text is read from the About page, so there is one copy.</li>
   </ul>
 
   <h2>v0.10, 2026-10-31</h2>
@@ -124,12 +94,12 @@
 
   <h2>v0.6, 2026-10-31</h2>
   <ul>
-    <li>Cumulative density view: each cell the blocks have left is hatched with diagonal lines, and the lines get finer the more often the cell was left (up to eight times). Blocks stay solid.</li>
+    <li>Cumulative density view: every block is drawn as fine lines, and the original and the last few variants each keep their own angle and spacing, so where they overlap the lines build into a mesh, as in the publication.</li>
   </ul>
 
   <h2>v0.5, 2026-10-31</h2>
   <ul>
-    <li>The 11 in the subtitle is live: it shows the number of variants the current grid, Moves setting and view would make (up to the cap of 500), and updates as you edit. It is 0 when the blocks are empty or do not touch.</li>
+    <li>The numbers in the subtitle are live: they show how many ways the current shape can be made up and how many to unmake, and update as you edit. The first is 0 when the blocks do not touch.</li>
   </ul>
 
   <h2>v0.4, 2026-10-31</h2>
@@ -139,16 +109,16 @@
 
   <h2>v0.2, 2026-10-31</h2>
   <ul>
-    <li>Cumulative transparency view: each trace is drawn at low opacity, so a cell that was left more than once reads darker. Blocks stay solid.</li>
+    <li>Cumulative transparency view (Ghost): the variants before this one stay behind it as fading ghosts, an onion skin, so you see the path the shape has taken.</li>
   </ul>
 
   <h2>v0.1, 2026-10-31</h2>
   <p>First release.</p>
   <ul>
-    <li>Form, Direction and Cumulative Solid views, with SVG export of the animation, the frame and the contact sheet.</li>
-    <li>One rule from the book: one block moves per move and the place it left stays marked. The Moves setting repeats it, 1 to 6 times.</li>
+    <li>Form, Direction and Cumulative Solid views, with SVG export of the animation and the contact sheet.</li>
+    <li>One rule from the book: one block moves per move and the place it left stays marked.</li>
     <li>Odd grid sizes (7, 9, 11, 15; default 9), so the T sits in the middle column.</li>
-    <li>Variants are ordered by block, then distance. Clicking a variant hides or keeps it, which affects the animation and the downloads.</li>
+    <li>Variants are ordered by block, then distance.</li>
     <li>Direction stripes run along the line each block is joined on, flush to the cell edges.</li>
     <li>About page referring to the publication, with the author credit and references.</li>
     <li>Styling matches Spot. Favicon and touch icon added. CNAME for form.pkwr.co added.</li>

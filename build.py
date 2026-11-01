@@ -92,11 +92,11 @@ def changelog_entries(text):
 
 
 def changelog_body(text):
-    # The public page shows additions only. Bullets tagged [fix] or [amend] stay in the vault note but are left off, and a version with nothing left is left off too.
+    # The public page shows additions only. Bullets tagged [fix], [amend] or [gone] stay in the vault note but are left off, and a version with nothing left is left off too.
     head, *secs = re.split(r"(?m)^(?=## v\d)", text)
     keep = []
     for sec in secs:
-        lines = [l for l in sec.split("\n") if not re.match(r"^- \[(fix|amend)\]", l, re.I)]
+        lines = [l for l in sec.split("\n") if not re.match(r"^- \[(fix|amend|gone)\]", l, re.I)]
         if any(l.startswith("- ") for l in lines):
             keep.append("\n".join(lines).rstrip() + "\n\n")
     text = head + "".join(keep)
