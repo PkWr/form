@@ -299,63 +299,64 @@ function decodePatternCode(code) {
 // A fixed number from a code, to seed the one random choice the output has (the order Unmake takes blocks away, and the random isometric angles), so a code always gives the same book.
 const codeSeed = code => { let h = 2166136261; for (const ch of code) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
-if (typeof document !== 'undefined') {
+// Starter symbols, drawn in square blocks (X). One is picked at random on load; the Random symbol button picks another.
+const SYMBOLS = {
+  T: ['XXX', '.X.', '.X.', '.X.'],
+  cross: ['.X.', 'XXX', '.X.', '.X.', '.X.'],
+  inverted: ['.X.', '.X.', '.X.', 'XXX', '.X.'],
+  plus: ['.X.', 'XXX', '.X.'],
+  ankh: ['XXX', 'X.X', 'XXX', '.X.', 'XXX', '.X.'],
+  arrow: ['..X..', '.XXX.', 'XXXXX', '..X..', '..X..'],
+  H: ['X.X', 'XXX', 'X.X'],
+  ring: ['XXX', 'X.X', 'XXX'],
+  tower: ['X.X.X', 'XXXXX', '.XXX.', '.XXX.'],
+  U: ['X.X', 'X.X', 'XXX'],
+  L: ['X.', 'X.', 'X.', 'XX'],
+  stairs: ['X..', 'XX.', 'XXX'],
+  // Letterforms (block capitals and a few lower-case) and more shapes. Each is joined edge to edge, so Make works on it.
+  'letter A': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'X...X'],
+  'letter B': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'XXXXX'],
+  'letter C': ['XXXXX', 'X....', 'X....', 'X....', 'X....', 'X....', 'XXXXX'],
+  'letter D': ['XXXX.', 'X..XX', 'X...X', 'X...X', 'X...X', 'X..XX', 'XXXX.'],
+  'letter E': ['XXXXX', 'X....', 'X....', 'XXXX.', 'X....', 'X....', 'XXXXX'],
+  'letter F': ['XXXXX', 'X....', 'X....', 'XXXX.', 'X....', 'X....', 'X....'],
+  'letter G': ['XXXXX', 'X....', 'X....', 'X.XXX', 'X...X', 'X...X', 'XXXXX'],
+  'letter H': ['X...X', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'X...X'],
+  'letter L': ['X....', 'X....', 'X....', 'X....', 'X....', 'X....', 'XXXXX'],
+  'letter O': ['XXXXX', 'X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'XXXXX'],
+  'letter P': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X....', 'X....', 'X....'],
+  'letter S': ['XXXXX', 'X....', 'X....', 'XXXXX', '....X', '....X', 'XXXXX'],
+  'letter T': ['XXXXX', '..X..', '..X..', '..X..', '..X..', '..X..', '..X..'],
+  'letter U': ['X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'XXXXX'],
+  'letter Z': ['XXXXX', '....X', '....X', '..XXX', 'XXX..', 'X....', 'XXXXX'],
+  'lower f': ['XXX', 'X..', 'XXX', 'X..', 'X..', 'X..', 'X..'],
+  'lower e': ['XXXXX', 'X...X', 'XXXXX', 'X....', 'XXXXX'],
+  'lower a': ['XXXXX', '....X', 'XXXXX', 'X...X', 'XXXXX'],
+  'heart': ['.X.X.', 'XXXXX', 'XXXXX', '.XXX.', '..X..'],
+  'diamond': ['..X..', '.XXX.', 'XXXXX', '.XXX.', '..X..'],
+  'flag': ['XXXX', 'XXXX', 'X...', 'X...', 'X...'],
+  'step': ['X....', 'XX...', 'XXX..', 'XXXX.', 'XXXXX'],
+  'letter Y': ['X...X', 'XX.XX', '.XXX.', '..X..', '..X..'],
+  // Signs of the kind collected in Rudolf Koch's The Book of Signs (1930), drawn here as block shapes (our own simplified versions, not copies of his plates).
+  'Koch: St Andrew cross': ['X...X', 'XX.XX', '.XXX.', 'XX.XX', 'X...X'],
+  'Koch: anchor': ['..X..', 'XXXXX', '..X..', 'X.X.X', 'XXXXX'],
+  'Koch: life rune': ['X...X', 'XX.XX', '.XXX.', '..X..', '..X..'],
+  'Koch: trident': ['X.X.X', 'X.X.X', 'XXXXX', '..X..', '..X..'],
+  'Koch: sun wheel': ['.XXX.', 'X.X.X', 'XXXXX', 'X.X.X', '.XXX.'],
+  'Koch: crescent': ['.XXXX', 'XX...', 'X....', 'XX...', '.XXXX'],
+  'Koch: hourglass': ['XXXXX', '.XXX.', '..X..', '.XXX.', 'XXXXX'],
+  'Koch: window': ['XXXXX', 'X.X.X', 'XXXXX', 'X.X.X', 'XXXXX'],
+  'Koch: triangle': ['..X..', '.XXX.', 'XXXXX'],
+  'Koch: nested squares': ['XXXXXXX', 'X.....X', 'X.XXX.X', 'XXX.X.X', 'X.XXX.X', 'X.....X', 'XXXXXXX'],
+  'Koch: Lorraine cross': ['..X..', 'XXXXX', '..X..', 'XXXXX', '..X..', '..X..'],
+  'Koch: triple cross': ['..X..', 'XXXXX', '..X..', 'XXXXX', '..X..', 'XXXXX', '..X..'],
+};
+
+if (typeof document !== 'undefined' && document.getElementById('grid')) { // the demo page loads this file for the engine only
   const $ = id => document.getElementById(id);
   let grid = Array(G * G).fill(null);
   let shape = 'square', chain = null, mode = 'form', cur = 0, timer = null;
   const mk = s => ({ s, r: 0, q: 0 });
-  // Starter symbols, drawn in square blocks (X). One is picked at random on load; the Random symbol button picks another.
-  const SYMBOLS = {
-    T: ['XXX', '.X.', '.X.', '.X.'],
-    cross: ['.X.', 'XXX', '.X.', '.X.', '.X.'],
-    inverted: ['.X.', '.X.', '.X.', 'XXX', '.X.'],
-    plus: ['.X.', 'XXX', '.X.'],
-    ankh: ['XXX', 'X.X', 'XXX', '.X.', 'XXX', '.X.'],
-    arrow: ['..X..', '.XXX.', 'XXXXX', '..X..', '..X..'],
-    H: ['X.X', 'XXX', 'X.X'],
-    ring: ['XXX', 'X.X', 'XXX'],
-    tower: ['X.X.X', 'XXXXX', '.XXX.', '.XXX.'],
-    U: ['X.X', 'X.X', 'XXX'],
-    L: ['X.', 'X.', 'X.', 'XX'],
-    stairs: ['X..', 'XX.', 'XXX'],
-    // Letterforms (block capitals and a few lower-case) and more shapes. Each is joined edge to edge, so Make works on it.
-    'letter A': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'X...X'],
-    'letter B': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'XXXXX'],
-    'letter C': ['XXXXX', 'X....', 'X....', 'X....', 'X....', 'X....', 'XXXXX'],
-    'letter D': ['XXXX.', 'X..XX', 'X...X', 'X...X', 'X...X', 'X..XX', 'XXXX.'],
-    'letter E': ['XXXXX', 'X....', 'X....', 'XXXX.', 'X....', 'X....', 'XXXXX'],
-    'letter F': ['XXXXX', 'X....', 'X....', 'XXXX.', 'X....', 'X....', 'X....'],
-    'letter G': ['XXXXX', 'X....', 'X....', 'X.XXX', 'X...X', 'X...X', 'XXXXX'],
-    'letter H': ['X...X', 'X...X', 'X...X', 'XXXXX', 'X...X', 'X...X', 'X...X'],
-    'letter L': ['X....', 'X....', 'X....', 'X....', 'X....', 'X....', 'XXXXX'],
-    'letter O': ['XXXXX', 'X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'XXXXX'],
-    'letter P': ['XXXXX', 'X...X', 'X...X', 'XXXXX', 'X....', 'X....', 'X....'],
-    'letter S': ['XXXXX', 'X....', 'X....', 'XXXXX', '....X', '....X', 'XXXXX'],
-    'letter T': ['XXXXX', '..X..', '..X..', '..X..', '..X..', '..X..', '..X..'],
-    'letter U': ['X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'X...X', 'XXXXX'],
-    'letter Z': ['XXXXX', '....X', '....X', '..XXX', 'XXX..', 'X....', 'XXXXX'],
-    'lower f': ['XXX', 'X..', 'XXX', 'X..', 'X..', 'X..', 'X..'],
-    'lower e': ['XXXXX', 'X...X', 'XXXXX', 'X....', 'XXXXX'],
-    'lower a': ['XXXXX', '....X', 'XXXXX', 'X...X', 'XXXXX'],
-    'heart': ['.X.X.', 'XXXXX', 'XXXXX', '.XXX.', '..X..'],
-    'diamond': ['..X..', '.XXX.', 'XXXXX', '.XXX.', '..X..'],
-    'flag': ['XXXX', 'XXXX', 'X...', 'X...', 'X...'],
-    'step': ['X....', 'XX...', 'XXX..', 'XXXX.', 'XXXXX'],
-    'letter Y': ['X...X', 'XX.XX', '.XXX.', '..X..', '..X..'],
-    // Signs of the kind collected in Rudolf Koch's The Book of Signs (1930), drawn here as block shapes (our own simplified versions, not copies of his plates).
-    'Koch: St Andrew cross': ['X...X', 'XX.XX', '.XXX.', 'XX.XX', 'X...X'],
-    'Koch: anchor': ['..X..', 'XXXXX', '..X..', 'X.X.X', 'XXXXX'],
-    'Koch: life rune': ['X...X', 'XX.XX', '.XXX.', '..X..', '..X..'],
-    'Koch: trident': ['X.X.X', 'X.X.X', 'XXXXX', '..X..', '..X..'],
-    'Koch: sun wheel': ['.XXX.', 'X.X.X', 'XXXXX', 'X.X.X', '.XXX.'],
-    'Koch: crescent': ['.XXXX', 'XX...', 'X....', 'XX...', '.XXXX'],
-    'Koch: hourglass': ['XXXXX', '.XXX.', '..X..', '.XXX.', 'XXXXX'],
-    'Koch: window': ['XXXXX', 'X.X.X', 'XXXXX', 'X.X.X', 'XXXXX'],
-    'Koch: triangle': ['..X..', '.XXX.', 'XXXXX'],
-    'Koch: nested squares': ['XXXXXXX', 'X.....X', 'X.XXX.X', 'XXX.X.X', 'X.XXX.X', 'X.....X', 'XXXXXXX'],
-    'Koch: Lorraine cross': ['..X..', 'XXXXX', '..X..', 'XXXXX', '..X..', '..X..'],
-    'Koch: triple cross': ['..X..', 'XXXXX', '..X..', 'XXXXX', '..X..', 'XXXXX', '..X..'],
-  };
   let lastSymbol = '';
   function startSymbol() { // only symbols that fit the grid are picked (a 5 grid is too small for the 7-row letters)
     const names = Object.keys(SYMBOLS).filter(n => n !== lastSymbol && SYMBOLS[n].length <= G && SYMBOLS[n][0].length <= G), name = lastSymbol = names[Math.floor(Math.random() * names.length)], rows = SYMBOLS[name];
@@ -683,4 +684,4 @@ if (typeof document !== 'undefined') {
     drawGrid(); process();
   }
   drawGrid();
-} else module.exports = { variants, unmake, scatter, connected, sheetSVG, patternCode, decodePatternCode, codeSeed, rng };
+} else if (typeof module !== 'undefined') module.exports = { variants, unmake, scatter, connected, sheetSVG, patternCode, decodePatternCode, codeSeed, rng };
