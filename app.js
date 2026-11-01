@@ -139,7 +139,7 @@ const waysLabel = (n, verb) => `${n} way${n === 1 ? '' : 's'} I can ${verb}`;
 function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs * 2.4, svg: `<text x="${W * 0.05}" y="${fs * 1.5}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(text)}</text>` }; }
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
-  `<path id="hl" fill="none" stroke-width="1.1" d="${(() => { let d = ''; for (let x = -30; x <= 130; x += 3.2) d += `M${+x.toFixed(1)} -30V130`; return d; })()}"/>` +
+  DENS.map((d, i) => `<path id="hl${i}" fill="none" stroke-width="${+(0.3 * 2.4 * d[1]).toFixed(2)}" d="${(() => { let p = ''; for (let x = -40; x <= 140; x += 2.4 * d[1]) p += `M${+x.toFixed(1)} -40V140`; return p; })()}"/>`).join('') +
   '</defs>';
 // Direction: each block is three stripes running along its last move (vertical until it moves).
 // Direction stripes: three lines of equal width with equal gaps, flush to the cell edge on open sides (as in the book). Where a block with stripes the same way
@@ -159,14 +159,16 @@ const stripes = (b, all) => { const sq = b.s === 'square'; return `<g transform=
 const n3 = v => +v.toFixed(3);
 // Density: every block is drawn as fine lines, and each iteration adds a layer at its own angle. Where layers overlap the lines cross into a darker mesh,
 // so tone builds up as texture. Layers: the original (vertical), this variant, and the two variants before it.
-const DENS = [0, 45, 135, 90];
+// Density: every block is filled with fine lines. The original and the last four variants each keep their own slot, an angle and a pitch, so a layer
+// holds its texture as later ones are added and the overlaps cross into a mesh, as in the 11 ways publication. [angle, pitch factor].
+const DENS = [[0, 1], [45, 1.35], [135, 1.7], [90, 1.15], [22, 1.5], [158, 1.05], [67, 1.9], [112, 1.25]];
+function densStack(chain, k) {
+  const s = chain.states[k], o = chain.orig || chain.states[0], list = [{ st: o, slot: 0 }];
+  for (let j = Math.max(0, k - 3); j <= k; j++) { const st = chain.states[j]; if (st !== o) list.push({ st, slot: 1 + (j % 7) }); }
+  return list.map(e => ({ blocks: e.st.blocks, dx: e.st.ox - s.ox, dy: e.st.oy - s.oy, slot: e.slot }));
+}
 function densLayers(chain, k) {
-  const s = chain.states[k], o = chain.orig || chain.states[0];
-  const layer = (blocks, dx, dy, a) => blocks.map(b => `<g transform="translate(${(b.x + dx) * U} ${(b.y + dy) * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#hl" stroke="${INK}" transform="rotate(${a} 50 50)"/></g>`).join('');
-  let out = layer(o.blocks, o.ox - s.ox, o.oy - s.oy, DENS[0]);
-  if (s !== o) out += layer(s.blocks, 0, 0, DENS[1]);
-  for (let a = 1; a <= 2; a++) { const j = k - a; if (j >= 0 && chain.states[j] !== o && chain.states[j] !== s) out += layer(chain.states[j].blocks, chain.states[j].ox - s.ox, chain.states[j].oy - s.oy, DENS[1 + a]); }
-  return out;
+  return densStack(chain, k).map(l => l.blocks.map(b => `<g transform="translate(${(b.x + l.dx) * U} ${(b.y + l.dy) * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#hl${l.slot}" stroke="${INK}" transform="rotate(${DENS[l.slot][0]} 50 50)"/></g>`).join('')).join('');
 }
 const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${ang(b)} 50 50)"/>`;
 // Transparency (onion skin): the blocks of the variants shown just before this one stay as fading ghosts.

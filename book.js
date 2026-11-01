@@ -53,14 +53,7 @@ function buildPages(bc, opt) {
   // Density: every block is filled with a fine-line pattern, one layer for the original and one for each of this variant and the two before it,
   // each layer at its own angle (DENS in app.js), so overlaps cross into a darker mesh. The patterns are defined once for the whole file.
   const patBlock = (b, X, Y, c, slot) => `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm /Pattern cs /H${slot} scn ${pathOps(b.s, ang(b))} f Q\n`;
-  const densOps = (k, X, Y, c) => {
-    const st = bc.states[k], o = bc.orig || bc.states[0]; let out = '';
-    const L = (blocks, dx, dy, slot) => blocks.forEach(b => { out += patBlock(b, X + dx * c, Y + dy * c, c, slot); });
-    L(o.blocks, o.ox - st.ox, o.oy - st.oy, 0);
-    if (st !== o) L(st.blocks, 0, 0, 1);
-    for (let a = 1; a <= 2; a++) { const j = k - a; if (j >= 0 && bc.states[j] !== o && bc.states[j] !== st) L(bc.states[j].blocks, bc.states[j].ox - st.ox, bc.states[j].oy - st.oy, 1 + a); }
-    return out;
-  };
+  const densOps = (k, X, Y, c) => densStack(bc, k).map(l => l.blocks.map(b => patBlock(b, X + l.dx * c, Y + l.dy * c, c, l.slot)).join('')).join('');
   const frameOps0 = (k, view, X, Y, c, ink) => {
     const s = bc.states[k]; let out = '';
     if (view === 'direction') return s.blocks.map(b => stripeOps(b, X, Y, c, ink, s.blocks)).join('');
@@ -173,7 +166,7 @@ function pdfBuild(pageOps, imposed, gs, meta) {
   const wrap = ops => `1 0 0 -1 0 ${n2(H)} cm\n${ops}`;
   const fonts = FONTS.map(f => add(`<< /Type /Font /Subtype /Type1 /BaseFont /${f[0]} /Encoding /WinAnsiEncoding >>`));
   const gsIds = [...gs].map(p => [p, add(`<< /Type /ExtGState /CA ${p / 100} /ca ${p / 100} >>`)]);
-  const pats = DENS.map(a => { const P = 1.1, r = a * Math.PI / 180; return stream(`/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 ${P} ${P}] /XStep ${P} /YStep ${P} /Resources << >> /Matrix [${n2(Math.cos(r))} ${n2(Math.sin(r))} ${n2(-Math.sin(r))} ${n2(Math.cos(r))} 0 0]`, `${rgb(THEME.light.ink)} rg 0 0 0.5 ${P} re f\n`); });
+  const pats = DENS.map(d => { const P = 1.1 * d[1], r = d[0] * Math.PI / 180; return stream(`/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 ${P} ${P}] /XStep ${P} /YStep ${P} /Resources << >> /Matrix [${n2(Math.cos(r))} ${n2(Math.sin(r))} ${n2(-Math.sin(r))} ${n2(Math.cos(r))} 0 0]`, `${rgb(THEME.light.ink)} rg 0 0 ${n2(P * 0.3)} ${P} re f\n`); });
   const resId = add('');
   const xo = imposed ? pageOps.map(o => stream(`/Type /XObject /Subtype /Form /BBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R`, wrap(o))) : [];
   objs[resId - 1] = `<< /Font << ${fonts.map((id, i) => `/F${i + 1} ${id} 0 R`).join(' ')} >> /ExtGState << ${gsIds.map(([p, id]) => `/G${p} ${id} 0 R`).join(' ')} >> /Pattern << ${pats.map((id, i) => `/H${i} ${id} 0 R`).join(' ')} >> /XObject << ${xo.map((id, i) => `/P${i} ${id} 0 R`).join(' ')} >> >>`;
