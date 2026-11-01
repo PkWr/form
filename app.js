@@ -270,7 +270,7 @@ if (typeof document !== 'undefined') {
     const st = startBlocks();
     $('count').textContent = act !== 'make' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
   }
-  function process() {
+  function process(quiet) { // quiet: redo the results in place, without moving to step 1 or to the results pane
     const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (act === 'make' && !connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge. (Unmake works with separate blocks.)';
@@ -279,7 +279,7 @@ if (typeof document !== 'undefined') {
     const n = chain.states.length - 1;
     $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : act === 'rearrange' ? `${n} step${n > 1 ? 's' : ''}. Each moves one block away from the rest.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
-    document.body.classList.add('view-results'); paneSwitch(); goStep(1);
+    if (!quiet) { document.body.classList.add('view-results'); paneSwitch(); goStep(1); }
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
   $('size').addEventListener('click', e => {
@@ -294,7 +294,7 @@ if (typeof document !== 'undefined') {
       cells.forEach(p => ng[(oy + p.y - y0) * n + ox + p.x - x0] = p.c);
     }
     [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    G = n; grid = ng; $('msg').textContent = ''; drawGrid(); if (chain) process();
+    G = n; grid = ng; $('msg').textContent = ''; drawGrid(); if (chain) process(true);
   });
   // Camera: your face as blocks. The picture is cut to a square, shrunk to the grid, mirrored, and a cell is filled where it is darker than the average
   // (the slider moves that cut-off). It is processed on the device, never recorded or sent, and the camera stops when you take the picture.
@@ -338,12 +338,16 @@ if (typeof document !== 'undefined') {
   $('act').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('act').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    act = a.dataset.a; verb(); updateCount(); if (chain) process();
+    act = a.dataset.a; verb(); updateCount(); if (chain) process(true);
   });
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
-  document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { mode = r.value; updateCount(); if (chain) process(); });
+  $('viewIcons').addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
+    [...$('viewIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
+    mode = a.dataset.mode; updateCount(); if (chain) process(true);
+  });
   $('sheet').addEventListener('click', e => { const g = e.target.closest('[data-id]'); if (!g) return; const id = +g.dataset.id; hidden.has(id) ? hidden.delete(id) : hidden.add(id); show(); });
   $('paper').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
@@ -413,7 +417,7 @@ if (typeof document !== 'undefined') {
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   // Phones: the grid and shapes live on the screen, the settings in the sheet. One element moves between the two places.
   const small = matchMedia('(pointer: coarse), (max-width: 600px)');
-  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
+  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $(small.matches ? 'viewHostOut' : 'viewHostPanel').prepend($('viewBox')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); });
   const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 16 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));

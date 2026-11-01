@@ -176,3 +176,21 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .card .row{margin:12px 0 0}
 #out{min-height:0}
 @media(pointer:coarse),(max-width:600px){#sheet svg{height:max(220px,calc(100svh - 430px))}}
+/* Icon buttons: steps, rule and treatments. Quiet: the selected one is yellow on the dark panel and ink with a yellow icon on paper. */
+.links.ico{display:flex;flex-wrap:nowrap;gap:4px;margin:6px 0;font-size:9.5px;color:var(--muted)}
+.ico a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:56px;padding:6px 4px 5px;border-radius:8px;text-decoration:none;color:var(--text);line-height:1.1;text-align:center;overflow-wrap:anywhere}
+.ico a svg{width:26px;height:26px;display:block}
+.ico a:hover{text-decoration:none;background:rgba(255,255,255,.07)}
+.ico a[aria-checked=true]{color:var(--yellow);text-decoration:none}
+#out .ico a,#screen .ico a{color:#555}
+#out .ico a:hover,#screen .ico a:hover{background:#e3dfd8}
+#out .ico a[aria-checked=true],#screen .ico a[aria-checked=true]{background:var(--ink);color:var(--yellow);text-decoration:none}
+#viewIcons{justify-content:space-between}
+#viewIcons a{flex:1;min-width:0}
+#steps a{flex-direction:row;gap:6px;font-size:12px;min-width:0;padding:6px 12px}
+#steps a svg{width:18px;height:18px}
+#processRow .row{align-items:stretch;flex-wrap:nowrap}
+#processRow #process{flex:1;min-width:0}
+#act{margin:0}
+#act a{min-width:58px}
+#viewHostPanel{margin:0 0 8px}
