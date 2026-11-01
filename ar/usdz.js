@@ -33,7 +33,7 @@
     let s = `#usda 1.0\n(\n    defaultPrim = "Form"\n    metersPerUnit = 1\n    upAxis = "Y"\n    startTimeCode = 0\n    endTimeCode = ${endF}\n    timeCodesPerSecond = ${FPS}\n)\n\ndef Xform "Form"\n{\n`;
     s += `    def Material "Ink"\n    {\n        token outputs:surface.connect = </Form/Ink/Surf.outputs:surface>\n        def Shader "Surf"\n        {\n            uniform token info:id = "UsdPreviewSurface"\n            color3f inputs:diffuseColor = (0.137, 0.122, 0.125)\n            float inputs:roughness = 0.6\n            token outputs:surface\n        }\n    }\n`;
     start.forEach((b, j) => {
-      s += `    def Xform "B${j}"\n    {\n        double3 xformOp:translate.timeSamples = ${samples(tr[j], v => `(${v.map(f4).join(', ')})`)}\n        double3 xformOp:scale.timeSamples = ${samples(sc[j], v => `(${f4(v)}, ${f4(v)}, ${f4(v)})`)}\n        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]\n        def Cube "Cube"\n        {\n            double size = ${f4(CELL * 0.94)}\n            rel material:binding = </Form/Ink>\n        }\n    }\n`;
+      s += `    def Xform "B${j}"\n    {\n        double3 xformOp:translate.timeSamples = ${samples(tr[j], v => `(${v.map(f4).join(', ')})`)}\n        double3 xformOp:scale.timeSamples = ${samples(sc[j], v => `(${f4(v)}, ${f4(v)}, ${f4(v)})`)}\n        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]\n        def Cube "Cube"\n        {\n            double size = ${f4(CELL)}\n            rel material:binding = </Form/Ink>\n        }\n    }\n`;
     });
     return { text: s + '}\n', frames: endF };
   }
