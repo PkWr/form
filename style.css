@@ -420,3 +420,5 @@ body{padding-bottom:0!important;padding-right:368px}
 #screen,#out{margin-left:auto;margin-right:auto}
 }
 #shadeLab[hidden],#isoHostPanel[hidden]{display:none!important}
+/* Pieces swing past the edge of the mark while they turn, so the drawing is not clipped to its box. */
+#startOpen svg{overflow:visible}
