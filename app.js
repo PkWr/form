@@ -1,6 +1,6 @@
 'use strict';
 // Form — pick blocks on a 16x16 grid; a chain of moves leaves traces; export as SVG.
-let G = 9;
+let G = 5;
 const U = 100, MAXCAP = 500, TONE = 0.22, YEL = '#ffe100';
 let INK = '#111111', PAPER = '#f4f2ee'; // the artwork's colours, set from the Colour setting
 const mixHex = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
