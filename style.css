@@ -282,3 +282,4 @@ body.view-results #processRow .row{display:none}
 #out .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
 .row.nav{align-items:center}
 button#process,#processRow .row button{font-size:14px;line-height:1.2;padding:10px 16px;min-height:44px}
+#startOpen svg path{stroke:var(--yellow);stroke-width:1}

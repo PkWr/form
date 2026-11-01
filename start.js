@@ -55,3 +55,56 @@
     if ((e.key === "Enter" || e.key === " ") && root.classList.contains("show-start") && e.target === document.body) { e.preventDefault(); open(); }
   });
 })();
+// The start mark: eight pieces of the F, scattered at random over its 3 x 5 grid in a random mix of shapes. Rolling over it (or, on a touch screen, a moment after it appears) turns them into the F: every piece slides home, straightens and squares up. Leaving scatters them again.
+(function () {
+  if (!document.documentElement.classList.contains("show-start")) return;
+  var btn = document.getElementById("startOpen"), svg = btn && btn.querySelector("svg");
+  if (!svg) return;
+  var K = 0.5523, NS = "http://www.w3.org/2000/svg";
+  // Each shape is four cubic segments on a 100 box, so any two can be blended point by point.
+  function line(a, b) { return [a[0] + (b[0] - a[0]) / 3, a[1] + (b[1] - a[1]) / 3, a[0] + 2 * (b[0] - a[0]) / 3, a[1] + 2 * (b[1] - a[1]) / 3, b[0], b[1]]; }
+  function build(start, segs) { return [].concat.apply([start[0], start[1]], segs); }
+  var SHAPES = {
+    square: build([0, 0], [line([0, 0], [100, 0]), line([100, 0], [100, 100]), line([100, 100], [0, 100]), line([0, 100], [0, 0])]),
+    circle: build([50, 0], [[50 + 50 * K, 0, 100, 50 - 50 * K, 100, 50], [100, 50 + 50 * K, 50 + 50 * K, 100, 50, 100], [50 - 50 * K, 100, 0, 50 + 50 * K, 0, 50], [0, 50 - 50 * K, 50 - 50 * K, 0, 50, 0]]),
+    triangle: build([0, 0], [line([0, 0], [0, 100]), line([0, 100], [100, 100]), line([100, 100], [100, 100]), line([100, 100], [0, 0])]),
+    quarter: build([0, 100], [line([0, 100], [0, 0]), [100 * K, 0, 100, 100 - 100 * K, 100, 100], line([100, 100], [0, 100]), line([0, 100], [0, 100])])
+  };
+  var KINDS = ["square", "circle", "triangle", "quarter"];
+  // The F as eight cells of a 3 x 5 grid: [column, row].
+  var F = [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2], [1, 2], [0, 3], [0, 4]];
+  var cells = []; for (var r = 0; r < 5; r++) for (var c = 0; c < 3; c++) cells.push([c, r]);
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  var pieces = [], nodes = [];
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  F.forEach(function () { var p = document.createElementNS(NS, "path"); svg.appendChild(p); nodes.push(p); });
+  function scatter() {
+    var spots = shuffle(cells.slice()).slice(0, F.length);
+    pieces = F.map(function (home, i) {
+      return { to: { x: spots[i][0] * 100, y: spots[i][1] * 100, rot: 90 * Math.floor(Math.random() * 4), kind: KINDS[Math.floor(Math.random() * KINDS.length)] }, home: { x: home[0] * 100, y: home[1] * 100, rot: 0, kind: "square" } };
+    });
+  }
+  function draw(i, a, b, t) {
+    var x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t, rot = a.rot + (b.rot - a.rot) * t, p = SHAPES[a.kind], q = SHAPES[b.kind], v = [];
+    for (var k = 0; k < p.length; k++) v.push((p[k] + (q[k] - p[k]) * t).toFixed(1));
+    var d = "M" + v[0] + " " + v[1];
+    for (k = 2; k < v.length; k += 6) d += "C" + v.slice(k, k + 6).join(" ");
+    nodes[i].setAttribute("d", d + "Z");
+    nodes[i].setAttribute("transform", "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") rotate(" + rot.toFixed(1) + " 50 50)");
+  }
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0, t = 0, goal = 0;
+  function ease(u) { return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; }
+  // t runs from 0 (scattered) to 1 (the F).
+  function paintAt(v) { pieces.forEach(function (p, i) { draw(i, p.to, p.home, ease(v)); }); }
+  function go(target) {
+    goal = target; if (reduce) { t = target; paintAt(t); return; }
+    cancelAnimationFrame(raf); var last = performance.now();
+    (function step(now) { var dt = (now - last) / 700; last = now; t += (goal > t ? 1 : -1) * dt; if ((goal > t) === (goal > t + dt) && Math.abs(goal - t) < dt) t = goal; t = Math.max(0, Math.min(1, t)); paintAt(t); if (t !== goal) raf = requestAnimationFrame(step); else if (goal === 0) { scatter(); paintAt(0); } })(last);
+  }
+  scatter(); paintAt(0);
+  btn.addEventListener("mouseenter", function () { go(1); });
+  btn.addEventListener("focus", function () { go(1); });
+  function away() { go(0); }
+  btn.addEventListener("mouseleave", away); btn.addEventListener("blur", away);
+  if (matchMedia("(pointer: coarse)").matches) setTimeout(function () { go(1); }, 1600);
+})();
