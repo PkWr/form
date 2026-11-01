@@ -4,12 +4,13 @@
 const OPS_RE = /\((?:\\.|[^\\)])*\)|\/[A-Za-z0-9]+|-?\d*\.?\d+|[A-Za-z]+\*?/g;
 const WIN_BACK = { '\x91': '‘', '\x92': '’', '\x93': '“', '\x94': '”', '\x96': '–', '\x97': '—', '\x85': '…' };
 const PREVIEW_FONTS = ['bold SZpx Arial, Helvetica, sans-serif', 'SZpx Arial, Helvetica, sans-serif', 'italic SZpx "Times New Roman", Times, serif', 'italic SZpx "Courier New", Courier, monospace'];
-function patternsFor(ctx, k) { // the four fine-line patterns, drawn at the preview scale (PDF patterns ignore the page transform, so these are applied after resetting it)
-  return DENS.map(a => {
-    const t = Math.max(3, 1.1 * k), c = document.createElement('canvas'); c.width = c.height = Math.ceil(t * 2); const x = c.getContext('2d');
-    x.fillStyle = INK; x.fillRect(0, 0, t * 2 * 0.45, t * 2);
-    const p = ctx.createPattern(c, 'repeat'); if (p.setTransform) p.setTransform(new DOMMatrix().rotate(-a).scale(0.5)); return p;
-  });
+function patternsFor(ctx, k) { // the fine-line patterns, drawn at the preview scale (PDF patterns ignore the page transform, so these are applied after resetting it): dark lines on light pages, light lines (HD) on dark pages
+  const make = (a, colour) => {
+    const t = Math.max(3, 1.1 * k * a[1]), c = document.createElement('canvas'); c.width = c.height = Math.ceil(t * 2); const x = c.getContext('2d');
+    x.fillStyle = colour; x.fillRect(0, 0, t * 2 * 0.45, t * 2);
+    const p = ctx.createPattern(c, 'repeat'); if (p.setTransform) p.setTransform(new DOMMatrix().rotate(-a[0]).scale(0.5)); return p;
+  };
+  return { H: DENS.map(a => make(a, INK)), HD: DENS.map(a => make(a, PAPER)) };
 }
 function renderOps(ctx, ops, k, W, H) {
   const toks = ops.match(OPS_RE) || [], pats = patternsFor(ctx, k), stack = [];
@@ -38,7 +39,7 @@ function renderOps(ctx, ops, k, W, H) {
       case 'W': clip = true; break;
       case 'n': if (clip) { ctx.clip(); clip = false; } ctx.beginPath(); break;
       case 'gs': ctx.globalAlpha = +st[0].slice(2) / 100; break;
-      case 'scn': pat = pats[+st[0].slice(2)]; break;
+      case 'scn': { const m = /^\/(HD?)(\d+)/.exec(st[0]); pat = m ? pats[m[1]][+m[2]] : null; break; }
       case 'BT': tx = ty = 0; break;
       case 'Tf': font = +st[0].slice(2) - 1; size = st[1]; break;
       case 'Tm': tx = st[4]; ty = st[5]; break;
