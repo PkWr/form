@@ -67,10 +67,11 @@
   svg.setAttribute("viewBox", "-152 -2 604 504");
   while (svg.firstChild) svg.removeChild(svg.firstChild);
   var nodes = F.map(function (p) { var n = document.createElementNS(NS, "path"); n.setAttribute("d", "M0 0H" + p.w + "V" + p.h + "H0Z"); svg.appendChild(n); return n; });
-  var from = [];
+  // Each piece has a current pose; every move runs from wherever it is now to a target pose, so nothing ever jumps. Leaving picks a fresh scatter as the target.
+  var cur = [], HOME = F.map(function (p) { return { x: p.x, y: p.y, rot: 0 }; });
   function scatter() {
     var placed = [], tries = 0;
-    from = F.map(function (p) {
+    return F.map(function (p) {
       for (;;) {
         var rot = TURNS[Math.floor(Math.random() * TURNS.length)], q = Math.abs(rot) === 90, w = q ? p.h : p.w, h = q ? p.w : p.h;
         var cx = AREA.x0 + w / 2 + Math.random() * (AREA.x1 - AREA.x0 - w), cy = AREA.y0 + h / 2 + Math.random() * (AREA.y1 - AREA.y0 - h);
@@ -80,23 +81,25 @@
       }
     });
   }
-  function draw(t) {
-    F.forEach(function (p, i) {
-      var f = from[i], x = f.x + (p.x - f.x) * t, y = f.y + (p.y - f.y) * t, r = f.rot * (1 - t);
-      nodes[i].setAttribute("transform", "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") rotate(" + r.toFixed(1) + " " + p.w / 2 + " " + p.h / 2 + ")");
-    });
+  function draw() {
+    F.forEach(function (p, i) { var c = cur[i]; nodes[i].setAttribute("transform", "translate(" + c.x.toFixed(1) + " " + c.y.toFixed(1) + ") rotate(" + c.rot.toFixed(1) + " " + p.w / 2 + " " + p.h / 2 + ")"); });
   }
-  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0, t = 0, goal = 0;
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0;
   function ease(u) { return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; }
   function go(target) {
-    goal = target; if (reduce) { t = target; draw(ease(t)); return; }
-    cancelAnimationFrame(raf); var last = performance.now();
-    (function step(now) { var dt = (now - last) / 800; last = now; t += (goal > t ? 1 : -1) * dt; if (Math.abs(goal - t) < dt) t = goal; t = Math.max(0, Math.min(1, t)); draw(ease(t)); if (t !== goal) raf = requestAnimationFrame(step); else if (goal === 0) { scatter(); draw(0); } })(last);
+    cancelAnimationFrame(raf);
+    if (reduce) { cur = target.map(function (t) { return { x: t.x, y: t.y, rot: t.rot }; }); draw(); return; }
+    var start = cur.map(function (c) { return { x: c.x, y: c.y, rot: c.rot }; }), t0 = performance.now();
+    (function step(now) {
+      var u = Math.min(1, (now - t0) / 800), e = ease(u);
+      cur = start.map(function (s, i) { var t = target[i]; return { x: s.x + (t.x - s.x) * e, y: s.y + (t.y - s.y) * e, rot: s.rot + (t.rot - s.rot) * e }; });
+      draw(); if (u < 1) raf = requestAnimationFrame(step);
+    })(t0);
   }
-  scatter(); draw(0);
-  btn.addEventListener("mouseenter", function () { go(1); });
-  btn.addEventListener("focus", function () { go(1); });
-  function away() { go(0); }
+  cur = scatter(); draw();
+  btn.addEventListener("mouseenter", function () { go(HOME); });
+  btn.addEventListener("focus", function () { go(HOME); });
+  function away() { go(scatter()); }
   btn.addEventListener("mouseleave", away); btn.addEventListener("blur", away);
-  if (matchMedia("(pointer: coarse)").matches) setTimeout(function () { go(1); }, 1600);
+  if (matchMedia("(pointer: coarse)").matches) setTimeout(function () { go(HOME); }, 1600);
 })();
