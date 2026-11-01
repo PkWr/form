@@ -26,7 +26,7 @@ const edgeInk = new THREE.LineBasicMaterial({ color: 0x77736c }), cube = () => {
 const gc = document.createElement('canvas'); gc.width = gc.height = 128; const g2 = gc.getContext('2d'), gr = g2.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(35,31,32,.30)'); gr.addColorStop(1, 'rgba(35,31,32,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
 const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc), transparent: true, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.scale.set(span * 0.9, span * 0.9, 1); shadow.position.y = -(Math.max(...ys) - cy) - 1.6; rig.add(shadow);
 const blocks = start.map(b => { const m = cube(); root.add(m); return m; }), marks = start.map(() => { const m = marker(); m.visible = false; root.add(m); return m; });
-let az = 0, el = 0.08, drag = null, userRot = 0, t0 = 0, clock = 0;
+let drag = null, t0 = 0, clock = 0;
 const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t), lerp = (a, b, t) => a + (b - a) * t;
 function pose(time) {
   blocks.forEach((m, i) => { m.visible = true; m.scale.setScalar(1); m.position.copy(P(...start[i])); marks[i].visible = false; });
@@ -43,11 +43,20 @@ function pose(time) {
 const key3 = b => b.join(',');
 function resize() { renderer.setSize(W(), H()); cam.aspect = W() / H(); cam.updateProjectionMatrix(); cam.position.set(0, 0, span * (W() < H() ? 2.0 : 1.6)); cam.lookAt(0, 0, 0); }
 addEventListener('resize', resize); resize();
-view.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, az, el]; view.setPointerCapture(e.pointerId); });
-view.addEventListener('pointermove', e => { if (!drag) return; az = drag[2] + (e.clientX - drag[0]) * 0.008; el = Math.max(-0.9, Math.min(0.9, drag[3] + (e.clientY - drag[1]) * 0.006)); });
-view.addEventListener('pointerup', () => { drag = null; });
+// Turning: one finger or the mouse turns the shape about any axis (a trackball: sideways turns it about the vertical, up and down about the horizontal, with no stops, so it goes all the way round);
+// two fingers twisting, or shift-drag, roll it about the line of sight. It keeps the turn you give it; until you touch it, it only sways.
+const uq = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.08, 0, 0)), pts = new Map(), AX = new THREE.Vector3(1, 0, 0), AY = new THREE.Vector3(0, 1, 0), AZ = new THREE.Vector3(0, 0, 1);
+let touched = false;
+const turn = (axis, ang) => { uq.premultiply(new THREE.Quaternion().setFromAxisAngle(axis, ang)); touched = true; };
+const twist = () => { const [a, b] = [...pts.values()]; return Math.atan2(b.y - a.y, b.x - a.x); };
+view.addEventListener('pointerdown', e => { pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); view.setPointerCapture(e.pointerId); drag = pts.size === 2 ? twist() : true; });
+view.addEventListener('pointermove', e => { const p = pts.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  if (pts.size === 2) { const before = twist(); p.x = e.clientX; p.y = e.clientY; let d = twist() - before; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; turn(AZ, d); }
+  else { p.x = e.clientX; p.y = e.clientY; if (e.shiftKey) turn(AZ, dx * 0.01); else { turn(AY, dx * 0.01); turn(AX, dy * 0.01); } } });
+const lift = e => { pts.delete(e.pointerId); drag = pts.size ? true : null; }; view.addEventListener('pointerup', lift); view.addEventListener('pointercancel', lift);
+const swayQ = new THREE.Quaternion();
 function frame(now) { if (renderer.xr.isPresenting) { requestAnimationFrame(frame); return; } const dt = Math.min(0.1, (now - t0) / 1000); t0 = now; clock += dt; pose(clock);
-  const sway = drag ? 0 : Math.sin(clock * 0.35) * 0.35; root.rotation.set(el, az + sway, 0); renderer.render(scene, cam); requestAnimationFrame(frame); }
+  swayQ.setFromAxisAngle(AY, touched || drag ? 0 : Math.sin(clock * 0.35) * 0.35); root.quaternion.copy(swayQ).multiply(uq); renderer.render(scene, cam); requestAnimationFrame(frame); }
 requestAnimationFrame(n => { t0 = n; frame(n); });
 window.__space = { nM, nU, scale, total, set: t => { clock = t; } };
 
@@ -69,7 +78,7 @@ async function startXR() {
   renderer.xr.enabled = true; renderer.xr.setReferenceSpaceType('local'); await renderer.xr.setSession(session); renderer.setClearColor(PAPER, 0);
   const reticle = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.08, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: INK })); reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
   const viewer = await session.requestReferenceSpace('viewer'), source = await session.requestHitTestSource({ space: viewer }); let placed = false;
-  rig.scale.setScalar(CELLM); rig.visible = false; root.rotation.set(0, 0, 0); document.getElementById('msg').textContent = 'Move the phone, then tap to place it.';
+  rig.scale.setScalar(CELLM); rig.visible = false; root.quaternion.identity(); document.getElementById('msg').textContent = 'Move the phone, then tap to place it.';
   session.addEventListener('select', () => { if (!reticle.visible) return; const p = new THREE.Vector3().setFromMatrixPosition(reticle.matrix), c = new THREE.Vector3().setFromMatrixPosition(cam.matrixWorld);
     rig.position.set(p.x, p.y - L * CELLM, p.z); rig.rotation.y = Math.atan2(c.x - p.x, c.z - p.z); rig.visible = true; placed = true; reticle.visible = false; document.getElementById('msg').textContent = ''; });
   session.addEventListener('end', () => { source.cancel(); renderer.xr.enabled = false; renderer.setAnimationLoop(null); scene.remove(reticle); rig.scale.setScalar(1); rig.position.set(0, 0, 0); rig.rotation.set(0, 0, 0); rig.visible = true; renderer.setClearColor(PAPER, 1); resize(); document.getElementById('msg').textContent = ''; });
