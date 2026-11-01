@@ -344,3 +344,7 @@ body[data-step="1"] #dlBar [data-for="1"],body[data-step="2"] #dlBar [data-for="
 /* The animation sits in the same square, with the same outline, as the grid on Draw. */
 #anim{display:block;width:min(100%,calc(100vh - 360px));max-height:none;height:auto;aspect-ratio:1;margin:0 auto;border:1px solid var(--line);border-radius:6px}
 @media(max-height:700px){#anim{width:min(100%,calc(100svh - 348px))}}
+/* The print size sits with the download icon it belongs to: under it, right-aligned, on the Contact sheet step only. */
+#paneSwitch{flex-wrap:wrap}
+#paneSwitch #paper{display:none;flex:0 0 100%;justify-content:flex-end;margin:0;font-size:13px}
+body[data-step="2"] #paneSwitch #paper{display:flex}
