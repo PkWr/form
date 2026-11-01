@@ -2,6 +2,7 @@
 (function () {
   const STEP = 220, REST = 1400; // ms per iteration; pause on the last one before the next shape
   G = 9; // the whole symbol list fits a 9 grid
+  INK = '#231F20'; PAPER = '#DEDDD2'; // the colours of the printed book
   const svg = document.getElementById('stage');
   let last = '', timer = 0;
   function next() {
@@ -13,7 +14,7 @@
     const states = [made.states[0], ...made.states.slice(1), ...unmade.states.slice(1)];
     const chain = { states, orig: states[0] }, bb = bbox(chain, 'form');
     svg.setAttribute('viewBox', `${bb.x} ${bb.y} ${bb.w} ${bb.h}`);
-    svg.innerHTML = defs() + '<g id="f"></g>';
+    svg.innerHTML = defs() + '<g id="f" fill="' + INK + '"></g>';
     const g = svg.querySelector('#f'); let k = 0;
     const tick = () => { g.innerHTML = frame(chain, k, 'form'); k++; timer = setTimeout(k < states.length ? tick : () => { timer = setTimeout(next, REST); }, k < states.length ? STEP : 0); };
     tick();
