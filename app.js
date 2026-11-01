@@ -179,8 +179,11 @@ const metaSVG = `<desc>${CREDIT}</desc><metadata><rdf:RDF xmlns:rdf="http://www.
 const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${extra}>${metaSVG}<rect width="${w}" height="${h}" fill="${PAPER}"/>${defs()}${inner}</svg>`;
 // Portrait paper sizes in mm (ISO A series). The contact sheet is laid out on one page of the chosen size and exported at that physical size.
 const PAPERS = { A3: [297, 420], A2: [420, 594], A1: [594, 841], A0: [841, 1189] };
+const n2s = v => +v.toFixed(1);
 function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', title = '') {
-  const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06, nb = NOTE ? noteBlock(W) : null, band = nb ? nb.h : 0, tb = title ? titleBlock(W, title) : null, top = tb ? tb.h : 0;
+  const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06, nb = NOTE ? noteBlock(W) : null, band = nb ? nb.h + (title ? 160 : 0) : 0, top = 0, fs = W / 105;
+  // The title sits small in the bottom left corner with the name, in the margin, not across the top.
+  const cap = title ? `<text x="${m}" y="${n2s(H - m * 0.55 - fs * 1.7)}" font-family="Times New Roman, Times, serif" font-style="italic" font-size="${n2s(fs * 1.2)}" fill="${INK}">${esc(title)}</text><text x="${m}" y="${n2s(H - m * 0.55)}" font-family="Helvetica, Arial, sans-serif" font-size="${n2s(fs * 0.85)}" fill="${INK}" opacity=".7">Form by Patrick Walker, form.pkwr.co</text>` : '';
   // Choose the number of columns that makes the variants as large as possible on the page.
   let cols = 1, best = 0;
   for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m - band - top) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
@@ -191,7 +194,7 @@ function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', t
       `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
       `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${st.id ? roman(st.id) : ''}</text></g>`;
   });
-  return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m + top}) scale(${best})">${inner}</g>` + (tb ? `<g transform="translate(0 ${m * 0.35})">${tb.svg}</g>` : '') + (nb ? nb.svg(H - band - m / 2) : ''), `width="${pw}mm" height="${ph}mm"`);
+  return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m + top}) scale(${best})">${inner}</g>` + cap + (nb ? nb.svg(H - band - m / 2) : ''), `width="${pw}mm" height="${ph}mm"`);
 }
 function animSVG(chain, mode, ms, title = '') {
   const bb = bbox(chain, mode), n = chain.states.length, T = (n * ms / 1000).toFixed(2);
