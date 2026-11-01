@@ -257,8 +257,9 @@ if (typeof document !== 'undefined') {
 
   function drawGrid(live) {
     let h = '';
-    for (let i = 0; i <= G; i++) h += `<path d="M${i * U} 0V${G * U}M0 ${i * U}H${G * U}" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>`;
-    h += `<g fill="${YEL}">` + grid.map((c, i) => c ? use({ ...c, x: i % G, y: Math.floor(i / G) }, YEL) : '').join('') + '</g>';
+    for (let i = 0; i <= G; i++) h += `<path d="M${i * U} 0V${G * U}M0 ${i * U}H${G * U}" stroke="${INK}" stroke-opacity=".16" stroke-width="2"/>`; // the grid is the artwork's paper and ink, so a colour change shows at once
+    h += `<g fill="${INK}">` + grid.map((c, i) => c ? use({ ...c, x: i % G, y: Math.floor(i / G) }, INK) : '').join('') + '</g>';
+    $('grid').style.background = PAPER;
     $('grid').setAttribute('viewBox', `0 0 ${G * U} ${G * U}`);
     $('grid').innerHTML = defs() + h;
     if (!live) updateCount(); // the live camera redraws many times a second, so it skips the count
@@ -516,6 +517,7 @@ if (typeof document !== 'undefined') {
   $('presets').innerHTML = PRESETS.map(([n, p, i]) => `<button type="button" class="preset" title="${n}" aria-label="${n}" data-p="${p}" data-i="${i}" style="background:linear-gradient(135deg,${p} 50%,${i} 50%)"></button>`).join('');
   function setColours(p, i) {
     PAPER = p; INK = i; $('paperCol').value = p; $('inkCol').value = i; $('anim').style.background = p;
+    drawGrid(true); // the drawing grid shows the colours too, so the change is visible wherever you are
     if (chain) show();
   }
   $('paperCol').addEventListener('input', () => setColours($('paperCol').value, INK));

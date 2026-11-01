@@ -199,3 +199,18 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #colours input[type=color]{width:34px;height:26px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
 #presets{display:flex;gap:8px;margin-left:auto}
 .preset{width:26px;height:26px;padding:0;border-radius:50%;border:1px solid #555;cursor:pointer}
+.shape-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px}
+.shape-row #palette{margin:0}
+.shape-row #act{margin:0}
+@media(pointer:coarse),(max-width:600px){
+.draw-shapes{display:block}
+.shape-row{flex-wrap:nowrap;gap:8px;margin:0 0 10px}
+.draw-shapes #palette{gap:4px}
+.draw-shapes #palette button{width:40px;height:40px;padding:7px}
+.shape-row #act a{min-width:50px;padding:5px 2px 4px}
+.draw-shapes>.row{margin:0}
+}
+@media(pointer:coarse),(max-width:600px){
+#drawBox #grid{width:auto;height:min(calc(100vw - 32px),calc(100svh - 360px));max-width:100%;margin:0 auto}
+}
+#grid{border-color:var(--line)}
