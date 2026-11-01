@@ -175,7 +175,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .card h3{margin:0 0 6px;font-size:15px;font-weight:400}
 .card .row{margin:12px 0 0}
 #out{min-height:0}
-@media all{#sheet svg{height:max(220px,calc(100svh - 430px))}}
+@media all{#sheet svg{height:max(140px,calc(100svh - 430px))}}
 /* Icon buttons: steps, rule and treatments. Quiet: the selected one is yellow on the dark panel and ink with a yellow icon on paper. */
 .links.ico{display:flex;flex-wrap:nowrap;gap:4px;margin:6px 0;font-size:9.5px;color:var(--muted)}
 .ico a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:56px;padding:6px 4px 5px;border-radius:8px;text-decoration:none;color:var(--text);line-height:1.1;text-align:center;overflow-wrap:anywhere}
@@ -236,7 +236,7 @@ body.view-results #processRow .row{display:none}
 #out #colours .swatch{color:#555}
 #out #colours input[type=color]{border-color:var(--ink)}
 #out .preset{border-color:var(--ink)}
-@media all{#sheet svg{height:max(200px,calc(100svh - 440px))}}
+@media all{#sheet svg{height:max(140px,calc(100svh - 440px))}}
 @media(min-width:601px) and (pointer:fine){#panel #grid{width:min(100%,calc(100vh - 505px));margin:0 auto}}
 .dlico{display:inline-block}
 #out #viewIcons,#out #projIcons,#out #colours,#makeTabs{max-width:460px}
@@ -248,8 +248,8 @@ body.view-results #processRow .row{display:none}
 #out .preset.on,.preset.on{border-color:var(--yellow)}
 /* Desktop: the animation and the contact sheet are sized to the window so Next and Back stay in view; the icon tiles keep a steady width. */
 @media(min-width:601px) and (pointer:fine){
-#anim{max-height:max(220px,calc(100vh - 400px))}
-#sheet svg{height:max(240px,calc(100vh - 390px))}
+#anim{max-height:max(150px,calc(100vh - 400px))}
+#sheet svg{height:max(150px,calc(100vh - 390px))}
 #viewIcons a{flex:0 1 84px}
 #viewIcons{justify-content:flex-start}
 }
@@ -309,3 +309,6 @@ body.view-outputs #viewHostOut,body.view-outputs #colourHostOut{display:none}
 /* Step by step: the step line shows where you are; there are no tabs to jump ahead, and the icon row is a marker, not a menu. */
 #paneSwitch{margin:0 0 10px;font-size:13px;color:#555}
 #steps{pointer-events:none}
+/* Keep each step on one screen. The animation gives up height on desktop for its controls; on short phones the card's explanatory text steps aside (the step line already names the card). */
+@media(min-width:601px) and (pointer:fine){#anim{max-height:max(140px,calc(100vh - 470px))}}
+@media(max-height:700px){.card .hint2,.card h3{display:none}#personalMsg{height:2.4em}}
