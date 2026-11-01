@@ -198,7 +198,8 @@ function frame0(chain, k, mode) {
   return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
 }
 function bbox(chain, mode) {
-  const pts = (s, k) => [...s.blocks, ...s.tr, ...(mode === 'dens' ? (chain.orig || chain.states[0]).blocks.map(b => ({ x: b.x + (chain.orig || chain.states[0]).ox - s.ox, y: b.y + (chain.orig || chain.states[0]).oy - s.oy })) : []), ...(mode === 'trans' ? ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy }))) : [])];
+  // The same frame for every treatment (blocks, traces, the density overlay and the ghosts), so changing treatment never changes the scale.
+  const pts = (s, k) => [...s.blocks, ...s.tr, ...(chain.orig || chain.states[0]).blocks.map(b => ({ x: b.x + (chain.orig || chain.states[0]).ox - s.ox, y: b.y + (chain.orig || chain.states[0]).oy - s.oy })), ...ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy })))];
   const all = chain.states.flatMap(pts);
   if (ISO) { // projected extents of every cell corner at each step's own angle, plus the thickness
     let xa = 1e9, xb = -1e9, ya = 1e9, yb = -1e9;
