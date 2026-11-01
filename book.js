@@ -43,10 +43,8 @@ function makeBook(bc, opt) {
   const text = (t, f, size, x, y, col, align = 'c') => { const w = textWidth(t, f, size), xx = align === 'c' ? x - w / 2 : x; return `${rgb(col)} rg BT /F${f + 1} ${size} Tf 1 0 0 -1 ${n2(xx)} ${n2(y)} Tm (${pdfStr(t)}) Tj ET\n`; };
   // blocks, stripes and hatching, in a frame whose cell (0,0) sits at (X,Y) with cells c points wide
   const blockOps = (b, X, Y, c, ink, o = 1) => `q ${o < 1 ? alpha(o) : ''}${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm ${rgb(ink)} rg ${rgb(ink)} RG 1.5 w ${pathOps(b.s, ang(b))} B Q\n`;
-  const stripeOps = (b, X, Y, c, ink) => {
-    const sq = b.s === 'square'; // square blocks: stripes run a hair past the cell, with no clip, so lines carry on without a seam
-    const r = b.a === 0 ? (sq ? '-0.6 8.33 101.2 16.67 re -0.6 41.67 101.2 16.67 re -0.6 75 101.2 16.67 re' : '0 8.33 100 16.67 re 0 41.67 100 16.67 re 0 75 100 16.67 re')
-      : (sq ? '8.33 -0.6 16.67 101.2 re 41.67 -0.6 16.67 101.2 re 75 -0.6 16.67 101.2 re' : '8.33 0 16.67 100 re 41.67 0 16.67 100 re 75 0 16.67 100 re');
+  const stripeOps = (b, X, Y, c, ink, all) => { // geometry from stripeRects in app.js
+    const sq = b.s === 'square', r = stripeRects(b, all, sq).map(([x, y, w, h]) => `${n2(x)} ${n2(y)} ${n2(w)} ${n2(h)} re`).join(' ');
     return `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm ${rgb(ink)} rg ${sq ? '' : pathOps(b.s, ang(b)) + ' W n '}${r} f Q\n`;
   };
   // Density: every block is filled with a fine-line pattern, one layer for the original and one for each of this variant and the two before it,
@@ -62,7 +60,7 @@ function makeBook(bc, opt) {
   };
   const frameOps = (k, view, X, Y, c, ink) => {
     const s = bc.states[k]; let out = '';
-    if (view === 'direction') return s.blocks.map(b => stripeOps(b, X, Y, c, ink)).join('');
+    if (view === 'direction') return s.blocks.map(b => stripeOps(b, X, Y, c, ink, s.blocks)).join('');
     if (view === 'dens') return densOps(k, X, Y, c);
     if (view === 'trans') { ghosts(bc, k).forEach(g => g.blocks.forEach(b => { out += blockOps(b, X + g.dx * c, Y + g.dy * c, c, ink, g.o); })); s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink, TONE); }); }
     else if (view === 'solid') s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink); });

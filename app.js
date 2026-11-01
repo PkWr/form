@@ -134,14 +134,18 @@ function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs *
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
   `<path id="hl" fill="none" stroke-width="1.1" d="${(() => { let d = ''; for (let x = -30; x <= 130; x += 3.2) d += `M${+x.toFixed(1)} -30V130`; return d; })()}"/>` +
-  // Direction stripes: three lines a sixth of the cell wide with equal gaps, inset by half a gap, so the pattern carries on evenly across neighbouring blocks (flush edge stripes joined into doubled lines).
-  '<g id="hs"><rect y="8.33" width="100" height="16.67"/><rect y="41.67" width="100" height="16.67"/><rect y="75" width="100" height="16.67"/></g>' +
-  '<g id="vs"><rect x="8.33" width="16.67" height="100"/><rect x="41.67" width="16.67" height="100"/><rect x="75" width="16.67" height="100"/></g>' +
-  // for square blocks the stripes run a hair past the cell, so lines carry on without a seam where blocks join
-  '<g id="hs2"><rect x="-0.6" y="8.33" width="101.2" height="16.67"/><rect x="-0.6" y="41.67" width="101.2" height="16.67"/><rect x="-0.6" y="75" width="101.2" height="16.67"/></g>' +
-  '<g id="vs2"><rect x="8.33" y="-0.6" width="16.67" height="101.2"/><rect x="41.67" y="-0.6" width="16.67" height="101.2"/><rect x="75" y="-0.6" width="16.67" height="101.2"/></g></defs>';
+  '</defs>';
 // Direction: each block is three stripes running along its last move (vertical until it moves).
-const stripes = b => b.s === 'square' ? `<g transform="translate(${b.x * U} ${b.y * U})"><use href="#${b.a === 0 ? 'hs2' : 'vs2'}"/></g>` : `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
+// Direction stripes: three lines of equal width with equal gaps, flush to the cell edge on open sides (as in the book). Where a block with stripes the same way
+// touches this one, that side is inset by half a gap, so the two blocks together make an even gap and not a doubled line. Line width follows: 20% of the cell flush
+// both sides, about 18% with one side inset, about 17% with both. Square blocks draw unclipped and a hair long so joined lines have no seam.
+function stripeRects(b, all, over) {
+  const v = b.a === 1, has = (dx, dy) => all.some(o => o.x === b.x + dx && o.y === b.y + dy && o.a === b.a);
+  const nl = v ? has(-1, 0) : has(0, -1), nr = v ? has(1, 0) : has(0, 1), w = 100 / (5 + 0.5 * nl + 0.5 * nr), L = nl ? w / 2 : 0, e = over ? 0.6 : 0;
+  return [0, 1, 2].map(i => { const p = L + i * 2 * w; return v ? [p, -e, w, 100 + 2 * e] : [-e, p, 100 + 2 * e, w]; });
+}
+const stripes = (b, all) => { const sq = b.s === 'square'; return `<g transform="translate(${b.x * U} ${b.y * U})"${sq ? '' : ` clip-path="url(#c_${b.s}_${ang(b)})"`}>${stripeRects(b, all, sq).map(([x, y, w, h]) => `<rect x="${n3(x)}" y="${n3(y)}" width="${n3(w)}" height="${n3(h)}"/>`).join('')}</g>`; };
+const n3 = v => +v.toFixed(3);
 // Density: every block is drawn as fine lines, and each iteration adds a layer at its own angle. Where layers overlap the lines cross into a darker mesh,
 // so tone builds up as texture. Layers: the original (vertical), this variant, and the two variants before it.
 const DENS = [0, 45, 135, 90];
@@ -160,7 +164,7 @@ const ghosts = (chain, k) => GHOSTS.map((o, a) => { const j = k - 1 - a; if (j <
   return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
 function frame(chain, k, mode) {
   const s = chain.states[k];
-  if (mode === 'direction') return s.blocks.map(stripes).join('');
+  if (mode === 'direction') return s.blocks.map(b => stripes(b, s.blocks)).join('');
   if (mode === 'dens') return densLayers(chain, k);
   return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
 }
