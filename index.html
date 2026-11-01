@@ -62,28 +62,54 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Process</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.27<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.28<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
-    <h2>Animated frame</h2>
-    <svg id="anim" viewBox="0 0 100 100"></svg>
-    <div class="row"><button id="dlAnim">Download animated SVG</button><button id="dlFrame">Download this frame</button></div>
-    <h2>Contact sheet</h2>
-    <p class="hint2">Click a variant to hide or keep it. Hidden ones are left out of the animation and the downloads.</p>
-    <div id="sheet"></div>
-    <div class="links" id="paper" role="radiogroup" aria-label="Contact sheet size, portrait"><span>Contact sheet, portrait</span><a href="#" role="radio" data-p="A3" aria-checked="true">A3</a><a href="#" role="radio" data-p="A2" aria-checked="false">A2</a><a href="#" role="radio" data-p="A1" aria-checked="false">A1</a><a href="#" role="radio" data-p="A0" aria-checked="false">A0</a></div>
-    <div class="row"><button id="dlSheet">Download contact sheet SVG</button></div>
-    <h2>Publication</h2>
-    <p class="hint2">An A5 book of this shape in the design of the original, with no bleed. Imposed puts two pages on each A4 landscape sheet in booklet order: print double sided, flip on short edge, fold and staple. Pages is the plain A5 pages for reading on screen.</p>
-    <label class="inline"><input type="checkbox" id="prefacePage"> Preface about the project: one page</label>
-    <label class="msg">Personal message: one page, in your own words (optional)<textarea id="personalMsg" rows="3" maxlength="600" placeholder="For ..."></textarea></label>
-    <label class="inline"><input type="checkbox" id="endPapers"> End papers: two pages, a pattern of the iterations, white on yellow</label>
-    <div class="row"><button id="dlBookImposed">Download publication, A5 imposed (PDF)</button><button id="dlBook">Download pages, A5 (PDF)</button></div>
+    <div class="links" id="steps" role="radiogroup" aria-label="Results"><a href="#" role="radio" data-s="1" aria-checked="true">1 Animation</a><a href="#" role="radio" data-s="2" aria-checked="false">2 Contact sheet</a><a href="#" role="radio" data-s="3" aria-checked="false">3 Make a book, a print or a GIF</a></div>
+    <div class="step on" id="step1">
+      <h2>Animation</h2>
+      <svg id="anim" viewBox="0 0 100 100"></svg>
+      <div class="row"><button id="dlAnim">Download animated SVG</button><button id="dlFrame">Download this frame</button></div>
+      <div class="row nav"><button class="next" data-go="2">Next: choose your variants</button></div>
+    </div>
+    <div class="step" id="step2">
+      <h2>Contact sheet</h2>
+      <p class="hint2">Click a variant to hide or keep it. Hidden ones are left out of everything that follows.</p>
+      <div id="sheet"></div>
+      <div class="row nav"><button class="back" data-go="1">Back</button><button class="next" data-go="3">Next: make a book, a print or a GIF</button></div>
+    </div>
+    <div class="step" id="step3">
+      <h2>What do you want to make?</h2>
+      <div class="cards">
+        <div class="card" id="cardPrint">
+          <h3>Make a print</h3>
+          <p class="hint2">The contact sheet as one portrait page, an SVG at its real size.</p>
+          <div class="links" id="paper" role="radiogroup" aria-label="Print size, portrait"><span>Size</span><a href="#" role="radio" data-p="A3" aria-checked="true">A3</a><a href="#" role="radio" data-p="A2" aria-checked="false">A2</a><a href="#" role="radio" data-p="A1" aria-checked="false">A1</a><a href="#" role="radio" data-p="A0" aria-checked="false">A0</a></div>
+          <div class="row"><button id="dlSheet">Download the print (SVG)</button></div>
+        </div>
+        <div class="card" id="cardGif">
+          <h3>Make a GIF for socials</h3>
+          <p class="hint2">The animation as a looping GIF, with the title line on every frame.</p>
+          <div class="links" id="gifFormat" role="radiogroup" aria-label="GIF shape"><span>Shape</span><a href="#" role="radio" data-g="sq" aria-checked="true">Square 1:1</a><a href="#" role="radio" data-g="st" aria-checked="false">Story 9:16</a></div>
+          <div class="row"><button id="dlGif">Download the GIF</button></div>
+        </div>
+        <div class="card" id="cardBook">
+          <h3>Make a book</h3>
+          <p class="hint2">An A5 book of this shape in the design of the original, with no bleed. Imposed puts two pages on each A4 landscape sheet in booklet order: print double sided, flip on short edge, fold and staple. Pages is the plain A5 pages for reading on screen.</p>
+          <label class="inline"><input type="checkbox" id="prefacePage"> Preface about the project: one page</label>
+          <label class="msg">Personal message: one page, in your own words (optional)<textarea id="personalMsg" rows="3" maxlength="600" placeholder="For ..."></textarea></label>
+          <label class="inline"><input type="checkbox" id="endPapers"> End papers: two pages, a pattern of the iterations, white on yellow</label>
+          <div class="row"><button id="dlBookImposed">Download the book, imposed (PDF)</button><button id="dlBook">Download the pages (PDF)</button></div>
+        </div>
+      </div>
+      <div class="row nav"><button class="back" data-go="2">Back</button></div>
+    </div>
   </section>
 </main>
 <script src="app.js"></script>
 <script src="book.js"></script>
+<script src="gif.js"></script>
 <script src="start.js"></script>
 </body>
 </html>

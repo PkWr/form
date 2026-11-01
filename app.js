@@ -279,7 +279,7 @@ if (typeof document !== 'undefined') {
     const n = chain.states.length - 1;
     $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : act === 'rearrange' ? `${n} step${n > 1 ? 's' : ''}. Each moves one block away from the rest.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
-    document.body.classList.add('view-results'); paneSwitch();
+    document.body.classList.add('view-results'); paneSwitch(); goStep(1);
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
   $('size').addEventListener('click', e => {
@@ -371,6 +371,34 @@ if (typeof document !== 'undefined') {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
     a.download = `form-publication-A5${imposed ? '-imposed' : ''}.pdf`; a.click(); URL.revokeObjectURL(a.href);
   }
+  // A looping GIF of the animation for socials: each variant is drawn as an SVG, rasterised, mapped to 32 steps between paper and ink, and written by gifEncode.
+  let gifFmt = 'sq';
+  $('gifFormat').addEventListener('click', e => { const g = e.target.closest('a'); if (!g) return; e.preventDefault(); [...$('gifFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === g)); gifFmt = g.dataset.g; });
+  async function dlGif() {
+    if (!chain) return $('msg').textContent = 'Press Process first.';
+    const kc = kept(); if (!kc.states.length) return $('msg').textContent = 'There are no variants to put in a GIF.';
+    const W = 720, H = gifFmt === 'sq' ? 720 : 1280, skip = Math.max(1, Math.ceil(kc.states.length / 120)), idxs = []; for (let k = 0; k < kc.states.length; k += skip) idxs.push(k);
+    const bb = bbox(kc, mode), fs = W / 38, perLine = Math.floor(W * 0.92 / (fs * 0.6)), lines = NOTE ? [...wrapText(NOTE.ref, perLine), ...wrapText(NOTE.text, perLine)] : [];
+    const band = 90 + (lines.length ? lines.length * fs * 1.45 + 24 : 0), availW = W * 0.84, availH = H - band - H * 0.06, sc = Math.min(availW / bb.w, availH / bb.h), tx = (W - bb.w * sc) / 2, ty = H * 0.06 + (availH - bb.h * sc) / 2;
+    const hex = c => { const n = parseInt(c.length === 4 ? '#' + [...c.slice(1)].map(x => x + x).join('') : c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+    const P = hex(PAPER), I = hex(INK), pal = []; for (let i = 0; i < 32; i++) pal.push(P.map((v, c) => Math.round(v + (I[c] - v) * i / 31)));
+    const lum = c => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2], PL = lum(P), IL = lum(I);
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d', { willReadFrequently: true }), frames = [], title = titleText(kc);
+    for (let n = 0; n < idxs.length; n++) {
+      $('msg').textContent = `Making the GIF: ${n + 1} of ${idxs.length}`;
+      const notes = lines.map((l, i) => `<text x="${W * 0.04}" y="${H - band + 30 + i * fs * 1.45}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(l)}</text>`).join('');
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${PAPER}"/>${defs()}<g transform="translate(${tx} ${ty}) scale(${sc})"><g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, idxs[n], mode)}</g></g>${notes}<text x="${W / 2}" y="${H - 34}" text-anchor="middle" font-family="monospace" font-style="italic" font-size="${fs * 1.15}" fill="${INK}">${esc(title)}</text></svg>`;
+      const img = new Image(); img.src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })); await img.decode(); URL.revokeObjectURL(img.src);
+      cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H); cx.drawImage(img, 0, 0, W, H);
+      const d = cx.getImageData(0, 0, W, H).data, px = new Uint8Array(W * H);
+      for (let i = 0; i < px.length; i++) px[i] = Math.max(0, Math.min(31, Math.round((PL - (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2])) / (PL - IL) * 31)));
+      frames.push(px);
+    }
+    const bytes = gifEncode(W, H, pal, frames, Math.max(2, Math.round(+$('spd').value / 10)));
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' })); a.download = `form-${gifFmt === 'sq' ? 'square' : 'story'}.gif`; a.click(); URL.revokeObjectURL(a.href);
+    $('msg').textContent = `GIF ready: ${idxs.length} frames.`;
+  }
+  $('dlGif').onclick = dlGif;
   $('dlBookImposed').onclick = () => dlBook(true);
   $('dlBook').onclick = () => dlBook(false);
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
@@ -389,6 +417,14 @@ if (typeof document !== 'undefined') {
   small.addEventListener('change', () => { placeDraw(); sizeBody(); });
   const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 16 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
+  // The results are a short path, one step at a time: the animation, the contact sheet, then make a book or a print.
+  function goStep(n) {
+    document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + n));
+    [...$('steps').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.s === String(n)));
+    scrollTo(0, 0);
+  }
+  $('steps').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); goStep(+a.dataset.s); });
+  $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   function paneSwitch() {
     const res = document.body.classList.contains('view-results');
     [...$('paneSwitch').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', (x.dataset.pane === 'results') === res));

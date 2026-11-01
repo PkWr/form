@@ -162,3 +162,17 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #out input[type=checkbox]{accent-color:var(--ink)}
 #out label.msg{display:block;margin:10px 0 6px;color:#555;font-size:12px}
 #out textarea{display:block;width:100%;max-width:520px;margin-top:4px;font:inherit;font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:6px;padding:6px 8px;resize:vertical}
+.step{display:none}
+.step.on{display:block}
+#steps{margin:0 0 6px}
+#out h2{margin-top:12px}
+.row.nav{margin-top:18px}
+.row.nav .next{background:var(--ink);color:var(--paper);padding:10px 16px;font-size:14px}
+.row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
+#sheet svg{display:block;margin:0 auto;width:auto;height:min(72vh,980px);max-width:100%}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;max-width:900px}
+.card{border:1px solid var(--ink);border-radius:12px;padding:14px 16px}
+.card h3{margin:0 0 6px;font-size:15px;font-weight:400}
+.card .row{margin:12px 0 0}
+#out{min-height:0}
+@media(pointer:coarse),(max-width:600px){#sheet svg{height:max(220px,calc(100svh - 430px))}}
