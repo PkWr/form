@@ -303,8 +303,7 @@ body.step-rule #drawBox #size,body.step-rule #drawBox .draw-shapes,body.step-rul
 body.step-rule #drawBox #grid{display:none}
 #rulePreview{display:block;width:100%;height:clamp(180px,38vh,360px);margin:0 0 10px;border:1px solid var(--ink);border-radius:8px;background:var(--paper)}
 /* Results (animation, sheet) come first; Outputs (print, GIF, book) are a screen of their own after them. */
-body:not(.view-outputs) #steps a[data-s="3"],body:not(.view-outputs) #steps a[data-s="4"],body:not(.view-outputs) #steps a[data-s="5"],body.view-outputs #steps a[data-s="1"],body.view-outputs #steps a[data-s="2"]{display:none}
-body.view-outputs #viewHostOut,body.view-outputs #colourHostOut{display:none}
+body:not([data-step="1"]):not([data-step="2"]) #viewHostOut{display:none}
 /* Step by step: the step line shows where you are; there are no tabs to jump ahead, and the icon row is a marker, not a menu. */
 #paneSwitch{margin:0 0 10px;font-size:13px;color:#555}
 #steps{pointer-events:none}
@@ -334,3 +333,5 @@ body.view-outputs #viewHostOut,body.view-outputs #colourHostOut{display:none}
 @media(max-width:600px){.draw-ui #palette{gap:4px}.draw-ui #palette button{width:36px;height:36px;padding:6px}}
 /* No rule step any more: the yellow button is on Draw, and the output holds both the making and the unmaking. */
 body.view-results #processRow .row{display:none}
+/* Step icons: Animation, Sheet, GIF, Book. Animation is the result; the rest are outputs. */
+body:not(.view-outputs) #steps a[data-s="2"],body:not(.view-outputs) #steps a[data-s="3"],body:not(.view-outputs) #steps a[data-s="4"],body.view-outputs #steps a[data-s="1"]{display:none}

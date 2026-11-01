@@ -295,7 +295,7 @@ if (typeof document !== 'undefined') {
   const kept = () => ({ ...chain, states: chain.states.filter(st => !hidden.has(st.id)) });
   let paper = 'A3';
   const titleText = c => waysTitle(c);
-  const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true, paper, titleText({ states: chain.states.filter(s => !hidden.has(s.id)) })); };
+  const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, false, paper, titleText({ states: chain.states.filter(s => !hidden.has(s.id)) })); };
   function show() {
     if (!chain) return;
     const kc = kept();
@@ -395,7 +395,7 @@ if (typeof document !== 'undefined') {
     [...$('viewIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
     mode = a.dataset.mode; updateCount(); if (chain) process(true);
   });
-  $('sheet').addEventListener('click', e => { const g = e.target.closest('[data-id]'); if (!g) return; const id = +g.dataset.id; hidden.has(id) ? hidden.delete(id) : hidden.add(id); show(); });
+  // The variants are what they are: nothing to hide or keep.
   $('paper').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('paper').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
@@ -511,17 +511,18 @@ if (typeof document !== 'undefined') {
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
   // The results are a short path, one step at a time: the animation, the contact sheet, then make a book or a print.
   // One linear flow: Animation, Sheet, Print, GIF or video, Book. Steps 3 to 5 share one panel and show one card each.
-  const CARDS = { 3: 'print', 4: 'social', 5: 'book' }, NEXT = { 1: 'Next: choose your variants', 2: 'Next: outputs', 3: 'Next: a GIF or a video', 4: 'Next: make a book' };
+  const CARDS = { 3: 'social', 4: 'book' }, NEXT = { 1: 'Next: the contact sheet', 2: 'Next: a GIF or a video', 3: 'Next: make a book' };
   let curStep = 1;
+  // Animation is the result. The contact sheet, the GIF or video and the book are outputs, each optional, in that order, with the book last.
   function goStep(n) {
-    curStep = n; document.body.classList.toggle('view-outputs', n > 2); paneSwitch();
+    curStep = n; document.body.dataset.step = n; document.body.classList.toggle('view-outputs', n > 1); paneSwitch();
     const panel = n > 2 ? 3 : n;
     document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
     [...$('steps').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.s === String(n)));
     if (n > 2) {
       document.querySelectorAll('#step3 .card').forEach(c => c.classList.toggle('on', c.dataset.m === CARDS[n]));
       const nx = document.querySelector('#step3 .next'), bk = document.querySelector('#step3 .back');
-      nx.hidden = n === 5; nx.dataset.go = n + 1; nx.textContent = NEXT[n]; bk.dataset.go = n - 1;
+      nx.hidden = n === 4; nx.dataset.go = n + 1; nx.textContent = NEXT[n]; bk.dataset.go = n - 1;
     }
     scrollTo(0, 0);
   }
@@ -529,8 +530,8 @@ if (typeof document !== 'undefined') {
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   // Three screens in order: Draw, Rule, Results. The rule is chosen after the shape is drawn, never while building.
   const paneNow = () => document.body.classList.contains('view-outputs') ? 'outputs' : document.body.classList.contains('view-results') ? 'results' : 'draw';
-  // One path, in order, with no jumping ahead: Draw, Animation, Sheet, Print, GIF or video, Book.
-  const STEP_NAMES = ['Draw', 'Animation', 'Sheet', 'Print', 'GIF or video', 'Book'];
+  // One path, in order, with no jumping ahead: Draw, Animation, Contact sheet, GIF or video, Book.
+  const STEP_NAMES = ['Draw', 'Animation', 'Contact sheet', 'GIF or video', 'Book'];
   function paneSwitch() {
     const p = paneNow(), n = p === 'draw' ? 1 : 1 + curStep;
     $('stepNow').textContent = `Step ${n} of ${STEP_NAMES.length} · ${STEP_NAMES[n - 1]}`;
@@ -538,7 +539,7 @@ if (typeof document !== 'undefined') {
   function showPane(p) {
     document.body.classList.toggle('view-results', p === 'results' || p === 'outputs');
     document.body.classList.toggle('view-outputs', p === 'outputs');
-    if (p === 'outputs') goStep(3); else if (p === 'results' && curStep > 2) goStep(1);
+    if (p === 'outputs') goStep(2); else if (p === 'results' && curStep > 1) goStep(1);
     paneSwitch(); scrollTo(0, 0);
   }
   $('backRule').onclick = () => showPane('draw');
