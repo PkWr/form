@@ -7,6 +7,8 @@ const mixHex = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice
 // Isometric: a second view beside the treatments. Every treatment is drawn as normal and the whole drawing is then laid onto the isometric plane (x' = (x - y) cos 30, y' = (x + y) / 2),
 // with each current block given a little thickness, drawn under the tops as a few copies of the block shifted down in a mid tone.
 let ISO = false, ISO_D = 0.4, ISO_A = 30, ISO_RND = false; // isometric view: depth (in blocks), angle (degrees; 30 is true isometric) and whether each step has its own angle
+let SHADE = null; // the colour of the isometric depth; null means halfway between ink and paper
+const shadeCol = () => SHADE || mixHex(INK, PAPER, 0.5);
 const isoAng = s => ISO_RND && s && s.ia ? s.ia : ISO_A;
 const isoCS = a => [Math.cos(a * Math.PI / 180), Math.sin(a * Math.PI / 180)];
 const isoM = a => { const [c, n] = isoCS(a); return `matrix(${+c.toFixed(4)} ${+n.toFixed(4)} ${+(-c).toFixed(4)} ${+n.toFixed(4)} 0 0)`; };
@@ -185,7 +187,7 @@ const ghosts = (chain, k) => GHOSTS.map((o, a) => { const st = pastOf(chain, k)[
   return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
 function frame(chain, k, mode) {
   if (!ISO) return frame0(chain, k, mode);
-  const s = chain.states[k], side = mixHex(INK, PAPER, 0.5), ISO_M = isoM(isoAng(s));
+  const s = chain.states[k], side = shadeCol(), ISO_M = isoM(isoAng(s));
   const sides = [1 / 3, 2 / 3, 1].map(t => `<g transform="translate(0 ${n3(t * ISO_D * U)}) ${ISO_M}" fill="${side}">${s.blocks.map(b => use(b, side)).join('')}</g>`).join('');
   return sides + `<g transform="${ISO_M}">${frame0(chain, k, mode)}</g>`;
 }
@@ -397,7 +399,7 @@ if (typeof document !== 'undefined') {
   $('projIcons').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('projIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    ISO = a.dataset.proj === 'iso'; $('isoHostPanel').hidden = !ISO; if (chain) show();
+    ISO = a.dataset.proj === 'iso'; $('isoHostPanel').hidden = !ISO; $('shadeLab').hidden = !ISO; if (chain) show();
   });
   $('viewIcons').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
@@ -562,13 +564,15 @@ if (typeof document !== 'undefined') {
   $('presets').innerHTML = PRESETS.map(([n, p, i]) => `<button type="button" class="preset" title="${n}" aria-label="${n}" data-p="${p}" data-i="${i}" style="background:linear-gradient(135deg,${p} 50%,${i} 50%)"></button>`).join('');
   function setColours(p, i) {
     [...$('presets').children].forEach(b => b.classList.toggle('on', b.dataset.p === p && b.dataset.i === i)); // the chosen preset is ringed in yellow
-    PAPER = p; INK = i; $('paperCol').value = p; $('inkCol').value = i; $('anim').style.background = p;
+    PAPER = p; INK = i; $('paperCol').value = p; $('inkCol').value = i; $('anim').style.background = p; if (!SHADE) $('shadeCol').value = shadeCol();
     drawGrid(true); // the drawing grid shows the colours too, so the change is visible wherever you are
     if (chain) show();
   }
   $('paperCol').addEventListener('input', () => setColours($('paperCol').value, INK));
   $('inkCol').addEventListener('input', () => setColours(PAPER, $('inkCol').value));
-  $('presets').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setColours(b.dataset.p, b.dataset.i); });
+  $('presets').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { SHADE = null; setColours(b.dataset.p, b.dataset.i); } }); // a preset is a whole palette, so the shade follows it again
+  $('shadeCol').addEventListener('input', () => { SHADE = $('shadeCol').value; if (chain) show(); });
+  $('shadeCol').value = shadeCol();
   $('anim').style.background = PAPER; $('presets').firstChild.classList.add('on');
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   const pieceName = new URLSearchParams(location.search).get('piece');

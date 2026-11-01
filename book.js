@@ -65,7 +65,7 @@ function buildPages(bc, opt) {
   // Isometric: the same drawing laid onto the isometric plane about the frame's origin, with thickness drawn under it (see app.js). Hatch patterns keep their screen angles.
   const frameOps = (k, view, X, Y, c, ink) => {
     if (!ISO) return frameOps0(k, view, X, Y, c, ink);
-    const st = bc.states[k], [cs, sn] = isoCS(isoAng(st)), e = X - (cs * X - cs * Y), f = Y - (sn * X + sn * Y), M = `${n2(cs)} ${n2(sn)} ${n2(-cs)} ${n2(sn)} ${n2(e)} ${n2(f)} cm`, side = mixHex(INK, PAPER, 0.5);
+    const st = bc.states[k], [cs, sn] = isoCS(isoAng(st)), e = X - (cs * X - cs * Y), f = Y - (sn * X + sn * Y), M = `${n2(cs)} ${n2(sn)} ${n2(-cs)} ${n2(sn)} ${n2(e)} ${n2(f)} cm`, side = shadeCol();
     const sides = [1 / 3, 2 / 3, 1].map(t => `q 1 0 0 1 0 ${n2(t * ISO_D * c)} cm ${M}\n` + st.blocks.map(b => blockOps(b, X, Y, c, side)).join('') + 'Q\n').join('');
     return sides + `q ${M}\n` + frameOps0(k, view, X, Y, c, ink) + 'Q\n';
   };
