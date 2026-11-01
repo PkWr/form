@@ -1,7 +1,7 @@
 'use strict';
 // Publication: the current shape, its variants and the five treatments laid out as a small book in the design of the original
 // (11 ways I can make you up, and Form): light pages with the shape on top and its variants in a grid under it, then dark plates.
-// Output is a real PDF written by hand (no library): A5 pages with no bleed, imposed two to a sheet for saddle stitch on A4 landscape
+// Output is a real PDF written by hand (no library): A5 pages, imposed two to a sheet for saddle stitch on A4 landscape
 // (print double sided, flip on short edge, fold and staple), or the plain A5 pages for proofing.
 // It relies on globals from app.js: SHAPES, ang, ghosts, TONE, U, bbox, waysLabel.
 const PT = 72 / 25.4, A5W = 148 * PT, A5H = 210 * PT, A4W = 297 * PT;
@@ -149,7 +149,7 @@ function buildPages(bc, opt) {
   if (opt.endpapers) pages.push(endpaper(true));
   const total = pages.length + 1, L = THEME.light;
   pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
-    text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch, no bleed.', 2, 6.5, W / 2, H * 0.83, L.ink) +
+    text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch.', 2, 6.5, W / 2, H * 0.83, L.ink) +
     text('\u00a9 2026 Patrick Walker. Free to share and print for non-commercial use, with credit.', 2, 6.5, W / 2, H * 0.845, L.ink) + text('Ask before commercial use.', 2, 6.5, W / 2, H * 0.86, L.ink), true));
   return { pages, gs, title };
 }
