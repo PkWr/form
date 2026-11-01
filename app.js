@@ -288,7 +288,7 @@ if (typeof document !== 'undefined') {
   let hidden = new Set();
   const kept = () => ({ ...chain, states: chain.states.filter(st => !hidden.has(st.id)) });
   let paper = 'A3';
-  const VERBS = { make: 'make you up', unmake: 'unmake you', rearrange: 'remake you' };
+  const VERBS = { make: 'make you up', unmake: 'unmake you' };
   const titleText = c => waysLabel(c.states.filter(s => s.id !== 0).length, VERBS[act]);
   const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true, paper, titleText({ states: chain.states.filter(s => !hidden.has(s.id)) })); };
   function show() {
@@ -304,8 +304,8 @@ if (typeof document !== 'undefined') {
   }
   const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
   // The subtitle number follows the grid, Moves and view live.
-  let act = 'make'; // the rule: make (a block moves and stays joined), unmake (a block is taken away) or rearrange (a block moves away from the rest)
-  const RULE_NOTES = { make: 'One block moves and stays joined to the rest. Its old place stays marked.', unmake: 'One block is taken away at a time. Nothing is added back.', rearrange: 'One block moves away from the rest, to somewhere else on the grid.' };
+  let act = 'make'; // the rule: make (a block moves and stays joined), unmake (a block is taken away)
+  const RULE_NOTES = { make: 'One block moves and stays joined to the rest. Its old place stays marked.', unmake: 'One block is taken away at a time. Nothing is added back.' };
   const verb = () => { $('verb').textContent = VERBS[act]; $('process').textContent = VERBS[act][0].toUpperCase() + VERBS[act].slice(1); };
   // Rule screen: a looping preview of what the chosen rule does to the drawn shape. Nothing is kept; the yellow button makes the real thing.
   let ptimer = 0;
@@ -313,7 +313,7 @@ if (typeof document !== 'undefined') {
     clearInterval(ptimer); const el = $('rulePreview'), st = startBlocks();
     if (!st.length) { el.innerHTML = ''; $('ruleNote').textContent = 'There is nothing drawn yet. Go back and place some blocks.'; return; }
     if (act === 'make' && !connected(st)) { el.innerHTML = ''; $('ruleNote').textContent = 'Make needs blocks that touch edge to edge. Go back to edit the shape, or try Unmake or Remake.'; return; }
-    const c = act === 'unmake' ? unmake(st) : act === 'rearrange' ? scatter(st, G) : variants(st, MOVES, mode === 'direction', TRACED.has(mode));
+    const c = act === 'unmake' ? unmake(st) : variants(st, MOVES, mode === 'direction', TRACED.has(mode));
     $('ruleNote').textContent = RULE_NOTES[act] + ' ' + (c.states.length - 1) + ' outcomes.';
     const bb = bbox(c, mode); el.setAttribute('viewBox', `0 0 ${bb.w} ${bb.h}`); let i = 0;
     const draw = () => { el.innerHTML = defs() + `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(c, i, mode)}</g>`; i = (i + 1) % c.states.length; };
@@ -328,9 +328,9 @@ if (typeof document !== 'undefined') {
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     if (act === 'make' && !connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge. (Unmake works with separate blocks.)';
     hidden = new Set();
-    chain = act === 'unmake' ? unmake(start) : act === 'rearrange' ? scatter(start, G) : variants(start, MOVES, mode === 'direction', TRACED.has(mode));
+    chain = act === 'unmake' ? unmake(start) : variants(start, MOVES, mode === 'direction', TRACED.has(mode));
     const n = chain.states.length - 1;
-    $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : act === 'rearrange' ? `${n} step${n > 1 ? 's' : ''}. Each moves one block away from the rest.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
+    $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
     if (!quiet) { showPane('results'); goStep(1); }
   }
