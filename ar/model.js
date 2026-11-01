@@ -2,7 +2,8 @@
 import * as THREE from 'three';
 const q = new URLSearchParams(location.search), code = (q.get('code') || '').trim();
 const msg = t => { document.getElementById('msg').textContent = t; };
-const INK = 0x231F20, PAPER = 0xDEDDD2, CAP = 150, MOVE_T = 1.2, UN_T = 1.0, LOOP_MAX = 120; // seconds
+const INK = 0x231F20, PAPER = 0xDEDDD2, CAP = 150, LOOP_MAX = 120; // seconds
+const MOVE_T = Math.max(0.2, Math.min(3, +q.get('speed') || 0.7)), UN_T = MOVE_T * 0.85; // seconds a move takes: ?speed=0.4 for faster, ?speed=1.5 for slower
 let pat;
 try { pat = decodePatternCode(code); } catch (e) { msg(code ? e.message : 'Add ?code= and a pattern code to the address.'); throw e; }
 const start = []; pat.cells.forEach((c, i) => { if (c) start.push([i % pat.G, Math.floor(i / pat.G), 0]); });
