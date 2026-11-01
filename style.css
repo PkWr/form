@@ -152,12 +152,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #pieceNote a{color:inherit;text-underline-offset:3px}
 @media(max-width:900px){#pieceNote{padding-right:24px}}
 @media all{#pieceNote{padding:16px 16px 0}}
-#camBar{margin:0 0 10px}
-#camBar .row{margin:6px 0 0}
-#camera[aria-pressed=true]{border-color:var(--yellow);color:var(--yellow)}
-#screen #camera[aria-pressed=true]{color:var(--yellow);background:var(--ink)}
 #screen label{color:#555}
-#screen #camT{margin-top:2px}
 #out label.inline{color:#231F20}
 #out input[type=checkbox]{accent-color:var(--ink)}
 #out label.msg{display:block;margin:10px 0 6px;color:#555;font-size:12px}
@@ -276,7 +271,7 @@ body.view-results #processRow .row{display:none}
 #steps a{flex:1 1 0;min-width:0;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:11px;text-align:center;word-break:normal}
 #steps a svg{width:20px;height:20px}
 #steps{max-width:460px}
-/* One button system. Tool: ink, 13px (downloads, Clear, Random, Camera, Preview). Step: ink, 14px, taller (Next). Go: yellow, same size as Step (the make button). Back: outline. All 8px radius, same line height. */
+/* One button system. Tool: ink, 13px (downloads, Clear, Random, Preview). Step: ink, 14px, taller (Next). Go: yellow, same size as Step (the make button). Back: outline. All 8px radius, same line height. */
 #screen .row button,#out .row button{font-size:13px;line-height:1.2;padding:8px 14px;min-height:38px}
 #screen .row.nav button,#out .row.nav button,#process{font-size:14px;line-height:1.2;padding:10px 16px;min-height:44px}
 #out .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
@@ -295,10 +290,8 @@ button#process,#processRow .row button{font-size:14px;line-height:1.2;padding:10
 #ruleBox h2{margin:6px 0 10px;font-size:15px;font-weight:400}
 #ruleBox #act{margin:0 0 6px}
 body:not(.step-rule) #ruleBox{display:none}
-body.step-rule #drawBox #size,body.step-rule #drawBox .draw-shapes,body.step-rule #drawBox #camBar,body.step-rule #drawBox .hint,body.step-rule #drawNav{display:none}
+body.step-rule #drawBox #size,body.step-rule #drawBox .draw-shapes,body.step-rule #drawBox .hint,body.step-rule #drawNav{display:none}
 #screen .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
-/* Camera is hidden for now; the code stays. */
-#camera,#camBar{display:none!important}
 /* The rule screen shows a preview of the outcome instead of the grid; Back returns to the grid to edit. */
 body.step-rule #drawBox #grid{display:none}
 #rulePreview{display:block;width:100%;height:clamp(180px,38vh,360px);margin:0 0 10px;border:1px solid var(--ink);border-radius:8px;background:var(--paper)}

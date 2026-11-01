@@ -380,7 +380,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     $('grid').style.background = PAPER;
     $('grid').setAttribute('viewBox', `0 0 ${G * U} ${G * U}`);
     $('grid').innerHTML = defs() + h;
-    if (!live) { updateCount(); codeShow(); } // the live camera redraws many times a second, so it skips the count and the code
+    if (!live) { updateCount(); codeShow(); }
   }
   $('grid').addEventListener('click', e => {
     const r = $('grid').getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * G), y = Math.floor((e.clientY - r.top) / r.height * G), i = y * G + x;
@@ -452,45 +452,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
     G = n; grid = ng; $('msg').textContent = ''; drawGrid(); if (chain) process(true);
   });
-  // Camera: your face as blocks. The picture is cut to a square, shrunk to the grid, mirrored, and a cell is filled where it is darker than the average
-  // (the slider moves that cut-off). It is processed on the device, never recorded or sent, and the camera stops when you take the picture.
-  let camStream = null, camVideo = null, camTimer = null, camBefore = null;
-  const camCanvas = document.createElement('canvas');
-  function camTick() {
-    if (!camVideo || camVideo.readyState < 2) return;
-    const vw = camVideo.videoWidth, vh = camVideo.videoHeight, side = Math.min(vw, vh);
-    camCanvas.width = camCanvas.height = G;
-    const cx = camCanvas.getContext('2d', { willReadFrequently: true });
-    cx.setTransform(-1, 0, 0, 1, G, 0); // mirror, as in a mirror
-    cx.drawImage(camVideo, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, G, G);
-    const d = cx.getImageData(0, 0, G, G).data, lum = [];
-    for (let i = 0; i < G * G; i++) lum.push(0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]);
-    const mean = lum.reduce((a, b) => a + b, 0) / lum.length, cut = mean + (+$('camT').value - 50) * 1.2;
-    grid = lum.map(v => v < cut ? mk('square') : null);
-    drawGrid(true);
-  }
-  async function camStart() {
-    if (camStream) return;
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return $('msg').textContent = 'This browser cannot use a camera here. The camera needs a secure (https) page.';
-    try { camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false }); }
-    catch (e) { return $('msg').textContent = 'The camera could not be opened: it was blocked or none was found.'; }
-    camVideo = document.createElement('video'); camVideo.muted = true; camVideo.playsInline = true; camVideo.srcObject = camStream; await camVideo.play().catch(() => {});
-    camBefore = grid; $('camBar').hidden = false; $('camera').setAttribute('aria-pressed', 'true');
-    $('msg').textContent = G < 9 ? 'Camera on. A grid of 9 shows more of a face.' : 'Camera on. Move the slider for more or fewer blocks, then press Take.';
-    camTimer = setInterval(camTick, 120); camTick();
-  }
-  function camStop(keep) {
-    clearInterval(camTimer); camTimer = null;
-    if (camStream) camStream.getTracks().forEach(t => t.stop());
-    camStream = null; camVideo = null; $('camBar').hidden = true; $('camera').setAttribute('aria-pressed', 'false');
-    if (!keep && camBefore) grid = camBefore;
-    camBefore = null; drawGrid();
-  }
-  $('camera').onclick = () => camStream ? camStop(false) : camStart();
-  $('camTake').onclick = () => { camStop(true); $('msg').textContent = 'Taken. Press the yellow button.'; };
-  $('camStop').onclick = () => camStop(false);
-  addEventListener('pagehide', () => { if (camStream) camStop(false); });
-  $('process').onclick = () => { if (camStream) camStop(true); process(); };
+  $('process').onclick = () => process();
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
