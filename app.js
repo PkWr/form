@@ -520,12 +520,13 @@ if (typeof document !== 'undefined') {
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
   // The results are a short path, one step at a time: the animation, the contact sheet, then make a book or a print.
   // One linear flow: Animation, Sheet, Print, GIF or video, Book. Steps 3 to 5 share one panel and show one card each.
-  const CARDS = { 3: 'book' }, NEXT = { 1: 'Next: the contact sheet', 2: 'Next: make a book' };
+  const CARDS = { 3: 'book' }, NEXT = { 1: 'Next: sheet', 2: 'Next: book' };
   let curStep = 1;
   // Animation is the result. The contact sheet, the GIF or video and the book are outputs, each optional, in that order, with the book last.
   function goStep(n) {
     $('msg').textContent = ''; curStep = n; document.body.dataset.step = n; document.body.classList.toggle('view-outputs', n > 1); paneSwitch();
     const panel = n > 2 ? 3 : n;
+    document.querySelector('#step' + panel + ' .row.nav').append($('dlWrap')); // the downloads sit at the right of Back and Next
     document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
     if (n > 2) {
       document.querySelectorAll('#step3 .card').forEach(c => c.classList.toggle('on', c.dataset.m === CARDS[n]));
@@ -546,7 +547,7 @@ if (typeof document !== 'undefined') {
   function showPane(p) {
     document.body.classList.toggle('view-results', p === 'results' || p === 'outputs');
     document.body.classList.toggle('view-outputs', p === 'outputs');
-    if (p === 'draw') document.body.dataset.step = '0'; else if (p === 'outputs') goStep(2); else if (p === 'results' && curStep > 1) goStep(1);
+    if (p === 'draw') { document.body.dataset.step = '0'; $('paneSwitch').append($('dlWrap')); } else if (p === 'outputs') goStep(2); else if (p === 'results' && curStep > 1) goStep(1);
     paneSwitch(); scrollTo(0, 0);
   }
   $('backRule').onclick = () => showPane('draw');
