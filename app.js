@@ -443,9 +443,8 @@ if (typeof document !== 'undefined') {
   async function showBook() {
     clearInterval(bookTimer); const inp = await bookInputs(false); if (!inp) return;
     bookPages = buildPages(inp[0], inp[1]).pages;
-    const fr = $('bookFrame'), cv = $('bookCanvas'), dpr = window.devicePixelRatio || 1, h = fr.clientHeight - 24, w = h * A5W / A5H; let i = 0;
-    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.width = w + 'px'; cv.style.height = h + 'px';
-    const draw = () => { const ctx = cv.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); renderOps(ctx, bookPages[i], cv.width / A5W, A5W, A5H); i = (i + 1) % bookPages.length; };
+    const fr = $('bookFrame'), st = $('bookPages'), items = bookItems(bookPages.length), h = Math.max(80, Math.min(fr.clientHeight - 24, (fr.clientWidth - 24) / (2 * A5W / A5H))), w = h * A5W / A5H; let i = 0;
+    const draw = () => { drawSides(st, bookPages, items[i].sides, w, h); i = (i + 1) % items.length; };
     draw(); bookTimer = setInterval(draw, 1100);
   }
   $('bookFrame').onclick = () => { if (bookPages) openBookPreview(bookPages); };

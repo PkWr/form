@@ -54,14 +54,27 @@ function renderOps(ctx, ops, k, W, H) {
 // ---- the viewer ----
 let BP = { pages: [], mode: 'read', i: 0 };
 const bpEl = id => document.getElementById(id);
-function bpItems() {
-  const n = BP.pages.length, narrow = bpEl('bpStage').clientWidth < 700;
-  if (BP.mode === 'sheets') return imposition(n).map(([l, r], i) => ({ sides: [l, r], label: `Printer's sheet ${Math.floor(i / 2) + 1}, ${i % 2 ? 'back' : 'front'}` }));
-  if (narrow) return BP.pages.map((_, i) => ({ sides: [i], label: `Page ${i + 1} of ${n}` }));
+// The reading order: the cover alone on the right, then facing pages as spreads, then the back cover alone on the left.
+function bookItems(n) {
   const out = [{ sides: [null, 0], label: 'Cover' }];
-  for (let p = 1; p < n - 1; p += 2) out.push({ sides: [p, p + 1], label: `Pages ${p + 1} and ${p + 2} of ${n}` });
+  for (let q = 1; q < n - 1; q += 2) out.push({ sides: [q, q + 1], label: `Pages ${q + 1} and ${q + 2} of ${n}` });
   out.push({ sides: [n - 1, null], label: `Back cover, page ${n}` });
   return out;
+}
+// Draw one spread (or a single page with its partner side left empty) into a container, one canvas per page.
+function drawSides(stage, pages, sides, w, h) {
+  const dpr = window.devicePixelRatio || 1; stage.innerHTML = '';
+  sides.forEach(pg => {
+    if (pg === null) { const d = document.createElement('div'); d.style.cssText = `width:${w}px;height:${h}px`; stage.appendChild(d); return; }
+    const c = document.createElement('canvas'); c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); c.style.width = w + 'px'; c.style.height = h + 'px';
+    c.setAttribute('role', 'img'); c.setAttribute('aria-label', `Page ${pg + 1}`);
+    renderOps(c.getContext('2d'), pages[pg], c.width / A5W, A5W, A5H); stage.appendChild(c);
+  });
+}
+function bpItems() {
+  const n = BP.pages.length;
+  if (BP.mode === 'sheets') return imposition(n).map(([l, r], i) => ({ sides: [l, r], label: `Printer's sheet ${Math.floor(i / 2) + 1}, ${i % 2 ? 'back' : 'front'}` }));
+  return bookItems(n);
 }
 function bpShow() {
   const items = bpItems(); BP.i = Math.max(0, Math.min(items.length - 1, BP.i));
