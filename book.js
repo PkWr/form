@@ -4,7 +4,7 @@
 // Output is a real PDF written by hand (no library): A5 pages, imposed two to a sheet for saddle stitch on A4 landscape
 // (print double sided, flip on short edge, fold and staple), or the plain A5 pages for proofing.
 // It relies on globals from app.js: SHAPES, ang, ghosts, TONE, U, bbox, waysLabel.
-const PT = 72 / 25.4, A5W = 148 * PT, A5H = 210 * PT, A4W = 297 * PT;
+const PT = 72 / 25.4, A5W = 148 * PT, A5H = 210 * PT, A4W = 297 * PT, SRA4W = 320 * PT, SRA4H = 225 * PT;
 const THEME = { light: { bg: '#DEDDD2', ink: '#231F20', dim: '#231F20' }, dark: { bg: '#231F20', ink: '#DEDDD2', dim: '#7A776F' }, yellow: { bg: '#FFE100', ink: '#FFFFFF', dim: '#231F20' } };
 // Shape outlines in a 100 by 100 cell. Keep in step with SHAPES in app.js.
 const SEG = {
@@ -170,7 +170,18 @@ function pdfBuild(pageOps, imposed, gs, meta) {
   const xo = imposed ? pageOps.map(o => stream(`/Type /XObject /Subtype /Form /BBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R`, wrap(o))) : [];
   objs[resId - 1] = `<< /Font << ${fonts.map((id, i) => `/F${i + 1} ${id} 0 R`).join(' ')} >> /ExtGState << ${gsIds.map(([p, id]) => `/G${p} ${id} 0 R`).join(' ')} >> /Pattern << ${pats.map((id, i) => `/H${i} ${id} 0 R`).join(' ')} ${patsD.map((id, i) => `/HD${i} ${id} 0 R`).join(' ')} >> /XObject << ${xo.map((id, i) => `/P${i} ${id} 0 R`).join(' ')} >> >>`;
   const kids = [];
-  if (imposed) { const sw = A4W, off = (sw - 2 * W) / 2; imposition(pageOps.length).forEach(([l, r]) => { const c = stream('', `q 1 0 0 1 ${n2(off)} 0 cm /P${l} Do Q q 1 0 0 1 ${n2(off + W)} 0 cm /P${r} Do Q\n`); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(sw)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); }); }
+  // Imposed sheets are SRA4 landscape (320 by 225 mm) so the two A5 pages (the trim) have room for 3 mm of bleed and crop marks. Bleed is the page colour carried 3 mm past the trim on the outer edges (top, bottom and outside); the fold edge has none. Marks sit outside the bleed, at the four corners and the fold, top and bottom.
+  if (imposed) {
+    const B = 3 * PT, MO = 3.5 * PT, ML = 3.5 * PT, sw = SRA4W, sh = SRA4H, mx = (sw - 2 * W) / 2, my = (sh - H) / 2, bg = o => (o.match(/^([\d.]+ [\d.]+ [\d.]+) rg/) || [0, '1 1 1'])[1];
+    const x0 = mx, x1 = mx + 2 * W, y0 = my, y1 = my + H, xf = mx + W;
+    let marks = '0 G 0.25 w\n';
+    [[x0, -1], [x1, 1]].forEach(([x, dx]) => [[y0, -1], [y1, 1]].forEach(([y, dy]) => { marks += `${n2(x + dx * MO)} ${n2(y)} m ${n2(x + dx * (MO + ML))} ${n2(y)} l S\n${n2(x)} ${n2(y + dy * MO)} m ${n2(x)} ${n2(y + dy * (MO + ML))} l S\n`; }));
+    [[y0, -1], [y1, 1]].forEach(([y, dy]) => { marks += `${n2(xf)} ${n2(y + dy * MO)} m ${n2(xf)} ${n2(y + dy * (MO + ML))} l S\n`; });
+    imposition(pageOps.length).forEach(([l, r]) => {
+      const c = stream('', `${bg(pageOps[l])} rg ${n2(x0 - B)} ${n2(y0 - B)} ${n2(W + B)} ${n2(H + 2 * B)} re f\n${bg(pageOps[r])} rg ${n2(xf)} ${n2(y0 - B)} ${n2(W + B)} ${n2(H + 2 * B)} re f\nq 1 0 0 1 ${n2(x0)} ${n2(y0)} cm /P${l} Do Q q 1 0 0 1 ${n2(xf)} ${n2(y0)} cm /P${r} Do Q\n${marks}`);
+      kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(sw)} ${n2(sh)}] /TrimBox [${n2(x0)} ${n2(y0)} ${n2(x1)} ${n2(y1)}] /BleedBox [${n2(x0 - B)} ${n2(y0 - B)} ${n2(x1 + B)} ${n2(y1 + B)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`));
+    });
+  }
   else pageOps.forEach(o => { const c = stream('', wrap(o)); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); });
   const info = add(`<< /Title (${pdfStr(meta.title)}) /Author (Patrick Walker) /Creator (Form, form.pkwr.co) /Producer (Form) /Subject (${pdfStr('Made with Form, form.pkwr.co.')}) /Rights (${pdfStr(CREDIT)}) >>`); // no creation date: the same code must give the same file
   objs[1] = `<< /Type /Pages /Kids [${kids.map(k => k + ' 0 R').join(' ')}] /Count ${kids.length} >>`;

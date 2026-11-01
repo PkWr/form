@@ -424,6 +424,7 @@ if (typeof document !== 'undefined') {
     const states = [{ ...(made ? made.states[0] : unmade.states[0]), phase: 'start' },
       ...(made ? made.states.slice(1).map(s => ({ ...s, phase: 'make' })) : []), ...unmade.states.slice(1).map(s => ({ ...s, phase: 'unmake' }))].map((s, id) => ({ ...s, id }));
     chain = { states, capped: !!(made && made.capped), orig: states[0], code };
+    document.querySelectorAll('[data-tally=iter]').forEach(p => { p.textContent = states.length + (states.length === 1 ? ' iteration' : ' iterations'); });
     $('msg').textContent = act === 'both' && !made ? 'The blocks do not touch edge to edge, so there is only the unmaking.' : chain.capped ? `Making stopped at the cap of ${MAXCAP}.` : '';
     show();
     if (!quiet) { showPane('results'); goStep(1); }
@@ -524,9 +525,10 @@ if (typeof document !== 'undefined') {
   }
   // The Book step shows the book as a visual, like the others: its pages, one after another, in the same square. Clicking it opens the full preview.
   const BOOKOPT = { preface: false, end: false }; let bookFmt = 'imposed', bookPages = null, bookTimer = 0;
+  const pageTally = () => { if (bookPages) $('pageTally').textContent = bookPages.length + ' pages' + (bookFmt === 'imposed' ? ', ' + bookPages.length / 2 + ' printed sides on ' + bookPages.length / 4 + ' sheets' : ''); };
   async function showBook() {
     clearInterval(bookTimer); const inp = await bookInputs(false); if (!inp) return;
-    bookPages = buildPages(inp[0], inp[1]).pages;
+    bookPages = buildPages(inp[0], inp[1]).pages; pageTally();
     const fr = $('bookFrame'), st = $('bookPages'), items = bookItems(bookPages.length), h = Math.max(80, Math.min(fr.clientHeight - 24, (fr.clientWidth - 24) / (2 * A5W / A5H))), w = h * A5W / A5H; let i = 0;
     const draw = () => { drawSides(st, bookPages, items[i].sides, w, h); i = (i + 1) % items.length; };
     draw(); bookTimer = setInterval(draw, 1100);
@@ -534,7 +536,7 @@ if (typeof document !== 'undefined') {
   $('sheet').onclick = () => { if (chain && $('sheet').firstElementChild) openSheetPreview($('sheet').innerHTML); };
   $('bookFrame').onclick = () => { if (bookPages) openBookPreview(bookPages); };
   // The book has no options besides its format: no preface and no end papers.
-  $('bookFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); bookFmt = a.dataset.f; [...$('bookFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); });
+  $('bookFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); bookFmt = a.dataset.f; [...$('bookFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); pageTally(); });
   // A looping GIF of the animation for socials: each variant is drawn as an SVG, rasterised, mapped to 32 steps between paper and ink, and written by gifEncode.
   let gifFmt = 'sq';
   $('gifFormat').addEventListener('click', e => { const g = e.target.closest('a'); if (!g) return; e.preventDefault(); [...$('gifFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === g)); gifFmt = g.dataset.g; });
