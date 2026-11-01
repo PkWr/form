@@ -298,3 +298,5 @@ body:not(.step-rule) #ruleBox{display:none}
 body.step-rule #drawBox #size,body.step-rule #drawBox .draw-shapes,body.step-rule #drawBox #camBar,body.step-rule #drawBox .hint,body.step-rule #drawNav{display:none}
 body:not(.step-rule) #processRow .row{display:none}
 #screen .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
+/* Camera is hidden for now; the code stays. */
+#camera,#camBar{display:none!important}
