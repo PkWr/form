@@ -515,7 +515,7 @@ if (typeof document !== 'undefined') {
   let curStep = 1;
   // Animation is the result. The contact sheet, the GIF or video and the book are outputs, each optional, in that order, with the book last.
   function goStep(n) {
-    curStep = n; document.body.dataset.step = n; document.body.classList.toggle('view-outputs', n > 1); paneSwitch();
+    $('msg').textContent = ''; curStep = n; document.body.dataset.step = n; document.body.classList.toggle('view-outputs', n > 1); paneSwitch();
     const panel = n > 2 ? 3 : n;
     document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
     if (n > 2) {
