@@ -45,23 +45,23 @@ function makeBook(bc, opt) {
   const blockOps = (b, X, Y, c, ink, o = 1) => `q ${o < 1 ? alpha(o) : ''}${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm ${rgb(ink)} rg ${rgb(ink)} RG 1.5 w ${pathOps(b.s, ang(b))} B Q\n`;
   const stripeOps = (b, X, Y, c, ink) => `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm ${rgb(ink)} rg ${pathOps(b.s, ang(b))} W n ` +
     (b.a === 0 ? '0 0 100 20 re 0 40 100 20 re 0 80 100 20 re' : '0 0 20 100 re 40 0 20 100 re 80 0 20 100 re') + ' f Q\n';
-  const hatchOps = (tr, X, Y, c, ink) => {
-    const cnt = new Map(), seen = new Set(); let out = '';
-    tr.forEach(t => cnt.set(t.x + ',' + t.y, (cnt.get(t.x + ',' + t.y) || 0) + 1));
-    tr.forEach(t => {
-      const key = t.x + ',' + t.y + t.s + ang(t); if (seen.has(key)) return; seen.add(key);
-      const sp = 40 / Math.min(8, cnt.get(t.x + ',' + t.y)); let ln = '';
-      for (let x = -100; x <= 100; x += sp) ln += `${n2(x)} 0 m ${n2(x + 100)} 100 l `;
-      out += `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + t.x * c)} ${n2(Y + t.y * c)} cm ${rgb(ink)} RG 3.5 w ${pathOps(t.s, ang(t))} W n ${ln}S Q\n`;
-    });
+  // Density: every block is filled with a fine-line pattern, one layer for the original and one for each of this variant and the two before it,
+  // each layer at its own angle (DENS in app.js), so overlaps cross into a darker mesh. The patterns are defined once for the whole file.
+  const patBlock = (b, X, Y, c, slot) => `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm /Pattern cs /H${slot} scn ${pathOps(b.s, ang(b))} f Q\n`;
+  const densOps = (k, X, Y, c) => {
+    const st = bc.states[k], o = bc.orig || bc.states[0]; let out = '';
+    const L = (blocks, dx, dy, slot) => blocks.forEach(b => { out += patBlock(b, X + dx * c, Y + dy * c, c, slot); });
+    L(o.blocks, o.ox - st.ox, o.oy - st.oy, 0);
+    if (st !== o) L(st.blocks, 0, 0, 1);
+    for (let a = 1; a <= 2; a++) { const j = k - a; if (j >= 0 && bc.states[j] !== o && bc.states[j] !== st) L(bc.states[j].blocks, bc.states[j].ox - st.ox, bc.states[j].oy - st.oy, 1 + a); }
     return out;
   };
   const frameOps = (k, view, X, Y, c, ink) => {
     const s = bc.states[k]; let out = '';
     if (view === 'direction') return s.blocks.map(b => stripeOps(b, X, Y, c, ink)).join('');
+    if (view === 'dens') return densOps(k, X, Y, c);
     if (view === 'trans') { ghosts(bc, k).forEach(g => g.blocks.forEach(b => { out += blockOps(b, X + g.dx * c, Y + g.dy * c, c, ink, g.o); })); s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink, TONE); }); }
     else if (view === 'solid') s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink); });
-    else if (view === 'dens') out += hatchOps(s.tr, X, Y, c, ink);
     return out + s.blocks.map(b => blockOps(b, X, Y, c, ink)).join('');
   };
   const fit = (n, bw, bh, rw, rh, cmax) => { let best = null; for (let c = 1; c <= n; c++) { const r = Math.ceil(n / c), s = Math.min(cmax, rw / (c * bw), rh / (r * bh)); if (!best || s > best.s - 1e-9) best = { cols: c, rows: r, s }; } return best; };
@@ -153,9 +153,10 @@ function pdfBuild(pageOps, imposed, gs) {
   const wrap = ops => `1 0 0 -1 0 ${n2(H)} cm\n${ops}`;
   const fonts = FONTS.map(f => add(`<< /Type /Font /Subtype /Type1 /BaseFont /${f[0]} /Encoding /WinAnsiEncoding >>`));
   const gsIds = [...gs].map(p => [p, add(`<< /Type /ExtGState /CA ${p / 100} /ca ${p / 100} >>`)]);
+  const pats = DENS.map(a => { const P = 1.1, r = a * Math.PI / 180; return stream(`/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 ${P} ${P}] /XStep ${P} /YStep ${P} /Resources << >> /Matrix [${n2(Math.cos(r))} ${n2(Math.sin(r))} ${n2(-Math.sin(r))} ${n2(Math.cos(r))} 0 0]`, `${rgb(THEME.light.ink)} rg 0 0 0.5 ${P} re f\n`); });
   const resId = add('');
   const xo = imposed ? pageOps.map(o => stream(`/Type /XObject /Subtype /Form /BBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R`, wrap(o))) : [];
-  objs[resId - 1] = `<< /Font << ${fonts.map((id, i) => `/F${i + 1} ${id} 0 R`).join(' ')} >> /ExtGState << ${gsIds.map(([p, id]) => `/G${p} ${id} 0 R`).join(' ')} >> /XObject << ${xo.map((id, i) => `/P${i} ${id} 0 R`).join(' ')} >> >>`;
+  objs[resId - 1] = `<< /Font << ${fonts.map((id, i) => `/F${i + 1} ${id} 0 R`).join(' ')} >> /ExtGState << ${gsIds.map(([p, id]) => `/G${p} ${id} 0 R`).join(' ')} >> /Pattern << ${pats.map((id, i) => `/H${i} ${id} 0 R`).join(' ')} >> /XObject << ${xo.map((id, i) => `/P${i} ${id} 0 R`).join(' ')} >> >>`;
   const kids = [];
   if (imposed) { const sw = A4W, off = (sw - 2 * W) / 2; imposition(pageOps.length).forEach(([l, r]) => { const c = stream('', `q 1 0 0 1 ${n2(off)} 0 cm /P${l} Do Q q 1 0 0 1 ${n2(off + W)} 0 cm /P${r} Do Q\n`); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(sw)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); }); }
   else pageOps.forEach(o => { const c = stream('', wrap(o)); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); });

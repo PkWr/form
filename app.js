@@ -63,7 +63,8 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
     if (!next.length) break;
     prev = level = next;
   }
-  return { states: [first, ...(prev === first ? [] : prev)].map((st, id) => ({ ...st, id })), capped };
+  const out = [first, ...(prev === first ? [] : prev)].map((st, id) => ({ ...st, id }));
+  return { states: out, capped, orig: out[0] };
 }
 
 // Unmake: the reverse rule. One block is taken away per step, in a random order, and never comes back. The place it left stays marked (a trace),
@@ -78,7 +79,8 @@ function unmake(start, order) {
     const gone = new Set(idx.slice(0, k + 1));
     states.push({ blocks: first.blocks.filter((_, i) => !gone.has(i)), tr: first.blocks.filter((_, i) => gone.has(i)).map(b => ({ x: b.x, y: b.y, s: b.s, r: b.r, q: b.q })), ox: first.ox, oy: first.oy });
   });
-  return { states: states.map((st, id) => ({ ...st, id })), capped: false };
+  const out = states.map((st, id) => ({ ...st, id }));
+  return { states: out, capped: false, orig: out[0] };
 }
 
 // Unmake by rearranging: each step moves one block that still touches another to an empty cell inside the grid that touches nothing, leaving its old
@@ -131,17 +133,21 @@ const waysLabel = (n, verb) => `${n} way${n === 1 ? '' : 's'} I can ${verb}`;
 function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs * 2.4, svg: `<text x="${W * 0.05}" y="${fs * 1.5}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(text)}</text>` }; }
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
-  [1, 2, 3, 4, 5, 6, 7, 8].map(k => { const s = 40 / k; let d = ''; for (let x = -100; x <= 100; x += s) d += `M${+x.toFixed(2)} 0L${+(x + 100).toFixed(2)} 100`; return `<path id="ht${k}" fill="none" stroke-width="3.5" d="${d}"/>`; }).join('') +
+  `<path id="hl" fill="none" stroke-width="1.1" d="${(() => { let d = ''; for (let x = -30; x <= 130; x += 3.2) d += `M${+x.toFixed(1)} -30V130`; return d; })()}"/>` +
   '<g id="hs" shape-rendering="crispEdges"><rect y="0" width="100" height="20"/><rect y="40" width="100" height="20"/><rect y="80" width="100" height="20"/></g>' +
   '<g id="vs" shape-rendering="crispEdges"><rect x="0" width="20" height="100"/><rect x="40" width="20" height="100"/><rect x="80" width="20" height="100"/></g></defs>';
 // Direction: each block is three stripes running along its last move (vertical until it moves).
 const stripes = b => `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
-// Density: a cell left k times is hatched at k times the line density, inside the shape that left it.
-function hatch(tr) {
-  const n = new Map(), seen = new Set();
-  tr.forEach(t => n.set(t.x + ',' + t.y, (n.get(t.x + ',' + t.y) || 0) + 1));
-  return tr.map(t => { const key = t.x + ',' + t.y + t.s + ang(t); if (seen.has(key)) return ''; seen.add(key);
-    return `<g transform="translate(${t.x * U} ${t.y * U})" clip-path="url(#c_${t.s}_${ang(t)})"><use href="#ht${Math.min(8, n.get(t.x + ',' + t.y))}" stroke="${INK}"/></g>`; }).join('');
+// Density: every block is drawn as fine lines, and each iteration adds a layer at its own angle. Where layers overlap the lines cross into a darker mesh,
+// so tone builds up as texture. Layers: the original (vertical), this variant, and the two variants before it.
+const DENS = [0, 45, 135, 90];
+function densLayers(chain, k) {
+  const s = chain.states[k], o = chain.orig || chain.states[0];
+  const layer = (blocks, dx, dy, a) => blocks.map(b => `<g transform="translate(${(b.x + dx) * U} ${(b.y + dy) * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#hl" stroke="${INK}" transform="rotate(${a} 50 50)"/></g>`).join('');
+  let out = layer(o.blocks, o.ox - s.ox, o.oy - s.oy, DENS[0]);
+  if (s !== o) out += layer(s.blocks, 0, 0, DENS[1]);
+  for (let a = 1; a <= 2; a++) { const j = k - a; if (j >= 0 && chain.states[j] !== o && chain.states[j] !== s) out += layer(chain.states[j].blocks, chain.states[j].ox - s.ox, chain.states[j].oy - s.oy, DENS[1 + a]); }
+  return out;
 }
 const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${ang(b)} 50 50)"/>`;
 // Transparency (onion skin): the blocks of the variants shown just before this one stay as fading ghosts.
@@ -151,10 +157,11 @@ const ghosts = (chain, k) => GHOSTS.map((o, a) => { const j = k - 1 - a; if (j <
 function frame(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(stripes).join('');
-  return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : mode === 'dens' ? hatch(s.tr) : '') + s.blocks.map(use).join('');
+  if (mode === 'dens') return densLayers(chain, k);
+  return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
 }
 function bbox(chain, mode) {
-  const all = chain.states.flatMap((s, k) => [...s.blocks, ...s.tr, ...(mode === 'trans' ? ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy }))) : [])]);
+  const all = chain.states.flatMap((s, k) => [...s.blocks, ...s.tr, ...(mode === 'dens' ? (chain.orig || chain.states[0]).blocks.map(b => ({ x: b.x + (chain.orig || chain.states[0]).ox - s.ox, y: b.y + (chain.orig || chain.states[0]).oy - s.oy })) : []), ...(mode === 'trans' ? ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy }))) : [])]);
   const x0 = Math.min(...all.map(b => b.x)) - 1, y0 = Math.min(...all.map(b => b.y)) - 1;
   return { x: x0 * U, y: y0 * U, w: (Math.max(...all.map(b => b.x)) + 2 - (x0 + 1) + 1) * U, h: (Math.max(...all.map(b => b.y)) + 2 - (y0 + 1) + 1) * U };
 }
@@ -360,7 +367,7 @@ if (typeof document !== 'undefined') {
     if (!orig || !vs.length) return $('msg').textContent = 'There are no variants to put in a book.';
     let preface = [];
     if ($('prefacePage').checked) { try { preface = await fetchPreface(); } catch (e) { return $('msg').textContent = 'The preface could not be read from the About page.'; } }
-    const bytes = makeBook({ states: [orig, ...vs] }, { imposed, preface, message: $('personalMsg').value.trim(), verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) });
+    const bytes = makeBook({ states: [orig, ...vs], orig }, { imposed, preface, message: $('personalMsg').value.trim(), verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) });
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
     a.download = `form-publication-A5${imposed ? '-imposed' : ''}.pdf`; a.click(); URL.revokeObjectURL(a.href);
   }
