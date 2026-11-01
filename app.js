@@ -518,7 +518,6 @@ if (typeof document !== 'undefined') {
     curStep = n; document.body.dataset.step = n; document.body.classList.toggle('view-outputs', n > 1); paneSwitch();
     const panel = n > 2 ? 3 : n;
     document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
-    [...$('steps').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.s === String(n)));
     if (n > 2) {
       document.querySelectorAll('#step3 .card').forEach(c => c.classList.toggle('on', c.dataset.m === CARDS[n]));
       const nx = document.querySelector('#step3 .next'), bk = document.querySelector('#step3 .back');
@@ -526,7 +525,6 @@ if (typeof document !== 'undefined') {
     }
     scrollTo(0, 0);
   }
-  $('steps').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); goStep(+a.dataset.s); });
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   // Three screens in order: Draw, Rule, Results. The rule is chosen after the shape is drawn, never while building.
   const paneNow = () => document.body.classList.contains('view-outputs') ? 'outputs' : document.body.classList.contains('view-results') ? 'results' : 'draw';
