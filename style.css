@@ -378,3 +378,10 @@ body[data-step="3"] #dlWrap #bookInclude,body[data-step="3"] #dlWrap #bookFormat
 #out #dlBar .dlbtn,#out .row.nav #dlBar .dlbtn{background:none;color:var(--ink);border:0;padding:2px 4px;min-width:0;min-height:0;font-size:0;line-height:0}
 #out #dlBar .dlbtn:hover svg{opacity:.6}
 #dlBar .dlbtn svg{width:26px;height:26px}
+/* The start mark is white and keeps moving; rolling over it (or focusing it) only turns it yellow. No tilt, no growing. */
+#startOpen svg{fill:currentColor;transform:none;transition:none}
+#startOpen svg path{stroke:currentColor}
+#startOpen{transition:color .35s ease}
+#startOpen:hover,#startOpen:focus-visible{color:var(--yellow)}
+#startOpen:hover svg,#startOpen:focus-visible svg{transform:none}
+#startOpen .mark-word{fill:#000}

@@ -55,7 +55,7 @@
     if ((e.key === "Enter" || e.key === " ") && root.classList.contains("show-start") && e.target === document.body) { e.preventDefault(); open(); }
   });
 })();
-// The start mark: the F in as few blocks as it can be, three, keeping its structure: the stem, the top bar and the arm. They lie scattered at random (turned, never overlapping) until you roll over the mark (or, on a touch screen, a moment after it appears); then each slides home and straightens into the F. Leaving scatters them again. Only these three shapes are used.
+// The start mark: the F's three blocks (the stem, the top bar and the arm) iterating repeatedly, drifting from one random arrangement to the next, turned and never overlapping. It does not become the F. Only these three shapes are used.
 (function () {
   if (!document.documentElement.classList.contains("show-start")) return;
   var btn = document.getElementById("startOpen"), svg = btn && btn.querySelector("svg");
@@ -101,15 +101,12 @@
     if (reduce) { cur = target.map(function (t) { return { x: t.x, y: t.y, rot: t.rot }; }); draw(); return; }
     var start = cur.map(function (c) { return { x: c.x, y: c.y, rot: c.rot }; }), t0 = performance.now();
     (function step(now) {
-      var u = Math.min(1, (now - t0) / 800), e = ease(u);
+      var u = Math.min(1, (now - t0) / 1300), e = ease(u);
       cur = start.map(function (s, i) { var t = target[i]; return { x: s.x + (t.x - s.x) * e, y: s.y + (t.y - s.y) * e, rot: s.rot + (t.rot - s.rot) * e }; });
       draw(); if (u < 1) raf = requestAnimationFrame(step);
     })(t0);
   }
   cur = scatter(); draw();
-  btn.addEventListener("mouseenter", function () { go(HOME); });
-  btn.addEventListener("focus", function () { go(HOME); });
-  function away() { go(scatter()); }
-  btn.addEventListener("mouseleave", away); btn.addEventListener("blur", away);
-  if (matchMedia("(pointer: coarse)").matches) setTimeout(function () { go(HOME); }, 1600);
+  // The mark keeps iterating: every moment the three pieces drift to a new random arrangement. It never settles into the F. Rolling over it only turns it yellow (see style.css).
+  if (!reduce) setInterval(function () { go(scatter()); }, 1500);
 })();
