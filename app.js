@@ -264,7 +264,7 @@ function animSVG(chain, mode, ms, title = '') {
 // A short code that names a pattern, so the same code always rebuilds the same book. The pattern is cropped to its bounding box (the book does not depend on where the shape sits, only on its
 // size and the grid size G, which limits how far a shape can grow), each cell is one of 11 states, and the cells are packed as one base-11 number with a small header. The number is written in a
 // 31-character alphabet without 0, O, 1, I or L, closed by two check characters (the number modulo 929, a prime), and grouped in fives.
-const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', CODE_GRIDS = [7, 9, 11, 15], CODE_PRIME = 929n;
+const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', CODE_GRIDS = [5, 7, 9], CODE_PRIME = 929n;
 const CODE_CELLS = [null, { s: 'square', q: 0 }, { s: 'circle', q: 0 }, ...[0, 1, 2, 3].map(q => ({ s: 'arch', q })), ...[0, 1, 2, 3].map(q => ({ s: 'tri', q }))]; // state 0 is empty
 const cellState = c => !c ? 0 : c.s === 'square' ? 1 : c.s === 'circle' ? 2 : (c.s === 'arch' ? 3 : 7) + ((c.q || 0) & 3);
 function toDigits(n, radix, alphabet) { let out = ''; const r = BigInt(radix); do { out = alphabet[Number(n % r)] + out; n /= r; } while (n > 0n); return out; }
@@ -454,7 +454,7 @@ if (typeof document !== 'undefined') {
     catch (e) { return $('msg').textContent = 'The camera could not be opened: it was blocked or none was found.'; }
     camVideo = document.createElement('video'); camVideo.muted = true; camVideo.playsInline = true; camVideo.srcObject = camStream; await camVideo.play().catch(() => {});
     camBefore = grid; $('camBar').hidden = false; $('camera').setAttribute('aria-pressed', 'true');
-    $('msg').textContent = G < 11 ? 'Camera on. A grid of 11 or 15 shows more of a face.' : 'Camera on. Move the slider for more or fewer blocks, then press Take.';
+    $('msg').textContent = G < 9 ? 'Camera on. A grid of 9 shows more of a face.' : 'Camera on. Move the slider for more or fewer blocks, then press Take.';
     camTimer = setInterval(camTick, 120); camTick();
   }
   function camStop(keep) {
