@@ -436,6 +436,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     show();
     if (!quiet) { showPane('results'); goStep(1); }
   }
+  const fname = rest => 'form-' + (chain && chain.code ? chain.code + '-' : '') + rest; // downloads carry the pattern code, so a file says which pattern it came from
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
   $('size').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
@@ -528,7 +529,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     const inp = await bookInputs(imposed); if (!inp) return;
     const bytes = makeBook(inp[0], inp[1]);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-    a.download = `form-publication-A5${imposed ? '-imposed' : ''}.pdf`; a.click(); URL.revokeObjectURL(a.href);
+    a.download = fname(`publication-A5${imposed ? '-imposed' : ''}.pdf`); a.click(); URL.revokeObjectURL(a.href);
   }
   // The Book step shows the book as a visual, like the others: its pages, one after another, in the same square. Clicking it opens the full preview.
   const BOOKOPT = { preface: false, end: false }; let bookFmt = 'imposed', bookPages = null, bookTimer = 0;
@@ -577,7 +578,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
         frames.push(px);
       }
       const bytes = gifEncode(S.W, S.H, pal, frames, Math.max(2, Math.round(S.delay / 10)), CREDIT.replace('©', '(c)'));
-      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' })); a.download = `form-${gifFmt === 'sq' ? 'square' : 'story'}.gif`; a.click(); URL.revokeObjectURL(a.href);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' })); a.download = fname(`${gifFmt === 'sq' ? 'square' : 'story'}.gif`); a.click(); URL.revokeObjectURL(a.href);
       $('msg').textContent = `GIF ready: ${S.idxs.length} frames.`;
     } finally { socialBusy = false; }
   }
@@ -605,18 +606,18 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
       }
       rec.stop(); await stopped; imgs.forEach(i => URL.revokeObjectURL(i.src));
       const ext = type.startsWith('video/mp4') ? 'mp4' : 'webm', a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob(chunks, { type })); a.download = `form-${gifFmt === 'sq' ? 'square' : 'story'}.${ext}`; a.click(); URL.revokeObjectURL(a.href);
+      a.href = URL.createObjectURL(new Blob(chunks, { type })); a.download = fname(`${gifFmt === 'sq' ? 'square' : 'story'}.${ext}`); a.click(); URL.revokeObjectURL(a.href);
       $('msg').textContent = ext === 'mp4' ? 'Video ready.' : 'Video ready, but this browser made WebM; Instagram and TikTok need MP4. Try Safari or a recent Chrome.';
     } finally { socialBusy = false; }
   }
   $('dlBook').onclick = () => dlBook(bookFmt === 'imposed');
-  $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
+  $('dlSheet').onclick = () => chain && kept().states.length && dl(fname(`sheet-${mode}-${paper}.svg`), sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
   // One download for the animation; the format (SVG, GIF or video) is chosen beside it, like the print size.
   let animFmt = 'svg';
   $('animFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); animFmt = a.dataset.f;
     [...$('animFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); $('dlAnim').setAttribute('aria-label', 'Download the animation as ' + a.textContent); });
   $('dlAnim').onclick = () => { if (!chain) return; if (animFmt === 'gif') return dlGif(); if (animFmt === 'video') return dlVideo();
-    dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value, titleText(kept()))); };
+    dl(fname(`anim-${mode}.svg`), animSVG(kept(), mode, +$('spd').value, titleText(kept()))); };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
