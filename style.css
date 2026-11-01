@@ -246,3 +246,10 @@ body.view-results #processRow .row{display:none}
 #paneSwitch a[aria-checked=true],#out .links:not(.ico) a[aria-checked=true]{background:var(--ink);color:var(--yellow);text-decoration:none}
 .preset.on{border:2px solid var(--yellow);box-shadow:0 0 0 1px var(--ink)}
 #out .preset.on,.preset.on{border-color:var(--yellow)}
+/* Desktop: the animation and the contact sheet are sized to the window so Next and Back stay in view; the icon tiles keep a steady width. */
+@media(min-width:601px) and (pointer:fine){
+#anim{max-height:max(220px,calc(100vh - 400px))}
+#sheet svg{height:max(240px,calc(100vh - 390px))}
+#viewIcons a{flex:0 1 84px}
+#viewIcons{justify-content:flex-start}
+}
