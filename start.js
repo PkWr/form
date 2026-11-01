@@ -66,11 +66,11 @@
   var AREA = { x0: -150, x1: 450, y0: 0, y1: 500 }, TURNS = [-180, -90, 0, 90, 180];
   svg.setAttribute("viewBox", "-152 -2 604 504");
   while (svg.firstChild) svg.removeChild(svg.firstChild);
-  // The word "open" sits in the top bar and turns with it, so it is read at whatever angle the bar is at.
+  // The word "open" sits in the middle bar (the arm) and turns with it, so it is read at whatever angle the bar is at.
   var nodes = F.map(function (p, i) {
     var g = document.createElementNS(NS, "g"), n = document.createElementNS(NS, "path");
     n.setAttribute("d", "M0 0H" + p.w + "V" + p.h + "H0Z"); g.appendChild(n);
-    if (i === 1) {
+    if (i === 2) {
       var t = document.createElementNS(NS, "text");
       t.setAttribute("x", p.w / 2); t.setAttribute("y", p.h / 2); t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central");
       t.setAttribute("class", "mark-word"); t.textContent = "open"; g.appendChild(t);
