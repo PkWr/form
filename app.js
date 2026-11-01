@@ -457,11 +457,6 @@ if (typeof document !== 'undefined') {
   $('dlBook').onclick = () => dlBook(false);
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
   $('dlAnim').onclick = () => chain && dl(`form-anim-${mode}.svg`, animSVG(kept(), mode, +$('spd').value, titleText(kept())));
-  $('dlFrame').onclick = () => {
-    if (!chain) return; const kc = kept(); if (!kc.states.length) return;
-    const bb = bbox(kc, mode), k = (cur + kc.states.length - 1) % kc.states.length, tb = titleBlock(bb.w, titleText(kc)), nb = NOTE ? noteBlock(bb.w) : null;
-    dl(`form-frame-${kc.states[k].id}.svg`, svgWrap(bb.w, tb.h + bb.h + (nb ? nb.h : 0), tb.svg + `<g transform="translate(0 ${tb.h})"><g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, k, mode)}</g></g>` + (nb ? nb.svg(tb.h + bb.h) : '')));
-  };
   const sync = r => r.style.setProperty('--to', (r.value - r.min) / (r.max - r.min) * 100 + '%');
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
