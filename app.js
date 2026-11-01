@@ -71,6 +71,38 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
   return { states: out, capped, orig: out[0] };
 }
 
+// Extra ways to make you up: after every single move, EXTRA more variants, each made by 1 to 3 moves in a row from the original, chosen by R (seeded from the pattern code).
+// A variant that is already in the list is skipped, so a one-move pick adds nothing new and the extras are mostly two or three moves.
+const EXTRA = 6;
+function movesFrom(st) {
+  const out = [], occ = new Set(st.blocks.map(b => b.x + ',' + b.y));
+  st.blocks.forEach((old, i) => {
+    const rest = st.blocks.filter((_, j) => j !== i), targets = new Map();
+    for (const o of rest) for (const [dx, dy] of DIRS) { const x = o.x + dx, y = o.y + dy; if (!occ.has(x + ',' + y)) targets.set(x + ',' + y, [x, y]); }
+    for (const [tx, ty] of targets.values()) {
+      const dx = tx - old.x, dy = ty - old.y, dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3);
+      const nb0 = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir } : o), nb = nb0.map(b => ({ ...b, a: axisOf(b, nb0) }));
+      if (!connected(nb)) continue;
+      const n = norm(nb, [...st.tr, { x: old.x, y: old.y, s: old.s, r: old.r, q: old.q }], st.ox, st.oy);
+      if (Math.max(...n.blocks.map(b => b.x)) >= G || Math.max(...n.blocks.map(b => b.y)) >= G) continue;
+      out.push(n);
+    }
+  });
+  return out;
+}
+function makeWays(start, ax, withTr, R) {
+  const made = variants(start, MOVES, ax, withTr), seen = new Set(variants(start, MOVES, false, false).states.map(s => keyOf(s, false, false))), states = [...made.states]; // the extras are picked the same way whatever the treatment, so the book does not depend on it
+  if (made.capped) return made;
+  for (let tries = 0, added = 0; added < EXTRA && tries < EXTRA * 12; tries++) {
+    let cur = made.states[0];
+    for (let k = 1 + Math.floor(R() * 3); k > 0; k--) { const nx = movesFrom(cur); if (!nx.length) break; cur = nx[Math.floor(R() * nx.length)]; }
+    const key = keyOf(cur, false, false); if (seen.has(key)) continue;
+    seen.add(key); states.push(cur); added++;
+  }
+  const out = states.map((st, id) => ({ ...st, id }));
+  return { states: out, capped: false, orig: out[0] };
+}
+
 // Unmake: the reverse rule. One block is taken away per step, in a random order, and never comes back. The place it left stays marked (a trace),
 // so the cumulative views still work. Blocks keep their positions (no re-centring), and the last state is empty.
 function unmake(start, order) {
@@ -365,7 +397,7 @@ if (typeof document !== 'undefined') {
   let act = 'both'; // 'both': the output holds the ways to make you up and the ways to unmake you; 'unmake' (the framed piece) holds only the unmaking
   function updateCount() {
     const st = startBlocks();
-    $('count').textContent = act === 'both' && st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
+    $('count').textContent = act === 'both' && st.length && connected(st) ? makeWays(st, mode === 'direction', TRACED.has(mode), rng(codeSeed(patternCode(G, grid)))).states.length - 1 : 0;
     $('countU').textContent = st.length;
   }
   function process(quiet) { // quiet: redo the results in place, without moving to step 1 or to the results pane
@@ -375,7 +407,7 @@ if (typeof document !== 'undefined') {
     // One sequence: the original, then every way to make you up (when the blocks touch), then every way to unmake you.
     // The only random choices (the order blocks are taken away, the random isometric angles) are drawn from the pattern's own code, so a code always gives the same results.
     const code = patternCode(G, grid), R = rng(codeSeed(code));
-    const made = act === 'both' && connected(start) ? variants(start, MOVES, mode === 'direction', TRACED.has(mode)) : null, unmade = unmake(start, start.map(() => R()));
+    const made = act === 'both' && connected(start) ? makeWays(start, mode === 'direction', TRACED.has(mode), R) : null, unmade = unmake(start, start.map(() => R()));
     const states = [{ ...(made ? made.states[0] : unmade.states[0]), phase: 'start' },
       ...(made ? made.states.slice(1).map(s => ({ ...s, phase: 'make' })) : []), ...unmade.states.slice(1).map(s => ({ ...s, phase: 'unmake' }))].map((s, id) => ({ ...s, id }));
     chain = { states, capped: !!(made && made.capped), orig: states[0], code };
