@@ -542,7 +542,7 @@ if (typeof document !== 'undefined') {
   function goStep(n) {
     $('msg').textContent = ''; curStep = n; document.body.dataset.step = n; document.body.classList.toggle('view-outputs', n > 1); paneSwitch();
     const panel = n > 2 ? 3 : n;
-    document.querySelector('#step' + panel + ' .row.nav').append($('dlWrap')); // the downloads sit at the right of Back and Next
+    document.querySelector('#step' + panel + ' .row.nav').append($('dlWrap')); $(n === 1 ? 'animFormat' : n === 2 ? 'paper' : 'bookFormat').append($('dlBar')); // the download icon sits at the end of the choice that decides what it downloads
     document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
     if (n > 2) { document.querySelector('#step3 .next').hidden = true; document.querySelector('#step3 .back').dataset.go = n - 1; showBook(); } else clearInterval(bookTimer);
     scrollTo(0, 0);

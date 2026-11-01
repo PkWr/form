@@ -372,3 +372,9 @@ body[data-step="3"] #dlWrap #bookInclude,body[data-step="3"] #dlWrap #bookFormat
 .row.nav #dlWrap #bookInclude,.row.nav #dlWrap #bookFormat{order:-1;flex:0 0 100%;justify-content:flex-end;margin:0 0 4px}
 .row.nav #dlWrap #bookInclude{order:-2}
 #bookInclude a[aria-checked=true]{background:var(--ink);color:var(--yellow)}
+/* The download is a plain icon at the end of its choice row (Format or Size), not a box. */
+.row.nav #dlBar{margin-left:0}
+#dlBar{display:inline-flex;margin-left:4px}
+#out #dlBar .dlbtn,#out .row.nav #dlBar .dlbtn{background:none;color:var(--ink);border:0;padding:2px 4px;min-width:0;min-height:0;font-size:0;line-height:0}
+#out #dlBar .dlbtn:hover svg{opacity:.6}
+#dlBar .dlbtn svg{width:26px;height:26px}
