@@ -535,7 +535,7 @@ if (typeof document !== 'undefined') {
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
   // The results are a short path, one step at a time: the animation, the contact sheet, then make a book or a print.
   // One linear flow: Animation, Sheet, Print, GIF or video, Book. Steps 3 to 5 share one panel and show one card each.
-  const CARDS = { 3: 'book' }, NEXT = { 1: 'Next: sheet', 2: 'Next: book' };
+  const CARDS = { 3: 'book' }, NEXT = { 1: 'Next', 2: 'Next' };
   let curStep = 1;
   // Animation is the result. The contact sheet, the GIF or video and the book are outputs, each optional, in that order, with the book last.
   function goStep(n) {

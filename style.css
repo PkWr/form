@@ -386,3 +386,16 @@ body[data-step="3"] #dlWrap #bookInclude,body[data-step="3"] #dlWrap #bookFormat
 #startOpen:hover,#startOpen:focus-visible{color:var(--yellow)}
 #startOpen:hover svg,#startOpen:focus-visible svg{transform:none}
 #startOpen .mark-word{fill:#000}
+/* The download choice and its icon share the row with Back and Next, at its right. The words Format and Size step aside to leave room. */
+.row.nav #dlWrap #animFormat,.row.nav #dlWrap #paper,.row.nav #dlWrap #bookFormat{order:0;flex:0 0 auto;margin:0 0 0 auto;gap:2px}
+.row.nav #dlWrap #animFormat>span,.row.nav #dlWrap #paper>span,.row.nav #dlWrap #bookFormat>span{display:none}
+.row.nav{gap:6px}
+.row.nav #dlWrap #animFormat a,.row.nav #dlWrap #paper a,.row.nav #dlWrap #bookFormat a{padding:2px 8px}
+/* The treatment icons are larger, easier to read and to hit. */
+#viewIcons{font-size:11.5px}
+#viewIcons a{padding:9px 2px 7px;gap:5px}
+#viewIcons a svg{width:40px;height:40px}
+/* The words Format and Size step aside; the download icon inside the choice must stay. */
+.row.nav #dlWrap #animFormat>span:first-child,.row.nav #dlWrap #paper>span:first-child,.row.nav #dlWrap #bookFormat>span:first-child{display:inline}
+.row.nav #dlWrap #animFormat>span,.row.nav #dlWrap #paper>span,.row.nav #dlWrap #bookFormat>span{display:inline-flex}
+.row.nav #dlWrap #animFormat>span:first-child,.row.nav #dlWrap #paper>span:first-child,.row.nav #dlWrap #bookFormat>span:first-child{display:none}
