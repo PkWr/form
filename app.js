@@ -6,12 +6,6 @@ let INK = '#111111', PAPER = '#f4f2ee'; // the artwork's colours, set from the C
 const mixHex = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
 // Isometric: a second view beside the treatments. Every treatment is drawn as normal and the whole drawing is then laid onto the isometric plane (x' = (x - y) cos 30, y' = (x + y) / 2),
 // with each current block given a little thickness, drawn under the tops as a few copies of the block shifted down in a mid tone.
-let ISO = false, ISO_D = 0.4, ISO_A = 30, ISO_RND = false; // isometric view: depth (in blocks), angle (degrees; 30 is true isometric) and whether each step has its own angle
-let SHADE = null; // the colour of the isometric depth; null means halfway between ink and paper
-const shadeCol = () => SHADE || mixHex(INK, PAPER, 0.5);
-const isoAng = s => ISO_RND && s && s.ia ? s.ia : ISO_A;
-const isoCS = a => [Math.cos(a * Math.PI / 180), Math.sin(a * Math.PI / 180)];
-const isoM = a => { const [c, n] = isoCS(a); return `matrix(${+c.toFixed(4)} ${+n.toFixed(4)} ${+(-c).toFixed(4)} ${+n.toFixed(4)} 0 0)`; };
 // Shape library: paths in a 100x100 cell. sym = looks the same turned. A placed block has a base turn q (0 to 3, from clicking) and r (0 to 3, the direction of its last move).
 const SHAPES = {
   square: { d: 'M0 0H100V100H0Z', sym: 1 },
@@ -185,12 +179,7 @@ const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-wid
 const GHOSTS = [0.3, 0.2, 0.13, 0.09, 0.06, 0.04];
 const ghosts = (chain, k) => GHOSTS.map((o, a) => { const st = pastOf(chain, k)[a], s = chain.states[k]; if (!st) return null;
   return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
-function frame(chain, k, mode) {
-  if (!ISO) return frame0(chain, k, mode);
-  const s = chain.states[k], side = shadeCol(), ISO_M = isoM(isoAng(s));
-  const sides = [1 / 3, 2 / 3, 1].map(t => `<g transform="translate(0 ${n3(t * ISO_D * U)}) ${ISO_M}" fill="${side}">${s.blocks.map(b => use(b, side)).join('')}</g>`).join('');
-  return sides + `<g transform="${ISO_M}">${frame0(chain, k, mode)}</g>`;
-}
+function frame(chain, k, mode) { return frame0(chain, k, mode); }
 function frame0(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(b => stripes(b, s.blocks)).join('');
@@ -201,12 +190,6 @@ function bbox(chain, mode) {
   // The same frame for every treatment (blocks, traces, the density overlay and the ghosts), so changing treatment never changes the scale.
   const pts = (s, k) => [...s.blocks, ...s.tr, ...(chain.orig || chain.states[0]).blocks.map(b => ({ x: b.x + (chain.orig || chain.states[0]).ox - s.ox, y: b.y + (chain.orig || chain.states[0]).oy - s.oy })), ...ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy })))];
   const all = chain.states.flatMap(pts);
-  if (ISO) { // projected extents of every cell corner at each step's own angle, plus the thickness
-    let xa = 1e9, xb = -1e9, ya = 1e9, yb = -1e9;
-    chain.states.forEach((s, k) => { const [cs, sn] = isoCS(isoAng(s));
-      pts(s, k).forEach(p => { for (let i = 0; i < 4; i++) { const cx = p.x + (i & 1), cy = p.y + (i >> 1), qx = (cx - cy) * cs, qy = (cx + cy) * sn; if (qx < xa) xa = qx; if (qx > xb) xb = qx; if (qy < ya) ya = qy; if (qy > yb) yb = qy; } }); });
-    return { x: (xa - 0.6) * U, y: (ya - 0.6) * U, w: (xb - xa + 1.2) * U, h: (yb - ya + ISO_D + 1.2) * U };
-  }
   const x0 = Math.min(...all.map(b => b.x)) - 1, y0 = Math.min(...all.map(b => b.y)) - 1;
   return { x: x0 * U, y: y0 * U, w: (Math.max(...all.map(b => b.x)) + 2 - (x0 + 1) + 1) * U, h: (Math.max(...all.map(b => b.y)) + 2 - (y0 + 1) + 1) * U };
 }
@@ -245,6 +228,45 @@ function animSVG(chain, mode, ms, title = '') {
 }
 
 // ---------- UI ----------
+// ---------- Pattern code ----------
+// A short code that names a pattern, so the same code always rebuilds the same book. The pattern is cropped to its bounding box (the book does not depend on where the shape sits, only on its
+// size and the grid size G, which limits how far a shape can grow), each cell is one of 11 states, and the cells are packed as one base-11 number with a small header. The number is written in a
+// 31-character alphabet without 0, O, 1, I or L, closed by two check characters (the number modulo 929, a prime), and grouped in fives.
+const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', CODE_GRIDS = [7, 9, 11, 15], CODE_PRIME = 929n;
+const CODE_CELLS = [null, { s: 'square', q: 0 }, { s: 'circle', q: 0 }, ...[0, 1, 2, 3].map(q => ({ s: 'arch', q })), ...[0, 1, 2, 3].map(q => ({ s: 'tri', q }))]; // state 0 is empty
+const cellState = c => !c ? 0 : c.s === 'square' ? 1 : c.s === 'circle' ? 2 : (c.s === 'arch' ? 3 : 7) + ((c.q || 0) & 3);
+function toDigits(n, radix, alphabet) { let out = ''; const r = BigInt(radix); do { out = alphabet[Number(n % r)] + out; n /= r; } while (n > 0n); return out; }
+function patternCode(G, cells) {
+  const gi = CODE_GRIDS.indexOf(G); if (gi < 0) throw new Error('Grid size ' + G + ' has no code.');
+  const occ = []; cells.forEach((c, i) => { if (c) occ.push([i % G, Math.floor(i / G)]); });
+  const x0 = occ.length ? Math.min(...occ.map(p => p[0])) : 0, y0 = occ.length ? Math.min(...occ.map(p => p[1])) : 0;
+  const w = occ.length ? Math.max(...occ.map(p => p[0])) - x0 + 1 : 1, h = occ.length ? Math.max(...occ.map(p => p[1])) - y0 + 1 : 1;
+  let num = 0n; for (let i = w * h - 1; i >= 0; i--) num = num * 11n + BigInt(cellState(cells[(y0 + Math.floor(i / w)) * G + x0 + i % w]));
+  const value = BigInt(gi | (w - 1) << 2 | (h - 1) << 6) + num * 1024n, chk = Number(value % CODE_PRIME);
+  const text = toDigits(value, 31, CODE_ALPHABET) + CODE_ALPHABET[Math.floor(chk / 31)] + CODE_ALPHABET[chk % 31];
+  return text.match(/.{1,5}/g).join('-');
+}
+function decodePatternCode(code) {
+  const t = String(code).toUpperCase().replace(/[\s-]/g, ''), bad = [...t].find(ch => !CODE_ALPHABET.includes(ch));
+  if (bad) throw new Error(`"${bad}" is not used in codes (no 0, O, 1, I or L).`);
+  if (t.length < 3) throw new Error('That code is too short.');
+  let value = 0n; for (const ch of t.slice(0, -2)) value = value * 31n + BigInt(CODE_ALPHABET.indexOf(ch));
+  const chk = CODE_ALPHABET.indexOf(t[t.length - 2]) * 31 + CODE_ALPHABET.indexOf(t[t.length - 1]);
+  if (BigInt(chk) !== value % CODE_PRIME) throw new Error('The code does not check out: a character is wrong or missing.');
+  const gi = Number(value & 3n), w = Number(value >> 2n & 15n) + 1, h = Number(value >> 6n & 15n) + 1, G = CODE_GRIDS[gi];
+  let num = value >> 10n; if (w > G || h > G) throw new Error('That code is not a valid pattern.');
+  const cells = Array(G * G).fill(null), box = [];
+  for (let i = 0; i < w * h; i++) { const st = Number(num % 11n); num /= 11n; box.push(st); }
+  if (num !== 0n) throw new Error('That code is not a valid pattern.');
+  const used = box.some(Boolean), top = box.slice(0, w).some(Boolean), left = box.some((v, i) => v && i % w === 0), right = box.some((v, i) => v && i % w === w - 1), bottom = box.slice((h - 1) * w).some(Boolean);
+  if (used ? !(top && left && right && bottom) : (w !== 1 || h !== 1)) throw new Error('That code is not a valid pattern.');
+  const ox = Math.floor((G - w) / 2), oy = Math.floor((G - h) / 2);
+  box.forEach((st, i) => { if (st) { const c = CODE_CELLS[st]; cells[(oy + Math.floor(i / w)) * G + ox + i % w] = { s: c.s, r: 0, q: c.q }; } });
+  return { G, cells };
+}
+// A fixed number from a code, to seed the one random choice the output has (the order Unmake takes blocks away, and the random isometric angles), so a code always gives the same book.
+const codeSeed = code => { let h = 2166136261; for (const ch of code) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+
 if (typeof document !== 'undefined') {
   const $ = id => document.getElementById(id);
   let grid = Array(G * G).fill(null);
@@ -306,7 +328,7 @@ if (typeof document !== 'undefined') {
     $('grid').style.background = PAPER;
     $('grid').setAttribute('viewBox', `0 0 ${G * U} ${G * U}`);
     $('grid').innerHTML = defs() + h;
-    if (!live) updateCount(); // the live camera redraws many times a second, so it skips the count
+    if (!live) { updateCount(); codeShow(); } // the live camera redraws many times a second, so it skips the count and the code
   }
   $('grid').addEventListener('click', e => {
     const r = $('grid').getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * G), y = Math.floor((e.clientY - r.top) / r.height * G), i = y * G + x;
@@ -351,10 +373,12 @@ if (typeof document !== 'undefined') {
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
     hidden = new Set();
     // One sequence: the original, then every way to make you up (when the blocks touch), then every way to unmake you.
-    const made = act === 'both' && connected(start) ? variants(start, MOVES, mode === 'direction', TRACED.has(mode)) : null, unmade = unmake(start);
+    // The only random choices (the order blocks are taken away, the random isometric angles) are drawn from the pattern's own code, so a code always gives the same results.
+    const code = patternCode(G, grid), R = rng(codeSeed(code));
+    const made = act === 'both' && connected(start) ? variants(start, MOVES, mode === 'direction', TRACED.has(mode)) : null, unmade = unmake(start, start.map(() => R()));
     const states = [{ ...(made ? made.states[0] : unmade.states[0]), phase: 'start' },
-      ...(made ? made.states.slice(1).map(s => ({ ...s, phase: 'make' })) : []), ...unmade.states.slice(1).map(s => ({ ...s, phase: 'unmake' }))].map((s, id) => ({ ...s, id, ia: 14 + Math.random() * 42 }));
-    chain = { states, capped: !!(made && made.capped), orig: states[0] };
+      ...(made ? made.states.slice(1).map(s => ({ ...s, phase: 'make' })) : []), ...unmade.states.slice(1).map(s => ({ ...s, phase: 'unmake' }))].map((s, id) => ({ ...s, id }));
+    chain = { states, capped: !!(made && made.capped), orig: states[0], code };
     $('msg').textContent = act === 'both' && !made ? 'The blocks do not touch edge to edge, so there is only the unmaking.' : chain.capped ? `Making stopped at the cap of ${MAXCAP}.` : '';
     show();
     if (!quiet) { showPane('results'); goStep(1); }
@@ -416,16 +440,6 @@ if (typeof document !== 'undefined') {
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
-  // Isometric controls: depth, angle, and a random angle for each step.
-  const isoRedraw = () => { if (chain) show(); };
-  $('isoDepth').oninput = e => { ISO_D = +e.target.value; $('isoDepthOut').textContent = ISO_D.toFixed(2); isoRedraw(); };
-  $('isoAngle').oninput = e => { ISO_A = +e.target.value; $('isoAngleOut').textContent = ISO_A + '°'; isoRedraw(); };
-  $('isoRandom').onchange = e => { ISO_RND = e.target.checked; $('isoAngle').disabled = ISO_RND; isoRedraw(); };
-  $('projIcons').addEventListener('click', e => {
-    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
-    [...$('projIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    ISO = a.dataset.proj === 'iso'; $('isoHostPanel').hidden = !ISO; $('shadeLab').hidden = !ISO; if (chain) show();
-  });
   $('viewIcons').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('viewIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
@@ -455,7 +469,7 @@ if (typeof document !== 'undefined') {
     if (!orig || !vs.length) { $('msg').textContent = 'There are no variants to put in a book.'; return null; }
     let preface = [];
     if (BOOKOPT.preface) { try { preface = await fetchPreface(); } catch (e) { $('msg').textContent = 'The preface could not be read from the About page.'; return null; } }
-    return [{ states: [orig, ...vs], orig }, { imposed, preface, title: waysTitle(kc), note: NOTE, endpapers: BOOKOPT.end, date: new Date().toISOString().slice(0, 10) }];
+    return [{ states: [orig, ...vs], orig }, { imposed, preface, title: waysTitle(kc), note: NOTE, endpapers: BOOKOPT.end, code: chain.code }];
   }
   async function dlBook(imposed) {
     const inp = await bookInputs(imposed); if (!inp) return;
@@ -558,7 +572,7 @@ if (typeof document !== 'undefined') {
   // On a wide desktop window the drawing tools (shapes, Clear, Random and the hint) sit in the side panel, beside the grid; elsewhere they stay under the grid.
   const placeTools = () => { if (wide.matches) { $('toolsHostPanel').append($('drawTools'), $('viewIcons')); } else { $('grid').after($('drawTools')); $('anim').after($('viewIcons')); } };
   wide.addEventListener('change', placeTools);
-  const placeDraw = () => { placeTools(); $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('colourHostPanel').prepend($('colours')); $('spdHostPanel').prepend($('spd').closest('label')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
+  const placeDraw = () => { placeTools(); $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('spdHostPanel').prepend($('spd').closest('label')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); }); phone.addEventListener('change', () => { placeDraw(); sizeBody(); });
   const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 4 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
@@ -596,22 +610,18 @@ if (typeof document !== 'undefined') {
   placeDraw();
   if (small.matches) { $('panel').classList.add('collapsed'); $('grab').setAttribute('aria-expanded', 'false'); $('grab').setAttribute('aria-label', 'Open controls'); }
   sizeBody();
-  // Colour: paper and ink for the artwork (the results, every download and the book). The app's own screen keeps its colours.
-  const PRESETS = [['Default', '#f4f2ee', '#111111'], ['Book', '#deddd2', '#231f20'], ['Night', '#231f20', '#deddd2'], ['Yellow', '#ffe100', '#111111']];
-  $('presets').innerHTML = PRESETS.map(([n, p, i]) => `<button type="button" class="preset" title="${n}" aria-label="${n}" data-p="${p}" data-i="${i}" style="background:linear-gradient(135deg,${p} 50%,${i} 50%)"></button>`).join('');
-  function setColours(p, i) {
-    [...$('presets').children].forEach(b => b.classList.toggle('on', b.dataset.p === p && b.dataset.i === i)); // the chosen preset is ringed in yellow
-    PAPER = p; INK = i; $('paperCol').value = p; $('inkCol').value = i; $('anim').style.background = p; if (!SHADE) $('shadeCol').value = shadeCol();
-    drawGrid(true); // the drawing grid shows the colours too, so the change is visible wherever you are
-    if (chain) show();
-  }
-  $('paperCol').addEventListener('input', () => setColours($('paperCol').value, INK));
-  $('inkCol').addEventListener('input', () => setColours(PAPER, $('inkCol').value));
-  $('presets').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { SHADE = null; setColours(b.dataset.p, b.dataset.i); } }); // a preset is a whole palette, so the shade follows it again
-  $('shadeCol').addEventListener('input', () => { SHADE = $('shadeCol').value; if (chain) show(); });
-  $('shadeCol').value = shadeCol();
-  $('anim').style.background = PAPER; $('presets').firstChild.classList.add('on');
+  $('anim').style.background = PAPER;
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
+  // Pattern code: shown with a copy button, and a field that loads a pattern from a code. A ?code= address loads one on opening.
+  function codeShow() { try { $('codeOut').textContent = patternCode(G, grid); } catch (e) { $('codeOut').textContent = ''; } }
+  function loadCode(text) {
+    try { const d = decodePatternCode(text); G = d.G; grid = d.cells; [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', +x.dataset.n === G)); $('codeMsg').textContent = ''; drawGrid(); if (chain) process(true); return true; }
+    catch (e) { $('codeMsg').textContent = e.message; return false; }
+  }
+  $('codeLoad').onclick = () => { if (loadCode($('codeIn').value)) $('codeIn').value = ''; };
+  $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('codeLoad').click(); });
+  $('codeCopy').onclick = () => { const c = $('codeOut').textContent; (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => { $('codeMsg').textContent = 'Copied.'; }, () => { const r = document.createRange(); r.selectNodeContents($('codeOut')); getSelection().removeAllRanges(); getSelection().addRange(r); $('codeMsg').textContent = 'Press copy on your keyboard.'; }); };
+  { const qc = new URLSearchParams(location.search).get('code'); if (qc) loadCode(qc); }
   const pieceName = new URLSearchParams(location.search).get('piece');
   if (PIECES[pieceName]) {
     const P = PIECES[pieceName]; NOTE = P;
@@ -625,4 +635,4 @@ if (typeof document !== 'undefined') {
     drawGrid(); process();
   }
   drawGrid();
-} else module.exports = { variants, unmake, scatter, connected, sheetSVG };
+} else module.exports = { variants, unmake, scatter, connected, sheetSVG, patternCode, decodePatternCode, codeSeed, rng };

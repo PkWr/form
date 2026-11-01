@@ -62,17 +62,11 @@ function buildPages(bc, opt) {
     else if (view === 'solid') s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink); });
     return out + s.blocks.map(b => blockOps(b, X, Y, c, ink)).join('');
   };
-  // Isometric: the same drawing laid onto the isometric plane about the frame's origin, with thickness drawn under it (see app.js). Hatch patterns keep their screen angles.
-  const frameOps = (k, view, X, Y, c, ink) => {
-    if (!ISO) return frameOps0(k, view, X, Y, c, ink);
-    const st = bc.states[k], [cs, sn] = isoCS(isoAng(st)), e = X - (cs * X - cs * Y), f = Y - (sn * X + sn * Y), M = `${n2(cs)} ${n2(sn)} ${n2(-cs)} ${n2(sn)} ${n2(e)} ${n2(f)} cm`, side = shadeCol();
-    const sides = [1 / 3, 2 / 3, 1].map(t => `q 1 0 0 1 0 ${n2(t * ISO_D * c)} cm ${M}\n` + st.blocks.map(b => blockOps(b, X, Y, c, side)).join('') + 'Q\n').join('');
-    return sides + `q ${M}\n` + frameOps0(k, view, X, Y, c, ink) + 'Q\n';
-  };
-  const extents = (blocks, state) => { const [cs, sn] = isoCS(isoAng(state)); // [x0, x1, y0, y1] in cells of the screen drawing
+  const frameOps = (k, view, X, Y, c, ink) => frameOps0(k, view, X, Y, c, ink);
+  const extents = blocks => { // [x0, x1, y0, y1] in cells of the screen drawing
     let xa = 1e9, xb = -1e9, ya = 1e9, yb = -1e9;
-    blocks.forEach(b => { for (let i = 0; i < 4; i++) { const cx = b.x + (i & 1), cy = b.y + (i >> 1), qx = ISO ? (cx - cy) * cs : cx, qy = ISO ? (cx + cy) * sn : cy; if (qx < xa) xa = qx; if (qx > xb) xb = qx; if (qy < ya) ya = qy; if (qy > yb) yb = qy; } });
-    return [xa, xb, ya, yb + (ISO ? ISO_D : 0)];
+    blocks.forEach(b => { for (let i = 0; i < 4; i++) { const cx = b.x + (i & 1), cy = b.y + (i >> 1), qx = cx, qy = cy; if (qx < xa) xa = qx; if (qx > xb) xb = qx; if (qy < ya) ya = qy; if (qy > yb) yb = qy; } });
+    return [xa, xb, ya, yb];
   };
   const fit = (n, bw, bh, rw, rh, cmax) => { let best = null; for (let c = 1; c <= n; c++) { const r = Math.ceil(n / c), s = Math.min(cmax, rw / (c * bw), rh / (r * bh)); if (!best || s > best.s - 1e-9) best = { cols: c, rows: r, s }; } return best; };
   const foot = (th, hasTitle) => {
@@ -114,7 +108,7 @@ function buildPages(bc, opt) {
   const pages = [];
   // cover
   { const bb = bbox(bc, 'form'), bw = bb.w / U, bh = bb.h / U, c = Math.min(0.11 * W, 0.76 * W / bw, 0.5 * H / bh);
-    const [x0, x1, y0, y1] = extents(bc.states[0].blocks, bc.states[0]);
+    const [x0, x1, y0, y1] = extents(bc.states[0].blocks);
     const cc = Math.min(0.11 * W, 0.7 * W / (x1 - x0), 0.5 * H / (y1 - y0));
     pages.push(page(THEME.light, frameOps(0, 'form', W / 2 - (x0 + x1) / 2 * cc, 0.435 * H - (y0 + y1) / 2 * cc, cc, THEME.light.ink) +
       text(title, 0, 8, W / 2, H * 0.808, THEME.light.ink) + text('Form', 2, 8, W / 2, H * 0.826, THEME.light.ink), true)); }
@@ -128,7 +122,7 @@ function buildPages(bc, opt) {
       const ks = []; for (let k = 1 + p * per; k <= Math.min(N, (p + 1) * per); k++) ks.push(k);
       const rx = 0.78 * W, ry = 0.445 * H, f = fit(ks.length, bw, bh, rx, ry, (view === 'dens' ? 0.075 : 0.0373) * W);
       const left = 0.11 * W + (rx - f.cols * f.s * bw) / 2; let body = '';
-      const [x0, x1, y0, y1] = extents(bc.states[0].blocks, bc.states[0]), oc = Math.min(0.0373 * W, 0.14 * H / (y1 - y0)); // the original is drawn no taller than the band above the grid, so a tall shape (a letter) cannot run into the variants
+      const [x0, x1, y0, y1] = extents(bc.states[0].blocks), oc = Math.min(0.0373 * W, 0.14 * H / (y1 - y0)); // the original is drawn no taller than the band above the grid, so a tall shape (a letter) cannot run into the variants
       body += frameOps(0, view, W / 2 - (x0 + x1) / 2 * oc, 0.12 * H - y0 * oc, oc, THEME.light.ink);
       ks.forEach((k, i) => { body += frameOps(k, view, left + (i % f.cols) * f.s * bw - bb.x / U * f.s, 0.275 * H + Math.floor(i / f.cols) * f.s * bh - bb.y / U * f.s, f.s, THEME.light.ink); });
       body += text(ROMAN[vi] + (pc > 1 ? '   ' + (p + 1) + ' of ' + pc : ''), 2, 6, W / 2, H * 0.805, THEME.light.ink) + text(name, 0, 8, W / 2, H * 0.824, THEME.light.ink);
@@ -150,13 +144,15 @@ function buildPages(bc, opt) {
     for (let i = 0; (pages.length + (opt.endpapers ? 1 : 0) + 1) % 4; i++) pages.push(page(THEME.dark, live.length ? frameOps(live[(i * 7 + N * 3) % live.length], 'dens', sp.X, sp.Y, sp.c, THEME.dark.ink) : '', true)); }
   if (opt.endpapers) pages.push(endpaper(true));
   const total = pages.length + 1, L = THEME.light;
-  pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
+  // The pattern code, six groups to a line, under the terms
+  const codeLines = (code, L) => { if (!code) return ''; const g = code.split('-'), rows = []; for (let i = 0; i < g.length; i += 6) rows.push(g.slice(i, i + 6).join(' ')); return text('Pattern code', 2, 6.5, W / 2, H * 0.885, L.ink) + rows.map((r, i) => text(r, 0, 7, W / 2, H * 0.9 + i * 9, L.ink)).join(''); };
+  pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co.', 2, 6.5, W / 2, H * 0.80, L.ink) +
     text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) +
-    text('\u00a9 2026 Patrick Walker. Free to share and print for non-commercial use, with credit.', 2, 6.5, W / 2, H * 0.845, L.ink) + text('Ask before commercial use.', 2, 6.5, W / 2, H * 0.86, L.ink), true));
+    text('\u00a9 2026 Patrick Walker. Free to share and print for non-commercial use, with credit.', 2, 6.5, W / 2, H * 0.845, L.ink) + text('Ask before commercial use.', 2, 6.5, W / 2, H * 0.86, L.ink) + codeLines(opt.code, L), true));
   return { pages, gs, title };
 }
 
-function makeBook(bc, opt) { const r = buildPages(bc, opt); return pdfBuild(r.pages, opt.imposed, r.gs, { title: r.title, date: opt.date || '' }); }
+function makeBook(bc, opt) { const r = buildPages(bc, opt); return pdfBuild(r.pages, opt.imposed, r.gs, { title: r.title }); }
 
 // Booklet imposition: for n pages (a multiple of four) the sides of the sheets, each as [left page, right page], 0-based.
 function imposition(n) { const out = []; for (let i = 0; i < n / 4; i++) { out.push([n - 1 - 2 * i, 2 * i]); out.push([2 * i + 1, n - 2 - 2 * i]); } return out; }
@@ -176,7 +172,7 @@ function pdfBuild(pageOps, imposed, gs, meta) {
   const kids = [];
   if (imposed) { const sw = A4W, off = (sw - 2 * W) / 2; imposition(pageOps.length).forEach(([l, r]) => { const c = stream('', `q 1 0 0 1 ${n2(off)} 0 cm /P${l} Do Q q 1 0 0 1 ${n2(off + W)} 0 cm /P${r} Do Q\n`); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(sw)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); }); }
   else pageOps.forEach(o => { const c = stream('', wrap(o)); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); });
-  const info = add(`<< /Title (${pdfStr(meta.title)}) /Author (Patrick Walker) /Creator (Form, form.pkwr.co) /Producer (Form) /Subject (${pdfStr('Made with Form, form.pkwr.co.')}) /Rights (${pdfStr(CREDIT)}) /CreationDate (D:${meta.date.replace(/-/g, '')}000000Z) >>`);
+  const info = add(`<< /Title (${pdfStr(meta.title)}) /Author (Patrick Walker) /Creator (Form, form.pkwr.co) /Producer (Form) /Subject (${pdfStr('Made with Form, form.pkwr.co.')}) /Rights (${pdfStr(CREDIT)}) >>`); // no creation date: the same code must give the same file
   objs[1] = `<< /Type /Pages /Kids [${kids.map(k => k + ' 0 R').join(' ')}] /Count ${kids.length} >>`;
   objs[0] = '<< /Type /Catalog /Pages 2 0 R >>';
   let out = '%PDF-1.4\n'; const offs = [];

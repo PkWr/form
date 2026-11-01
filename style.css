@@ -458,3 +458,11 @@ body{padding-right:388px}
 #panel #viewIcons{font-size:11px;letter-spacing:-.01em}
 }
 @media(min-width:901px) and (pointer:fine){#panel #viewIcons a span{white-space:nowrap;word-break:keep-all}#panel #viewIcons{font-size:10.5px}}
+/* Pattern code */
+#codeBox{margin:10px 0 0;font-size:12px}
+.code-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 6px}
+.code-row .lab{flex:0 0 auto;color:#9a9a9a}
+#codeOut{flex:1 1 auto;min-width:0;word-break:break-all;letter-spacing:.04em;color:#fff;font-style:normal}
+#codeIn{flex:1 1 90px;min-width:0;padding:5px 8px;font:inherit;color:#fff;background:#17191c;border:1px solid var(--line);border-radius:8px;text-transform:uppercase}
+#codeBox button{padding:5px 10px;font-size:12px}
+#codeMsg:empty{display:none}
