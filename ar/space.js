@@ -25,6 +25,15 @@
     order.forEach((_, k) => steps.push(order.slice(0, k + 1).map(i => key(start[i]))));
     return steps;
   }
-  const api = { spaceMoves, spaceUnmake };
+  // The movement: a block that makes several moves in a row goes straight from one new place to the next (the shape it makes is the same as going back to the start first, because every
+  // variant is the original with one block moved). When the next move belongs to another block, the first block goes back to its place during that move. One extra slot at the end brings the last block home.
+  // Returns one entry per slot: { cur: {bi, src, to} or null, ret: {bi, from} or null }, where bi is the index of the block in start.
+  function spacePlan(start, moves) {
+    const bi = moves.map(mv => start.findIndex(b => key(b) === key(mv.from))), slots = [];
+    moves.forEach((mv, i) => { const same = i > 0 && bi[i - 1] === bi[i]; slots.push({ cur: { bi: bi[i], src: same ? moves[i - 1].to : mv.from, to: mv.to }, ret: i > 0 && !same ? { bi: bi[i - 1], from: moves[i - 1].to } : null }); });
+    if (moves.length) slots.push({ cur: null, ret: { bi: bi[moves.length - 1], from: moves[moves.length - 1].to } });
+    return slots;
+  }
+  const api = { spaceMoves, spaceUnmake, spacePlan };
   if (typeof module !== 'undefined') module.exports = api; else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis);

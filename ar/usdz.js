@@ -8,17 +8,19 @@
   function buildUSDA(m) {
     const { start, moves, unmade, mt, ut } = m, key3 = b => b.join(','), xs = start.map(b => b[0]), ys = start.map(b => b[1]), cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
     const lift = ((Math.max(...ys) - Math.min(...ys)) / 2 + 2) * CELL, P = (x, y, z) => [(x - cx) * CELL, -(y - cy) * CELL + lift, z * CELL];
-    const mf = Math.round(mt * FPS), uf = Math.round(ut * FPS), endF = moves.length * mf + unmade.length * uf + Math.round(1.5 * FPS);
+    const nSlots = moves.length ? moves.length + 1 : 0, mf = Math.round(mt * FPS), uf = Math.round(ut * FPS), endF = nSlots * mf + unmade.length * uf + Math.round(1.5 * FPS);
     const dedupe = a => { const o = [], seen = new Set(); a.forEach(([f, v]) => { if (!seen.has(f)) { seen.add(f); o.push([f, v]); } else o[o.length - 1] = [f, v]; }); return o.sort((p, q) => p[0] - q[0]); };
     const N = start.length, tr = start.map(() => []), sc = start.map(() => []), mk = start.map(() => []); // keyframes per block: [frame, value]
     const T = (j, f, p) => tr[j].push([f, p]), S = (j, f, v) => sc[j].push([f, v]), M = (j, f, v) => mk[j].push([f, v]);
     start.forEach((b, j) => { T(j, 0, P(...b)); S(j, 0, 1); M(j, 0, 0); });
-    moves.forEach((mv, i) => {
-      const f0 = i * mf, j = start.findIndex(b => key3(b) === key3(mv.from)), K = 8;
-      for (let k = 0; k <= K; k++) { const u = k / K, s = ease(u), a = Math.sin(Math.PI * u) * 1.7; T(j, Math.round(f0 + u * 0.8 * mf), P(lerp(mv.from[0], mv.to[0], s), lerp(mv.from[1], mv.to[1], s), lerp(mv.from[2], mv.to[2], s) + a)); }
-      T(j, f0 + mf - 1, P(...mv.to)); T(j, f0 + mf, P(...mv.from)); M(j, f0 - 1, 0); M(j, f0, 1); M(j, f0 + mf - 1, 1); M(j, f0 + mf, 0);
+    const slots = root.spacePlan ? root.spacePlan(start, moves) : m.plan, nS = slots.length, K = 8, runStart = {}, bounds = {};
+    slots.forEach((sl, i) => { const f0 = i * mf;
+      if (sl.cur) { const c = sl.cur; for (let k = 0; k <= K; k++) { const x = k / K, s = ease(x), a = Math.sin(Math.PI * x) * 1.7; T(c.bi, Math.round(f0 + x * 0.8 * mf), P(lerp(c.src[0], c.to[0], s), lerp(c.src[1], c.to[1], s), lerp(c.src[2], c.to[2], s) + a)); }
+        T(c.bi, f0 + mf - 1, P(...c.to)); if (!(c.bi in runStart) || bounds[c.bi] !== i - 1) { runStart[c.bi] = i; } bounds[c.bi] = i; if (runStart[c.bi] === i) M(c.bi, f0 - 1, 0); M(c.bi, f0, 1); M(c.bi, f0 + mf - 1, 1); }
+      if (sl.ret) { const r = sl.ret, o = start[r.bi]; for (let k = 0; k <= K; k++) { const x = k / K, s = ease(x), a = Math.sin(Math.PI * x) * 1.0; T(r.bi, Math.round(f0 + x * 0.8 * mf), P(lerp(r.from[0], o[0], s), lerp(r.from[1], o[1], s), lerp(r.from[2], o[2], s) + a)); }
+        T(r.bi, f0 + mf - 1, P(...o)); M(r.bi, f0, 1); M(r.bi, f0 + mf - 1, 1); M(r.bi, f0 + mf, 0); }
     });
-    const u0 = moves.length * mf;
+    const u0 = nSlots * mf;
     unmade.forEach((set, i) => {
       const gone = new Set(i > 0 ? unmade[i - 1] : []), f0 = u0 + i * uf;
       start.forEach((b, j) => { const k3 = key3(b); if (gone.has(k3)) return; if (set.includes(k3)) {

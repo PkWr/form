@@ -9,8 +9,9 @@ const start = []; pat.cells.forEach((c, i) => { if (c) start.push([i % pat.G, Ma
 const R = rng(codeSeed(patternCode(pat.G, pat.cells) + '-space'));
 const moves = spaceMoves(start, CAP, R), unmade = spaceUnmake(start, R);
 const nM = moves.length, nU = unmade.length;
-const scale = Math.min(1, LOOP_MAX / (nM * MOVE_T + nU * UN_T)); // long patterns play faster so a loop stays under two minutes
-const mt = MOVE_T * scale, ut = UN_T * scale, total = nM * mt + nU * ut + 1.5;
+const slots = spacePlan(start, moves), nS = slots.length; // one slot per move, and one to bring the last block home
+const scale = Math.min(1, LOOP_MAX / (nS * MOVE_T + nU * UN_T)); // long patterns play faster so a loop stays under two minutes
+const mt = MOVE_T * scale, ut = UN_T * scale, total = nS * mt + nU * ut + 1.5;
 document.getElementById('count').textContent = `${nM} way${nM === 1 ? '' : 's'} I can make you up in space${nU ? ` and ${nU} to unmake you` : ''}`;
 const view = document.getElementById('view'), W = () => innerWidth, H = () => innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.setClearColor(PAPER); view.appendChild(renderer.domElement);
@@ -31,11 +32,12 @@ const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t), lerp = (a, b, t) 
 function pose(time) {
   blocks.forEach((m, i) => { m.visible = true; m.scale.setScalar(1); m.position.copy(P(...start[i])); marks[i].visible = false; });
   const tt = time % total;
-  if (tt < nM * mt) {
-    const i = Math.floor(tt / mt), u = (tt - i * mt) / mt, mv = moves[i], bi = start.findIndex(b => key3(b) === key3(mv.from)), s = ease(u / 0.8), a = Math.sin(Math.PI * Math.min(1, u / 0.8)) * 1.7;
-    const p = P(lerp(mv.from[0], mv.to[0], s), lerp(mv.from[1], mv.to[1], s), lerp(mv.from[2], mv.to[2], s) + a); blocks[bi].position.copy(p); marks[bi].position.copy(P(...mv.from)); marks[bi].visible = true;
+  if (tt < nS * mt) {
+    const i = Math.floor(tt / mt), u = (tt - i * mt) / mt, sl = slots[i], s = ease(u / 0.8), a = Math.sin(Math.PI * Math.min(1, u / 0.8)) * 1.7, at = (p, q, h) => P(lerp(p[0], q[0], s), lerp(p[1], q[1], s), lerp(p[2], q[2], s) + h);
+    if (sl.cur) { const c = sl.cur; blocks[c.bi].position.copy(at(c.src, c.to, a)); marks[c.bi].position.copy(P(...start[c.bi])); marks[c.bi].visible = true; }
+    if (sl.ret) { const r = sl.ret; blocks[r.bi].position.copy(at(r.from, start[r.bi], a * 0.6)); marks[r.bi].position.copy(P(...start[r.bi])); marks[r.bi].visible = true; }
   } else {
-    const k = tt - nM * mt, i = Math.min(nU - 1, Math.floor(k / ut)), u = (k - i * ut) / ut; if (k >= nU * ut) { blocks.forEach(m => m.visible = false); start.forEach((b, j) => { marks[j].position.copy(P(...b)); marks[j].visible = true; }); return; }
+    const k = tt - nS * mt, i = Math.min(nU - 1, Math.floor(k / ut)), u = (k - i * ut) / ut; if (k >= nU * ut) { blocks.forEach(m => m.visible = false); start.forEach((b, j) => { marks[j].position.copy(P(...b)); marks[j].visible = true; }); return; }
     const gone = new Set(i > 0 ? unmade[i - 1] : []), now = new Set(unmade[i]);
     start.forEach((b, j) => { const k3 = key3(b); if (gone.has(k3)) { blocks[j].visible = false; marks[j].position.copy(P(...b)); marks[j].visible = true; } else if (now.has(k3)) { const l = ease(u / 0.85); blocks[j].position.copy(P(b[0], b[1], b[2] + l * 3)); blocks[j].scale.setScalar(Math.max(0.01, 1 - l)); marks[j].position.copy(P(...b)); marks[j].visible = true; } });
   }
