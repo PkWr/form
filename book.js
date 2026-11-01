@@ -52,12 +52,12 @@ function buildPages(bc, opt) {
   };
   // Density: every block is filled with a fine-line pattern, one layer for the original and one for each of this variant and the two before it,
   // each layer at its own angle (DENS in app.js), so overlaps cross into a darker mesh. The patterns are defined once for the whole file.
-  const patBlock = (b, X, Y, c, slot) => `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm /Pattern cs /H${slot} scn ${pathOps(b.s, ang(b))} f Q\n`;
-  const densOps = (k, X, Y, c) => densStack(bc, k).map(l => l.blocks.map(b => patBlock(b, X + l.dx * c, Y + l.dy * c, c, l.slot)).join('')).join('');
+  const patBlock = (b, X, Y, c, slot, pre = 'H') => `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm /Pattern cs /${pre}${slot} scn ${pathOps(b.s, ang(b))} f Q\n`;
+  const densOps = (k, X, Y, c, onDark) => densStack(bc, k).map(l => l.blocks.map(b => patBlock(b, X + l.dx * c, Y + l.dy * c, c, l.slot, onDark ? 'HD' : 'H')).join('')).join(''); // HD: the same fine lines in the light colour, for dark pages
   const frameOps0 = (k, view, X, Y, c, ink) => {
     const s = bc.states[k]; let out = '';
     if (view === 'direction') return s.blocks.map(b => stripeOps(b, X, Y, c, ink, s.blocks)).join('');
-    if (view === 'dens') return densOps(k, X, Y, c);
+    if (view === 'dens') return densOps(k, X, Y, c, ink === THEME.dark.ink && ink !== THEME.light.ink);
     if (view === 'trans') { ghosts(bc, k).forEach(g => g.blocks.forEach(b => { out += blockOps(b, X + g.dx * c, Y + g.dy * c, c, ink, g.o); })); s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink, TONE); }); }
     else if (view === 'solid') s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink); });
     return out + s.blocks.map(b => blockOps(b, X, Y, c, ink)).join('');
@@ -145,7 +145,9 @@ function buildPages(bc, opt) {
         pages.push(page(d, ks.map((k, i) => frameOps(k, 'form', left + (i % f.cols) * f.s * bw - bb.x / U * f.s, 0.1 * H + Math.floor(i / f.cols) * f.s * bh - bb.y / U * f.s, f.s, d.ink)).join(''))); } }
   }
   // blank pages so the booklet is a multiple of four, then the colophon as the last page
-  while ((pages.length + (opt.endpapers ? 1 : 0) + 1) % 4) pages.push(page(THEME.dark, '', true)); // padding pages are truly blank: no title
+  { const sp = slot('form'), live = []; for (let k = 1; k <= N; k++) if (bc.states[k].blocks.length) live.push(k);
+    // padding pages (to make a multiple of four) are a chosen density variant, white on black, with no title
+    for (let i = 0; (pages.length + (opt.endpapers ? 1 : 0) + 1) % 4; i++) pages.push(page(THEME.dark, live.length ? frameOps(live[(i * 7 + N * 3) % live.length], 'dens', sp.X, sp.Y, sp.c, THEME.dark.ink) : '', true)); }
   if (opt.endpapers) pages.push(endpaper(true));
   const total = pages.length + 1, L = THEME.light;
   pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
@@ -167,9 +169,10 @@ function pdfBuild(pageOps, imposed, gs, meta) {
   const fonts = FONTS.map(f => add(`<< /Type /Font /Subtype /Type1 /BaseFont /${f[0]} /Encoding /WinAnsiEncoding >>`));
   const gsIds = [...gs].map(p => [p, add(`<< /Type /ExtGState /CA ${p / 100} /ca ${p / 100} >>`)]);
   const pats = DENS.map(d => { const P = 1.1 * d[1], r = d[0] * Math.PI / 180; return stream(`/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 ${P} ${P}] /XStep ${P} /YStep ${P} /Resources << >> /Matrix [${n2(Math.cos(r))} ${n2(Math.sin(r))} ${n2(-Math.sin(r))} ${n2(Math.cos(r))} 0 0]`, `${rgb(THEME.light.ink)} rg 0 0 ${n2(P * 0.3)} ${P} re f\n`); });
+  const patsD = DENS.map(d => { const P = 1.1 * d[1], r = d[0] * Math.PI / 180; return stream(`/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 ${P} ${P}] /XStep ${P} /YStep ${P} /Resources << >> /Matrix [${n2(Math.cos(r))} ${n2(Math.sin(r))} ${n2(-Math.sin(r))} ${n2(Math.cos(r))} 0 0]`, `${rgb(THEME.dark.ink)} rg 0 0 ${n2(P * 0.3)} ${P} re f\n`); });
   const resId = add('');
   const xo = imposed ? pageOps.map(o => stream(`/Type /XObject /Subtype /Form /BBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R`, wrap(o))) : [];
-  objs[resId - 1] = `<< /Font << ${fonts.map((id, i) => `/F${i + 1} ${id} 0 R`).join(' ')} >> /ExtGState << ${gsIds.map(([p, id]) => `/G${p} ${id} 0 R`).join(' ')} >> /Pattern << ${pats.map((id, i) => `/H${i} ${id} 0 R`).join(' ')} >> /XObject << ${xo.map((id, i) => `/P${i} ${id} 0 R`).join(' ')} >> >>`;
+  objs[resId - 1] = `<< /Font << ${fonts.map((id, i) => `/F${i + 1} ${id} 0 R`).join(' ')} >> /ExtGState << ${gsIds.map(([p, id]) => `/G${p} ${id} 0 R`).join(' ')} >> /Pattern << ${pats.map((id, i) => `/H${i} ${id} 0 R`).join(' ')} ${patsD.map((id, i) => `/HD${i} ${id} 0 R`).join(' ')} >> /XObject << ${xo.map((id, i) => `/P${i} ${id} 0 R`).join(' ')} >> >>`;
   const kids = [];
   if (imposed) { const sw = A4W, off = (sw - 2 * W) / 2; imposition(pageOps.length).forEach(([l, r]) => { const c = stream('', `q 1 0 0 1 ${n2(off)} 0 cm /P${l} Do Q q 1 0 0 1 ${n2(off + W)} 0 cm /P${r} Do Q\n`); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(sw)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); }); }
   else pageOps.forEach(o => { const c = stream('', wrap(o)); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); });
