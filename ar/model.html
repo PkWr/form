@@ -11,6 +11,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#DEDDD2;color:#231F20;
 #view canvas{display:block}
 #count{position:fixed;left:0;right:0;bottom:18px;text-align:center;font-style:italic;font-size:15px;padding:0 16px}
 #msg{position:fixed;left:0;right:0;top:40%;text-align:center;padding:0 24px}
+#ar{position:fixed;top:14px;right:14px;font:inherit;padding:10px 16px;border:0;border-radius:8px;background:#ffe100;color:#231F20}
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head>
@@ -18,8 +19,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#DEDDD2;color:#231F20;
 <div id="view"></div>
 <div id="count"></div>
 <div id="msg"></div>
+<button id="ar" hidden>View in AR</button>
 <script src="../app.js"></script>
 <script src="space.js"></script>
+<script src="usdz.js"></script>
 <script type="module" src="model.js"></script>
 </body>
 </html>
