@@ -288,7 +288,8 @@ if (typeof document !== 'undefined') {
   let hidden = new Set();
   const kept = () => ({ ...chain, states: chain.states.filter(st => !hidden.has(st.id)) });
   let paper = 'A3';
-  const titleText = c => waysLabel(c.states.filter(s => s.id !== 0).length, act === 'make' ? 'make you up' : 'unmake you');
+  const VERBS = { make: 'make you up', unmake: 'unmake you', rearrange: 'remake you' };
+  const titleText = c => waysLabel(c.states.filter(s => s.id !== 0).length, VERBS[act]);
   const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true, paper, titleText({ states: chain.states.filter(s => !hidden.has(s.id)) })); };
   function show() {
     if (!chain) return;
@@ -304,7 +305,7 @@ if (typeof document !== 'undefined') {
   const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
   // The subtitle number follows the grid, Moves and view live.
   let act = 'make'; // the rule: make (a block moves and stays joined), unmake (a block is taken away) or rearrange (a block moves away from the rest)
-  const verb = () => { const t = act === 'make' ? 'make you up' : 'unmake you'; $('verb').textContent = t; $('process').textContent = act === 'make' ? 'Make you up' : 'Unmake you'; };
+  const verb = () => { $('verb').textContent = VERBS[act]; $('process').textContent = VERBS[act][0].toUpperCase() + VERBS[act].slice(1); };
   function updateCount() {
     const st = startBlocks();
     $('count').textContent = act !== 'make' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
@@ -416,7 +417,7 @@ if (typeof document !== 'undefined') {
     if (!orig || !vs.length) { $('msg').textContent = 'There are no variants to put in a book.'; return null; }
     let preface = [];
     if ($('prefacePage').checked) { try { preface = await fetchPreface(); } catch (e) { $('msg').textContent = 'The preface could not be read from the About page.'; return null; } }
-    return [{ states: [orig, ...vs], orig }, { imposed, preface, message: $('personalMsg').value.trim(), verb: act === 'make' ? 'make you up' : 'unmake you', note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) }];
+    return [{ states: [orig, ...vs], orig }, { imposed, preface, message: $('personalMsg').value.trim(), verb: VERBS[act], note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) }];
   }
   async function dlBook(imposed) {
     const inp = await bookInputs(imposed); if (!inp) return;
