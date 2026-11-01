@@ -26,12 +26,24 @@
     return steps;
   }
   // The movement: a block that makes several moves in a row goes straight from one new place to the next (the shape it makes is the same as going back to the start first, because every
-  // variant is the original with one block moved). When the next move belongs to another block, the first block goes back to its place during that move. One extra slot at the end brings the last block home.
-  // Returns one entry per slot: { cur: {bi, src, to} or null, ret: {bi, from} or null }, where bi is the index of the block in start.
+  // variant is the original with one block moved). Two blocks walk their routes at the same time (consecutive blocks are paired), so the sequence is watched once, not twice. A block goes home
+  // while the next pair starts, and one extra slot at the end brings the last pair home. If a block's next place is the one the other block is standing on, it waits a slot.
+  // Returns one entry per slot: { curs: [{bi, src, to}], rets: [{bi, from}] }, where bi is the index of the block in start.
   function spacePlan(start, moves) {
-    const bi = moves.map(mv => start.findIndex(b => key(b) === key(mv.from))), slots = [];
-    moves.forEach((mv, i) => { const same = i > 0 && bi[i - 1] === bi[i]; slots.push({ cur: { bi: bi[i], src: same ? moves[i - 1].to : mv.from, to: mv.to }, ret: i > 0 && !same ? { bi: bi[i - 1], from: moves[i - 1].to } : null }); });
-    if (moves.length) slots.push({ cur: null, ret: { bi: bi[moves.length - 1], from: moves[moves.length - 1].to } });
+    const runs = []; moves.forEach(mv => { const k = key(mv.from), last = runs[runs.length - 1]; if (last && last.k === k) last.list.push(mv); else runs.push({ k, bi: start.findIndex(b => key(b) === k), from: mv.from, list: [mv] }); });
+    const slots = []; let pending = [];
+    for (let r = 0; r < runs.length; r += 2) {
+      const pair = runs.slice(r, r + 2).map(x => ({ bi: x.bi, at: x.from, list: x.list.slice(), n: 0 }));
+      while (pair.some(p => p.n < p.list.length)) {
+        const curs = [], taken = new Set(pair.map(p => key(p.at)));
+        pair.forEach(p => { if (p.n >= p.list.length) return; const to = p.list[p.n].to; const clash = pair.some(o => o !== p && key(o.at) === key(to)) || curs.some(c => key(c.to) === key(to));
+          if (clash) return; curs.push({ bi: p.bi, src: p.at, to }); p.at = to; p.n++; });
+        if (!curs.length) { const p = pair.find(x => x.n < x.list.length); curs.push({ bi: p.bi, src: p.at, to: p.list[p.n].to }); p.at = p.list[p.n].to; p.n++; }
+        slots.push({ curs, rets: pending }); pending = [];
+      }
+      pending = pair.map(p => ({ bi: p.bi, from: p.at }));
+    }
+    if (pending.length) slots.push({ curs: [], rets: pending });
     return slots;
   }
   const api = { spaceMoves, spaceUnmake, spacePlan };

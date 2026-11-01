@@ -35,8 +35,8 @@ function pose(time) {
   const tt = time % total;
   if (tt < nS * mt) {
     const i = Math.floor(tt / mt), u = (tt - i * mt) / mt, sl = slots[i], s = ease(u / 0.8), a = Math.sin(Math.PI * Math.min(1, u / 0.8)) * 1.7, at = (p, q, h) => P(lerp(p[0], q[0], s), lerp(p[1], q[1], s), lerp(p[2], q[2], s) + h);
-    if (sl.cur) { const c = sl.cur; blocks[c.bi].position.copy(at(c.src, c.to, a)); }
-    if (sl.ret) { const r = sl.ret; blocks[r.bi].position.copy(at(r.from, start[r.bi], a * 0.6)); }
+    sl.curs.forEach(c => blocks[c.bi].position.copy(at(c.src, c.to, a)));
+    sl.rets.forEach(r => blocks[r.bi].position.copy(at(r.from, start[r.bi], a * 0.6)));
   } else {
     const k = tt - nS * mt, i = Math.min(nU - 1, Math.floor(k / ut)), u = (k - i * ut) / ut; if (k >= nU * ut) { blocks.forEach(m => m.visible = false); start.forEach((b, j) => { }); return; }
     const gone = new Set(i > 0 ? unmade[i - 1] : []), now = new Set(unmade[i]);
