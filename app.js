@@ -136,6 +136,12 @@ function noteBlock(W) {
 // Iterations are numbered in lower-case Roman numerals, as the sections of the book are. The original has no number.
 const roman = n => { let r = ''; [[1000, 'm'], [900, 'cm'], [500, 'd'], [400, 'cd'], [100, 'c'], [90, 'xc'], [50, 'l'], [40, 'xl'], [10, 'x'], [9, 'ix'], [5, 'v'], [4, 'iv'], [1, 'i']].forEach(([v, t]) => { while (n >= v) { r += t; n -= v; } }); return r; };
 const waysLabel = (n, verb) => `${n} way${n === 1 ? '' : 's'} I can ${verb}`;
+// The title carries both sets: "36 ways I can make you up and 9 ways to unmake you". A set with nothing in it is left out.
+const waysTitle = c => { const m = c.states.filter(s => s.phase === 'make').length, u = c.states.filter(s => s.phase === 'unmake').length;
+  return [m && `${m} way${m === 1 ? '' : 's'} I can make you up`, u && `${u} way${u === 1 ? '' : 's'} to unmake you`].filter(Boolean).join(' and '); };
+// The states before this one that count as its past: the same set only (making looks back at earlier makes, unmaking at earlier unmakes), then the original.
+const pastOf = (c, k) => { const s = c.states[k], o = c.orig || c.states[0]; if (s === o) return [];
+  return [...c.states.slice(0, k).filter(x => x !== o && x.phase === s.phase).reverse(), o]; };
 function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs * 2.4, svg: `<text x="${W * 0.05}" y="${fs * 1.5}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(text)}</text>` }; }
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
@@ -164,7 +170,7 @@ const n3 = v => +v.toFixed(3);
 const DENS = [[0, 1], [45, 1.35], [135, 1.7], [90, 1.15], [22, 1.5], [158, 1.05], [67, 1.9], [112, 1.25]];
 function densStack(chain, k) {
   const s = chain.states[k], o = chain.orig || chain.states[0], list = [{ st: o, slot: 0 }];
-  for (let j = Math.max(0, k - 3); j <= k; j++) { const st = chain.states[j]; if (st !== o) list.push({ st, slot: 1 + (j % 7) }); }
+  for (const st of [...pastOf(chain, k).filter(x => x !== o).slice(0, 3).reverse(), s]) if (st !== o) list.push({ st, slot: 1 + (st.id % 7) });
   return list.map(e => ({ blocks: e.st.blocks, dx: e.st.ox - s.ox, dy: e.st.oy - s.oy, slot: e.slot }));
 }
 function densLayers(chain, k) {
@@ -173,7 +179,7 @@ function densLayers(chain, k) {
 const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${ang(b)} 50 50)"/>`;
 // Transparency (onion skin): the blocks of the variants shown just before this one stay as fading ghosts.
 const GHOSTS = [0.3, 0.2, 0.13, 0.09, 0.06, 0.04];
-const ghosts = (chain, k) => GHOSTS.map((o, a) => { const j = k - 1 - a; if (j < 0) return null; const st = chain.states[j], s = chain.states[k];
+const ghosts = (chain, k) => GHOSTS.map((o, a) => { const st = pastOf(chain, k)[a], s = chain.states[k]; if (!st) return null;
   return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
 function frame(chain, k, mode) {
   if (!ISO) return frame0(chain, k, mode);
@@ -288,8 +294,7 @@ if (typeof document !== 'undefined') {
   let hidden = new Set();
   const kept = () => ({ ...chain, states: chain.states.filter(st => !hidden.has(st.id)) });
   let paper = 'A3';
-  const VERBS = { make: 'make you up', unmake: 'unmake you' };
-  const titleText = c => waysLabel(c.states.filter(s => s.id !== 0).length, VERBS[act]);
+  const titleText = c => waysTitle(c);
   const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, true, paper, titleText({ states: chain.states.filter(s => !hidden.has(s.id)) })); };
   function show() {
     if (!chain) return;
@@ -304,33 +309,22 @@ if (typeof document !== 'undefined') {
   }
   const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
   // The subtitle number follows the grid, Moves and view live.
-  let act = 'make'; // the rule: make (a block moves and stays joined), unmake (a block is taken away)
-  const RULE_NOTES = { make: 'One block moves and stays joined to the rest. Its old place stays marked.', unmake: 'One block is taken away at a time. Nothing is added back.' };
-  const verb = () => { $('verb').textContent = VERBS[act]; $('process').textContent = VERBS[act][0].toUpperCase() + VERBS[act].slice(1); };
-  // Rule screen: a looping preview of what the chosen rule does to the drawn shape. Nothing is kept; the yellow button makes the real thing.
-  let ptimer = 0;
-  function previewRule() {
-    clearInterval(ptimer); const el = $('rulePreview'), st = startBlocks();
-    if (!st.length) { el.innerHTML = ''; $('ruleNote').textContent = 'There is nothing drawn yet. Go back and place some blocks.'; return; }
-    if (act === 'make' && !connected(st)) { el.innerHTML = ''; $('ruleNote').textContent = 'Make needs blocks that touch edge to edge. Go back to edit the shape, or try Unmake or Remake.'; return; }
-    const c = act === 'unmake' ? unmake(st) : variants(st, MOVES, mode === 'direction', TRACED.has(mode));
-    $('ruleNote').textContent = RULE_NOTES[act] + ' ' + (c.states.length - 1) + ' outcomes.';
-    const bb = bbox(c, mode); el.setAttribute('viewBox', `0 0 ${bb.w} ${bb.h}`); let i = 0;
-    const draw = () => { el.innerHTML = defs() + `<g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(c, i, mode)}</g>`; i = (i + 1) % c.states.length; };
-    draw(); ptimer = setInterval(draw, +$('spd').value);
-  }
+  let act = 'both'; // 'both': the output holds the ways to make you up and the ways to unmake you; 'unmake' (the framed piece) holds only the unmaking
   function updateCount() {
     const st = startBlocks();
-    $('count').textContent = act !== 'make' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
+    $('count').textContent = act === 'both' && st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
+    $('countU').textContent = st.length;
   }
   function process(quiet) { // quiet: redo the results in place, without moving to step 1 or to the results pane
     const start = startBlocks();
     if (!start.length) return $('msg').textContent = 'Place some blocks first.';
-    if (act === 'make' && !connected(start)) return $('msg').textContent = 'Blocks must touch edge to edge. (Unmake works with separate blocks.)';
     hidden = new Set();
-    chain = act === 'unmake' ? unmake(start) : variants(start, MOVES, mode === 'direction', TRACED.has(mode));
-    const n = chain.states.length - 1;
-    $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
+    // One sequence: the original, then every way to make you up (when the blocks touch), then every way to unmake you.
+    const made = act === 'both' && connected(start) ? variants(start, MOVES, mode === 'direction', TRACED.has(mode)) : null, unmade = unmake(start);
+    const states = [{ ...(made ? made.states[0] : unmade.states[0]), phase: 'start' },
+      ...(made ? made.states.slice(1).map(s => ({ ...s, phase: 'make' })) : []), ...unmade.states.slice(1).map(s => ({ ...s, phase: 'unmake' }))].map((s, id) => ({ ...s, id }));
+    chain = { states, capped: !!(made && made.capped), orig: states[0] };
+    $('msg').textContent = act === 'both' && !made ? 'The blocks do not touch edge to edge, so there is only the unmaking.' : chain.capped ? `Making stopped at the cap of ${MAXCAP}.` : '';
     show();
     if (!quiet) { showPane('results'); goStep(1); }
   }
@@ -384,15 +378,10 @@ if (typeof document !== 'undefined') {
     camBefore = null; drawGrid();
   }
   $('camera').onclick = () => camStream ? camStop(false) : camStart();
-  $('camTake').onclick = () => { camStop(true); $('msg').textContent = 'Taken. Press the yellow button, or try Unmake: it does not need the blocks to touch.'; };
+  $('camTake').onclick = () => { camStop(true); $('msg').textContent = 'Taken. Press the yellow button.'; };
   $('camStop').onclick = () => camStop(false);
   addEventListener('pagehide', () => { if (camStream) camStop(false); });
   $('process').onclick = () => { if (camStream) camStop(true); process(); };
-  $('act').addEventListener('click', e => {
-    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
-    [...$('act').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    act = a.dataset.a; verb(); updateCount(); if (document.body.classList.contains('step-rule')) previewRule(); else if (chain) process(true);
-  });
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
@@ -430,7 +419,7 @@ if (typeof document !== 'undefined') {
     if (!orig || !vs.length) { $('msg').textContent = 'There are no variants to put in a book.'; return null; }
     let preface = [];
     if ($('prefacePage').checked) { try { preface = await fetchPreface(); } catch (e) { $('msg').textContent = 'The preface could not be read from the About page.'; return null; } }
-    return [{ states: [orig, ...vs], orig }, { imposed, preface, message: $('personalMsg').value.trim(), verb: VERBS[act], note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) }];
+    return [{ states: [orig, ...vs], orig }, { imposed, preface, message: $('personalMsg').value.trim(), title: waysTitle(kc), note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) }];
   }
   async function dlBook(imposed) {
     const inp = await bookInputs(imposed); if (!inp) return;
@@ -539,28 +528,21 @@ if (typeof document !== 'undefined') {
   $('steps').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); goStep(+a.dataset.s); });
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   // Three screens in order: Draw, Rule, Results. The rule is chosen after the shape is drawn, never while building.
-  const paneNow = () => document.body.classList.contains('view-outputs') ? 'outputs' : document.body.classList.contains('view-results') ? 'results' : document.body.classList.contains('step-rule') ? 'rule' : 'draw';
-  // One path, in order, with no jumping ahead: Draw, Rule, Animation, Sheet, Print, GIF or video, Book.
-  const STEP_NAMES = ['Draw', 'Rule', 'Animation', 'Sheet', 'Print', 'GIF or video', 'Book'];
+  const paneNow = () => document.body.classList.contains('view-outputs') ? 'outputs' : document.body.classList.contains('view-results') ? 'results' : 'draw';
+  // One path, in order, with no jumping ahead: Draw, Animation, Sheet, Print, GIF or video, Book.
+  const STEP_NAMES = ['Draw', 'Animation', 'Sheet', 'Print', 'GIF or video', 'Book'];
   function paneSwitch() {
-    const p = paneNow(), n = p === 'draw' ? 1 : p === 'rule' ? 2 : 2 + curStep;
+    const p = paneNow(), n = p === 'draw' ? 1 : 1 + curStep;
     $('stepNow').textContent = `Step ${n} of ${STEP_NAMES.length} · ${STEP_NAMES[n - 1]}`;
   }
   function showPane(p) {
-    document.body.classList.toggle('view-results', p === 'results' || p === 'outputs'); document.body.classList.toggle('step-rule', p === 'rule');
+    document.body.classList.toggle('view-results', p === 'results' || p === 'outputs');
     document.body.classList.toggle('view-outputs', p === 'outputs');
     if (p === 'outputs') goStep(3); else if (p === 'results' && curStep > 2) goStep(1);
-    paneSwitch(); scrollTo(0, 0); if (p === 'rule') previewRule(); else clearInterval(ptimer);
+    paneSwitch(); scrollTo(0, 0);
   }
-  $('paneSwitch').addEventListener('click', e => {
-    const a = e.target.closest('a'); if (!a) return; e.preventDefault();
-    if ((a.dataset.pane === 'results' || a.dataset.pane === 'outputs') && !chain) { $('msg').textContent = 'Press the yellow button first.'; return; }
-    showPane(a.dataset.pane);
-  });
-  $('backRule').onclick = () => showPane('rule');
-  $('toRule').onclick = () => showPane('rule');
-  $('backDraw').onclick = () => showPane('draw');
-  placeDraw(); verb();
+  $('backRule').onclick = () => showPane('draw');
+  placeDraw();
   if (small.matches) { $('panel').classList.add('collapsed'); $('grab').setAttribute('aria-expanded', 'false'); $('grab').setAttribute('aria-label', 'Open controls'); }
   sizeBody();
   // Colour: paper and ink for the artwork (the results, every download and the book). The app's own screen keeps its colours.
@@ -583,7 +565,7 @@ if (typeof document !== 'undefined') {
     grid = Array(G * G).fill(null);
     const ox = Math.floor((G - P.rows[0].length) / 2), oy = Math.floor((G - P.rows.length) / 2);
     P.rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'X') grid[(oy + y) * G + ox + x] = mk('square'); }));
-    act = 'unmake'; verb(); [...$('act').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.a === 'unmake'));
+    act = 'unmake'; // the framed piece shows only the unmaking
     $('spd').value = 250; $('spdOut').textContent = '250 ms'; sync($('spd'));
     $('pieceNote').innerHTML = `<p>${P.ref.replace(/(https?:\/\/\S+)/, '<a href="$1">$1</a>')}</p><p>${P.text}</p>`;
     $('pieceNote').hidden = false; document.body.classList.add('piece');

@@ -41,7 +41,7 @@ function wrapWidth(t, f, size, maxW) {
 function buildPages(bc, opt) {
   Object.assign(THEME.light, { bg: PAPER, ink: INK, dim: INK }); Object.assign(THEME.dark, { bg: INK, ink: PAPER, dim: mixHex(INK, PAPER, 0.45) });
   const N = bc.states.length - 1, W = A5W, H = A5H, gs = new Set();
-  const title = waysLabel(N, opt.verb), note = opt.note || null;
+  const title = opt.title || waysLabel(N, opt.verb), note = opt.note || null;
   const alpha = o => { const p = Math.round(o * 100); gs.add(p); return `/G${p} gs `; };
   const text = (t, f, size, x, y, col, align = 'c') => { const w = textWidth(t, f, size), xx = align === 'c' ? x - w / 2 : x; return `${rgb(col)} rg BT /F${f + 1} ${size} Tf 1 0 0 -1 ${n2(xx)} ${n2(y)} Tm (${pdfStr(t)}) Tj ET\n`; };
   // blocks, stripes and hatching, in a frame whose cell (0,0) sits at (X,Y) with cells c points wide
@@ -137,7 +137,7 @@ function buildPages(bc, opt) {
   });
   // dark plates: the original, then every variant one to a page (or in grids when there are many)
   { const sl = slot('form'), d = THEME.dark;
-    pages.push(page(d, frameOps(0, 'form', sl.X, sl.Y, sl.c, d.ink) + text(waysLabel(N, opt.verb).split(' ')[0] + ' ways', 2, 6, W / 2, H * 0.805, d.dim) + text('Form', 0, 8, W / 2, H * 0.824, d.dim), true));
+    pages.push(page(d, frameOps(0, 'form', sl.X, sl.Y, sl.c, d.ink) + text(N + " ways", 2, 6, W / 2, H * 0.805, d.dim) + text('Form', 0, 8, W / 2, H * 0.824, d.dim), true));
     if (N <= 16) for (let k = 1; k <= N; k++) pages.push(page(d, frameOps(k, 'form', sl.X, sl.Y, sl.c, d.ink)));
     else { const bb = bbox(bc, 'form'), bw = bb.w / U, bh = bb.h / U;
       for (let p = 0; p * 12 < N; p++) { const ks = []; for (let k = 1 + p * 12; k <= Math.min(N, p * 12 + 12); k++) ks.push(k);

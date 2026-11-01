@@ -296,7 +296,6 @@ button#process,#processRow .row button{font-size:14px;line-height:1.2;padding:10
 #ruleBox #act{margin:0 0 6px}
 body:not(.step-rule) #ruleBox{display:none}
 body.step-rule #drawBox #size,body.step-rule #drawBox .draw-shapes,body.step-rule #drawBox #camBar,body.step-rule #drawBox .hint,body.step-rule #drawNav{display:none}
-body:not(.step-rule) #processRow .row{display:none}
 #screen .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
 /* Camera is hidden for now; the code stays. */
 #camera,#camBar{display:none!important}
@@ -333,3 +332,5 @@ body.view-outputs #viewHostOut,body.view-outputs #colourHostOut{display:none}
 .draw-ui .draw-shapes>.row{gap:6px}
 .draw-ui .draw-shapes>.row button{padding:8px 11px}
 @media(max-width:600px){.draw-ui #palette{gap:4px}.draw-ui #palette button{width:36px;height:36px;padding:6px}}
+/* No rule step any more: the yellow button is on Draw, and the output holds both the making and the unmaking. */
+body.view-results #processRow .row{display:none}
