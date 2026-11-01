@@ -55,53 +55,45 @@
     if ((e.key === "Enter" || e.key === " ") && root.classList.contains("show-start") && e.target === document.body) { e.preventDefault(); open(); }
   });
 })();
-// The start mark: eight pieces of the F, scattered at random over its 3 x 5 grid in a random mix of shapes. Rolling over it (or, on a touch screen, a moment after it appears) turns them into the F: every piece slides home, straightens and squares up. Leaving scatters them again.
+// The start mark: the F in as few blocks as it can be, three, keeping its structure: the stem, the top bar and the arm. They lie scattered at random (turned, never overlapping) until you roll over the mark (or, on a touch screen, a moment after it appears); then each slides home and straightens into the F. Leaving scatters them again. Only these three shapes are used.
 (function () {
   if (!document.documentElement.classList.contains("show-start")) return;
   var btn = document.getElementById("startOpen"), svg = btn && btn.querySelector("svg");
   if (!svg) return;
-  var K = 0.5523, NS = "http://www.w3.org/2000/svg";
-  // Each shape is four cubic segments on a 100 box, so any two can be blended point by point.
-  function line(a, b) { return [a[0] + (b[0] - a[0]) / 3, a[1] + (b[1] - a[1]) / 3, a[0] + 2 * (b[0] - a[0]) / 3, a[1] + 2 * (b[1] - a[1]) / 3, b[0], b[1]]; }
-  function build(start, segs) { return [].concat.apply([start[0], start[1]], segs); }
-  var SHAPES = {
-    square: build([0, 0], [line([0, 0], [100, 0]), line([100, 0], [100, 100]), line([100, 100], [0, 100]), line([0, 100], [0, 0])]),
-    circle: build([50, 0], [[50 + 50 * K, 0, 100, 50 - 50 * K, 100, 50], [100, 50 + 50 * K, 50 + 50 * K, 100, 50, 100], [50 - 50 * K, 100, 0, 50 + 50 * K, 0, 50], [0, 50 - 50 * K, 50 - 50 * K, 0, 50, 0]]),
-    triangle: build([0, 0], [line([0, 0], [0, 100]), line([0, 100], [100, 100]), line([100, 100], [100, 100]), line([100, 100], [0, 0])]),
-    quarter: build([0, 100], [line([0, 100], [0, 0]), [100 * K, 0, 100, 100 - 100 * K, 100, 100], line([100, 100], [0, 100]), line([0, 100], [0, 100])])
-  };
-  var KINDS = ["square", "circle", "triangle", "quarter"];
-  // The F as eight cells of a 3 x 5 grid: [column, row].
-  var F = [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2], [1, 2], [0, 3], [0, 4]];
-  var cells = []; for (var r = 0; r < 5; r++) for (var c = 0; c < 3; c++) cells.push([c, r]);
-  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-  var pieces = [], nodes = [];
+  var NS = "http://www.w3.org/2000/svg";
+  // w, h and home position (top left) in the F's 300 x 500 box.
+  var F = [{ w: 100, h: 500, x: 0, y: 0 }, { w: 200, h: 100, x: 100, y: 0 }, { w: 100, h: 100, x: 100, y: 200 }];
+  var AREA = { x0: -150, x1: 450, y0: 0, y1: 500 }, TURNS = [-180, -90, 0, 90, 180];
+  svg.setAttribute("viewBox", "-152 -2 604 504");
   while (svg.firstChild) svg.removeChild(svg.firstChild);
-  F.forEach(function () { var p = document.createElementNS(NS, "path"); svg.appendChild(p); nodes.push(p); });
+  var nodes = F.map(function (p) { var n = document.createElementNS(NS, "path"); n.setAttribute("d", "M0 0H" + p.w + "V" + p.h + "H0Z"); svg.appendChild(n); return n; });
+  var from = [];
   function scatter() {
-    var spots = shuffle(cells.slice()).slice(0, F.length);
-    pieces = F.map(function (home, i) {
-      return { to: { x: spots[i][0] * 100, y: spots[i][1] * 100, rot: 90 * Math.floor(Math.random() * 4), kind: KINDS[Math.floor(Math.random() * KINDS.length)] }, home: { x: home[0] * 100, y: home[1] * 100, rot: 0, kind: "square" } };
+    var placed = [], tries = 0;
+    from = F.map(function (p) {
+      for (;;) {
+        var rot = TURNS[Math.floor(Math.random() * TURNS.length)], q = Math.abs(rot) === 90, w = q ? p.h : p.w, h = q ? p.w : p.h;
+        var cx = AREA.x0 + w / 2 + Math.random() * (AREA.x1 - AREA.x0 - w), cy = AREA.y0 + h / 2 + Math.random() * (AREA.y1 - AREA.y0 - h);
+        var box = { l: cx - w / 2 - 24, r: cx + w / 2 + 24, t: cy - h / 2 - 24, b: cy + h / 2 + 24 };
+        var clash = placed.some(function (o) { return box.l < o.r && box.r > o.l && box.t < o.b && box.b > o.t; });
+        if (!clash || ++tries > 400) { placed.push(box); return { x: cx - p.w / 2, y: cy - p.h / 2, rot: rot }; }
+      }
     });
   }
-  function draw(i, a, b, t) {
-    var x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t, rot = a.rot + (b.rot - a.rot) * t, p = SHAPES[a.kind], q = SHAPES[b.kind], v = [];
-    for (var k = 0; k < p.length; k++) v.push((p[k] + (q[k] - p[k]) * t).toFixed(1));
-    var d = "M" + v[0] + " " + v[1];
-    for (k = 2; k < v.length; k += 6) d += "C" + v.slice(k, k + 6).join(" ");
-    nodes[i].setAttribute("d", d + "Z");
-    nodes[i].setAttribute("transform", "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") rotate(" + rot.toFixed(1) + " 50 50)");
+  function draw(t) {
+    F.forEach(function (p, i) {
+      var f = from[i], x = f.x + (p.x - f.x) * t, y = f.y + (p.y - f.y) * t, r = f.rot * (1 - t);
+      nodes[i].setAttribute("transform", "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") rotate(" + r.toFixed(1) + " " + p.w / 2 + " " + p.h / 2 + ")");
+    });
   }
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0, t = 0, goal = 0;
   function ease(u) { return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; }
-  // t runs from 0 (scattered) to 1 (the F).
-  function paintAt(v) { pieces.forEach(function (p, i) { draw(i, p.to, p.home, ease(v)); }); }
   function go(target) {
-    goal = target; if (reduce) { t = target; paintAt(t); return; }
+    goal = target; if (reduce) { t = target; draw(ease(t)); return; }
     cancelAnimationFrame(raf); var last = performance.now();
-    (function step(now) { var dt = (now - last) / 700; last = now; t += (goal > t ? 1 : -1) * dt; if ((goal > t) === (goal > t + dt) && Math.abs(goal - t) < dt) t = goal; t = Math.max(0, Math.min(1, t)); paintAt(t); if (t !== goal) raf = requestAnimationFrame(step); else if (goal === 0) { scatter(); paintAt(0); } })(last);
+    (function step(now) { var dt = (now - last) / 800; last = now; t += (goal > t ? 1 : -1) * dt; if (Math.abs(goal - t) < dt) t = goal; t = Math.max(0, Math.min(1, t)); draw(ease(t)); if (t !== goal) raf = requestAnimationFrame(step); else if (goal === 0) { scatter(); draw(0); } })(last);
   }
-  scatter(); paintAt(0);
+  scatter(); draw(0);
   btn.addEventListener("mouseenter", function () { go(1); });
   btn.addEventListener("focus", function () { go(1); });
   function away() { go(0); }
