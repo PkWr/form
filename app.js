@@ -183,7 +183,7 @@ const n2s = v => +v.toFixed(1);
 function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', title = '') {
   const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06, nb = NOTE ? noteBlock(W) : null, band = nb ? nb.h + (title ? 160 : 0) : 0, top = 0, fs = W / 105;
   // The title sits small in the bottom left corner with the name, in the margin, not across the top.
-  const cap = title ? `<text x="${m}" y="${n2s(H - m * 0.55 - fs * 1.7)}" font-family="Times New Roman, Times, serif" font-style="italic" font-size="${n2s(fs * 1.2)}" fill="${INK}">${esc(title)}</text><text x="${m}" y="${n2s(H - m * 0.55)}" font-family="Helvetica, Arial, sans-serif" font-size="${n2s(fs * 0.85)}" fill="${INK}" opacity=".7">Form by Patrick Walker, form.pkwr.co</text>` : '';
+  const cap = title ? `<text x="${m}" y="${n2s(H - m * 0.55 - fs * 1.7)}" font-family="Times New Roman, Times, serif" font-style="italic" font-size="${n2s(fs * 1.2)}" fill="${INK}">${esc(title)}</text><text x="${m}" y="${n2s(H - m * 0.55)}" font-family="Helvetica, Arial, sans-serif" font-size="${n2s(fs * 0.85)}" fill="${INK}">Form by Patrick Walker, form.pkwr.co</text>` : '';
   // Choose the number of columns that makes the variants as large as possible on the page.
   let cols = 1, best = 0;
   for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m - band - top) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
