@@ -22,24 +22,24 @@ const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.
 const P = (x, y, z) => new THREE.Vector3(x - cx, -(y - cy), z); // the page's down is the world's down; z comes toward the viewer
 const rig = new THREE.Group(), root = new THREE.Group(); rig.add(root); scene.add(rig); // the rig holds the shape and its shadow so both move together in AR
 const geo = new THREE.BoxGeometry(0.94, 0.94, 0.94), mat = new THREE.MeshStandardMaterial({ color: INK, roughness: 0.6 }), edge = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.94, 0.94, 0.94)), lineMat = new THREE.LineBasicMaterial({ color: 0x8d8b84 });
-const edgeInk = new THREE.LineBasicMaterial({ color: 0x77736c }), cube = () => { const m = new THREE.Mesh(geo, mat); m.add(new THREE.LineSegments(edge, edgeInk)); return m; }, marker = () => new THREE.LineSegments(edge, lineMat);
+const edgeInk = new THREE.LineBasicMaterial({ color: 0x77736c }), cube = () => { const m = new THREE.Mesh(geo, mat); m.add(new THREE.LineSegments(edge, edgeInk)); return m; };
 // a soft shadow on the ground below the object (a dark blur, flat, scaled to the shape)
 const gc = document.createElement('canvas'); gc.width = gc.height = 128; const g2 = gc.getContext('2d'), gr = g2.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(35,31,32,.30)'); gr.addColorStop(1, 'rgba(35,31,32,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
 const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc), transparent: true, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.scale.set(span * 0.9, span * 0.9, 1); shadow.position.y = -(Math.max(...ys) - cy) - 1.6; rig.add(shadow);
-const blocks = start.map(b => { const m = cube(); root.add(m); return m; }), marks = start.map(() => { const m = marker(); m.visible = false; root.add(m); return m; });
+const blocks = start.map(b => { const m = cube(); root.add(m); return m; });
 let drag = null, t0 = 0, clock = 0;
 const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t), lerp = (a, b, t) => a + (b - a) * t;
 function pose(time) {
-  blocks.forEach((m, i) => { m.visible = true; m.scale.setScalar(1); m.position.copy(P(...start[i])); marks[i].visible = false; });
+  blocks.forEach((m, i) => { m.visible = true; m.scale.setScalar(1); m.position.copy(P(...start[i])); });
   const tt = time % total;
   if (tt < nS * mt) {
     const i = Math.floor(tt / mt), u = (tt - i * mt) / mt, sl = slots[i], s = ease(u / 0.8), a = Math.sin(Math.PI * Math.min(1, u / 0.8)) * 1.7, at = (p, q, h) => P(lerp(p[0], q[0], s), lerp(p[1], q[1], s), lerp(p[2], q[2], s) + h);
-    if (sl.cur) { const c = sl.cur; blocks[c.bi].position.copy(at(c.src, c.to, a)); marks[c.bi].position.copy(P(...start[c.bi])); marks[c.bi].visible = true; }
-    if (sl.ret) { const r = sl.ret; blocks[r.bi].position.copy(at(r.from, start[r.bi], a * 0.6)); marks[r.bi].position.copy(P(...start[r.bi])); marks[r.bi].visible = true; }
+    if (sl.cur) { const c = sl.cur; blocks[c.bi].position.copy(at(c.src, c.to, a)); }
+    if (sl.ret) { const r = sl.ret; blocks[r.bi].position.copy(at(r.from, start[r.bi], a * 0.6)); }
   } else {
-    const k = tt - nS * mt, i = Math.min(nU - 1, Math.floor(k / ut)), u = (k - i * ut) / ut; if (k >= nU * ut) { blocks.forEach(m => m.visible = false); start.forEach((b, j) => { marks[j].position.copy(P(...b)); marks[j].visible = true; }); return; }
+    const k = tt - nS * mt, i = Math.min(nU - 1, Math.floor(k / ut)), u = (k - i * ut) / ut; if (k >= nU * ut) { blocks.forEach(m => m.visible = false); start.forEach((b, j) => { }); return; }
     const gone = new Set(i > 0 ? unmade[i - 1] : []), now = new Set(unmade[i]);
-    start.forEach((b, j) => { const k3 = key3(b); if (gone.has(k3)) { blocks[j].visible = false; marks[j].position.copy(P(...b)); marks[j].visible = true; } else if (now.has(k3)) { const l = ease(u / 0.85); blocks[j].position.copy(P(b[0], b[1], b[2] + l * 3)); blocks[j].scale.setScalar(Math.max(0.01, 1 - l)); marks[j].position.copy(P(...b)); marks[j].visible = true; } });
+    start.forEach((b, j) => { const k3 = key3(b); if (gone.has(k3)) { blocks[j].visible = false; } else if (now.has(k3)) { const l = ease(u / 0.85); blocks[j].position.copy(P(b[0], b[1], b[2] + l * 3)); blocks[j].scale.setScalar(Math.max(0.01, 1 - l)); } });
   }
 }
 const key3 = b => b.join(',');

@@ -32,15 +32,11 @@
     const samples = (a, fmt) => '{\n' + dedupe(a).map(([f, v]) => `                ${f}: ${fmt(v)}`).join(',\n') + ',\n            }';
     let s = `#usda 1.0\n(\n    defaultPrim = "Form"\n    metersPerUnit = 1\n    upAxis = "Y"\n    startTimeCode = 0\n    endTimeCode = ${endF}\n    timeCodesPerSecond = ${FPS}\n)\n\ndef Xform "Form"\n{\n`;
     s += `    def Material "Ink"\n    {\n        token outputs:surface.connect = </Form/Ink/Surf.outputs:surface>\n        def Shader "Surf"\n        {\n            uniform token info:id = "UsdPreviewSurface"\n            color3f inputs:diffuseColor = (0.137, 0.122, 0.125)\n            float inputs:roughness = 0.6\n            token outputs:surface\n        }\n    }\n`;
-    s += `    def Material "Mark"\n    {\n        token outputs:surface.connect = </Form/Mark/Surf.outputs:surface>\n        def Shader "Surf"\n        {\n            uniform token info:id = "UsdPreviewSurface"\n            color3f inputs:diffuseColor = (0.55, 0.54, 0.51)\n            float inputs:opacity = 0.22\n            float inputs:roughness = 1\n            token outputs:surface\n        }\n    }\n`;
     start.forEach((b, j) => {
       s += `    def Xform "B${j}"\n    {\n        double3 xformOp:translate.timeSamples = ${samples(tr[j], v => `(${v.map(f4).join(', ')})`)}\n        double3 xformOp:scale.timeSamples = ${samples(sc[j], v => `(${f4(v)}, ${f4(v)}, ${f4(v)})`)}\n        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]\n        def Cube "Cube"\n        {\n            double size = ${f4(CELL * 0.94)}\n            rel material:binding = </Form/Ink>\n        }\n    }\n`;
-      const p0 = P(...moves.length ? start[j] : b), vis = mk[j];
-      s += `    def Xform "M${j}"\n    {\n        double3 xformOp:translate = (${P(...b).map(f4).join(', ')})\n        double3 xformOp:scale.timeSamples = ${samples(vis, v => `(${f4(v)}, ${f4(v)}, ${f4(v)})`)}\n        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]\n        def Cube "Cube"\n        {\n            double size = ${f4(CELL * 0.94)}\n            rel material:binding = </Form/Mark>\n        }\n    }\n`;
     });
     return { text: s + '}\n', frames: endF };
   }
-  // Marks that move: the vacated place of a move is not the block's own start in the make phase if two blocks share a start; each block has its own marker at its own start.
   // A plain, uncompressed zip, as USDZ requires: each file's data starts on a 64-byte boundary.
   const crcT = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
   const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = crcT[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
