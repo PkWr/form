@@ -7,7 +7,7 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=v0.96">
+<link rel="stylesheet" href="style.css?v=v0.97">
 </head>
 <body>
 <script>if (!location.search) document.documentElement.classList.add("show-start");</script>
@@ -62,11 +62,18 @@
       <div id="spdHostPanel"><label>Animation speed <output id="spdOut">400 ms</output><input id="spd" type="range" min="80" max="1500" step="20" value="400"></label></div>
       <div id="colourHostPanel">
       <div id="colours"><span class="lab">Colour</span><label class="swatch">Paper <input type="color" id="paperCol" value="#f4f2ee"></label><label class="swatch">Ink <input type="color" id="inkCol" value="#111111"></label><label class="swatch" id="shadeLab" hidden>Shade <input type="color" id="shadeCol" value="#888888"></label><div id="presets" role="group" aria-label="Colour presets"></div></div>
+      <div id="dlHelp">
+        <h2>About the downloads</h2>
+        <p data-for="1">An SVG is a drawing that stays sharp at any size. This one is animated and plays in a web browser. A GIF is a looping picture for social media, in the shape chosen above. A video is recorded as the animation plays, so it takes as long as it runs: MP4 where your browser can make it, otherwise WebM.</p>
+        <p data-for="2">The contact sheet is an SVG set out at its real size on a portrait page, A3 to A0. Open it in a web browser to look at it, or in design software such as Illustrator, Affinity, Inkscape or Figma to change it or to print it.</p>
+        <p data-for="3">Imposed puts two A5 pages on each A4 landscape sheet in booklet order: print double sided, flip on the short edge, then fold and staple. Pages gives the plain A5 pages for reading on screen.</p>
+        <p class="fine">Every file carries the credit and terms.</p>
+      </div>
       </div>
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make and unmake you</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.96<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.97<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
@@ -94,10 +101,10 @@
   <div class="bp-stage" id="bpStage"></div>
   <div class="bp-nav"><button id="bpPrev">Previous</button><span id="bpPos"></span><button id="bpNext">Next</button></div>
 </div>
-<script src="app.js?v=v0.96"></script>
-<script src="book.js?v=v0.96"></script>
-<script src="gif.js?v=v0.96"></script>
-<script src="preview.js?v=v0.96"></script>
-<script src="start.js?v=v0.96"></script>
+<script src="app.js?v=v0.97"></script>
+<script src="book.js?v=v0.97"></script>
+<script src="gif.js?v=v0.97"></script>
+<script src="preview.js?v=v0.97"></script>
+<script src="start.js?v=v0.97"></script>
 </body>
 </html>

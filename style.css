@@ -422,3 +422,10 @@ body{padding-bottom:0!important;padding-right:368px}
 #shadeLab[hidden],#isoHostPanel[hidden]{display:none!important}
 /* Pieces swing past the edge of the mark while they turn, so the drawing is not clipped to its box. */
 #startOpen svg{overflow:visible}
+/* Instructions for the downloads, in the control panel, for the step you are on. */
+#dlHelp{display:none;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--line);font-size:12px;line-height:1.5;color:#9a9a9a}
+#dlHelp h2{margin:0 0 6px;font-size:12px;font-weight:400;color:#cfcfcf}
+#dlHelp p{margin:0 0 6px;display:none}
+#dlHelp p.fine{display:block;color:#7d7d7d}
+body[data-step="1"] #dlHelp,body[data-step="2"] #dlHelp,body[data-step="3"] #dlHelp{display:block}
+body[data-step="1"] #dlHelp p[data-for="1"],body[data-step="2"] #dlHelp p[data-for="2"],body[data-step="3"] #dlHelp p[data-for="3"]{display:block}
