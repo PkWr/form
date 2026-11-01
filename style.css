@@ -466,3 +466,12 @@ body{padding-right:388px}
 #codeIn{flex:1 1 90px;min-width:0;padding:5px 8px;font:inherit;color:#fff;background:#17191c;border:1px solid var(--line);border-radius:8px;text-transform:uppercase}
 #codeBox button{padding:5px 10px;font-size:12px}
 #codeMsg:empty{display:none}
+
+/* Grid size lives in the control panel; the grid and the frames of the next steps share one square and one position; Next and Start again are the same yellow as the first button */
+#sizeHostPanel{margin:10px 0 4px}
+#sizeHostPanel #size{margin:0}
+#sheet{display:flex;align-items:center;justify-content:center;width:min(100%,calc(100vh - 360px));aspect-ratio:1;margin:0 auto;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+@media(max-height:700px){#sheet{width:min(100%,calc(100svh - 348px))}}
+#out #sheet svg{height:92%;width:auto;max-width:92%}
+#drawBox #grid,#anim,#bookFrame,#sheet{margin-left:0;margin-right:0}
+#out .row.nav .next{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
