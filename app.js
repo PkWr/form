@@ -350,6 +350,9 @@ if (typeof document !== 'undefined') {
     'Koch: sun wheel': ['.XXX.', 'X.X.X', 'XXXXX', 'X.X.X', '.XXX.'],
     'Koch: crescent': ['.XXXX', 'XX...', 'X....', 'XX...', '.XXXX'],
     'Koch: hourglass': ['XXXXX', '.XXX.', '..X..', '.XXX.', 'XXXXX'],
+    'Koch: window': ['XXXXX', 'X.X.X', 'XXXXX', 'X.X.X', 'XXXXX'],
+    'Koch: triangle': ['..X..', '.XXX.', 'XXXXX'],
+    'Koch: nested squares': ['XXXXXXX', 'X.....X', 'X.XXX.X', 'XXX.X.X', 'X.XXX.X', 'X.....X', 'XXXXXXX'],
     'Koch: Lorraine cross': ['..X..', 'XXXXX', '..X..', 'XXXXX', '..X..', '..X..'],
     'Koch: triple cross': ['..X..', 'XXXXX', '..X..', 'XXXXX', '..X..', 'XXXXX', '..X..'],
   };
