@@ -6,8 +6,10 @@ let INK = '#111111', PAPER = '#f4f2ee'; // the artwork's colours, set from the C
 const mixHex = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
 // Isometric: a second view beside the treatments. Every treatment is drawn as normal and the whole drawing is then laid onto the isometric plane (x' = (x - y) cos 30, y' = (x + y) / 2),
 // with each current block given a little thickness, drawn under the tops as a few copies of the block shifted down in a mid tone.
-let ISO = false;
-const ISO_D = 0.4, ISO_M = 'matrix(0.866 0.5 -0.866 0.5 0 0)';
+let ISO = false, ISO_D = 0.4, ISO_A = 30, ISO_RND = false; // isometric view: depth (in blocks), angle (degrees; 30 is true isometric) and whether each step has its own angle
+const isoAng = s => ISO_RND && s && s.ia ? s.ia : ISO_A;
+const isoCS = a => [Math.cos(a * Math.PI / 180), Math.sin(a * Math.PI / 180)];
+const isoM = a => { const [c, n] = isoCS(a); return `matrix(${+c.toFixed(4)} ${+n.toFixed(4)} ${+(-c).toFixed(4)} ${+n.toFixed(4)} 0 0)`; };
 // Shape library: paths in a 100x100 cell. sym = looks the same turned. A placed block has a base turn q (0 to 3, from clicking) and r (0 to 3, the direction of its last move).
 const SHAPES = {
   square: { d: 'M0 0H100V100H0Z', sym: 1 },
@@ -183,7 +185,7 @@ const ghosts = (chain, k) => GHOSTS.map((o, a) => { const st = pastOf(chain, k)[
   return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
 function frame(chain, k, mode) {
   if (!ISO) return frame0(chain, k, mode);
-  const s = chain.states[k], side = mixHex(INK, PAPER, 0.5);
+  const s = chain.states[k], side = mixHex(INK, PAPER, 0.5), ISO_M = isoM(isoAng(s));
   const sides = [1 / 3, 2 / 3, 1].map(t => `<g transform="translate(0 ${n3(t * ISO_D * U)}) ${ISO_M}" fill="${side}">${s.blocks.map(b => use(b, side)).join('')}</g>`).join('');
   return sides + `<g transform="${ISO_M}">${frame0(chain, k, mode)}</g>`;
 }
@@ -194,10 +196,12 @@ function frame0(chain, k, mode) {
   return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
 }
 function bbox(chain, mode) {
-  const all = chain.states.flatMap((s, k) => [...s.blocks, ...s.tr, ...(mode === 'dens' ? (chain.orig || chain.states[0]).blocks.map(b => ({ x: b.x + (chain.orig || chain.states[0]).ox - s.ox, y: b.y + (chain.orig || chain.states[0]).oy - s.oy })) : []), ...(mode === 'trans' ? ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy }))) : [])]);
-  if (ISO) { // projected extents of every cell corner, plus the thickness
+  const pts = (s, k) => [...s.blocks, ...s.tr, ...(mode === 'dens' ? (chain.orig || chain.states[0]).blocks.map(b => ({ x: b.x + (chain.orig || chain.states[0]).ox - s.ox, y: b.y + (chain.orig || chain.states[0]).oy - s.oy })) : []), ...(mode === 'trans' ? ghosts(chain, k).flatMap(g => g.blocks.map(b => ({ x: b.x + g.dx, y: b.y + g.dy }))) : [])];
+  const all = chain.states.flatMap(pts);
+  if (ISO) { // projected extents of every cell corner at each step's own angle, plus the thickness
     let xa = 1e9, xb = -1e9, ya = 1e9, yb = -1e9;
-    all.forEach(p => { for (let i = 0; i < 4; i++) { const cx = p.x + (i & 1), cy = p.y + (i >> 1), qx = (cx - cy) * 0.866, qy = (cx + cy) * 0.5; if (qx < xa) xa = qx; if (qx > xb) xb = qx; if (qy < ya) ya = qy; if (qy > yb) yb = qy; } });
+    chain.states.forEach((s, k) => { const [cs, sn] = isoCS(isoAng(s));
+      pts(s, k).forEach(p => { for (let i = 0; i < 4; i++) { const cx = p.x + (i & 1), cy = p.y + (i >> 1), qx = (cx - cy) * cs, qy = (cx + cy) * sn; if (qx < xa) xa = qx; if (qx > xb) xb = qx; if (qy < ya) ya = qy; if (qy > yb) yb = qy; } }); });
     return { x: (xa - 0.6) * U, y: (ya - 0.6) * U, w: (xb - xa + 1.2) * U, h: (yb - ya + ISO_D + 1.2) * U };
   }
   const x0 = Math.min(...all.map(b => b.x)) - 1, y0 = Math.min(...all.map(b => b.y)) - 1;
@@ -322,7 +326,7 @@ if (typeof document !== 'undefined') {
     // One sequence: the original, then every way to make you up (when the blocks touch), then every way to unmake you.
     const made = act === 'both' && connected(start) ? variants(start, MOVES, mode === 'direction', TRACED.has(mode)) : null, unmade = unmake(start);
     const states = [{ ...(made ? made.states[0] : unmade.states[0]), phase: 'start' },
-      ...(made ? made.states.slice(1).map(s => ({ ...s, phase: 'make' })) : []), ...unmade.states.slice(1).map(s => ({ ...s, phase: 'unmake' }))].map((s, id) => ({ ...s, id }));
+      ...(made ? made.states.slice(1).map(s => ({ ...s, phase: 'make' })) : []), ...unmade.states.slice(1).map(s => ({ ...s, phase: 'unmake' }))].map((s, id) => ({ ...s, id, ia: 14 + Math.random() * 42 }));
     chain = { states, capped: !!(made && made.capped), orig: states[0] };
     $('msg').textContent = act === 'both' && !made ? 'The blocks do not touch edge to edge, so there is only the unmaking.' : chain.capped ? `Making stopped at the cap of ${MAXCAP}.` : '';
     show();
@@ -385,10 +389,15 @@ if (typeof document !== 'undefined') {
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
+  // Isometric controls: depth, angle, and a random angle for each step.
+  const isoRedraw = () => { if (chain) show(); };
+  $('isoDepth').oninput = e => { ISO_D = +e.target.value; $('isoDepthOut').textContent = ISO_D.toFixed(2); isoRedraw(); };
+  $('isoAngle').oninput = e => { ISO_A = +e.target.value; $('isoAngleOut').textContent = ISO_A + '°'; isoRedraw(); };
+  $('isoRandom').onchange = e => { ISO_RND = e.target.checked; $('isoAngle').disabled = ISO_RND; isoRedraw(); };
   $('projIcons').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('projIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
-    ISO = a.dataset.proj === 'iso'; if (chain) show();
+    ISO = a.dataset.proj === 'iso'; $('isoHostPanel').hidden = !ISO; if (chain) show();
   });
   $('viewIcons').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();

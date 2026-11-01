@@ -52,6 +52,11 @@
           </div>
       </div>
             <div id="projHostPanel"><div class="links ico" id="projIcons" role="radiogroup" aria-label="Projection"><a href="#" role="radio" data-proj="flat" aria-checked="true" title="Flat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4" y="4" width="16" height="16"/></svg><span>Flat</span></a><a href="#" role="radio" data-proj="iso" aria-checked="false" title="Isometric"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 3l8.5 4.9v10.2L12 23 3.5 18.1V7.9z" opacity=".35"/><path d="M12 3l8.5 4.9L12 12.8 3.5 7.9z"/></svg><span>Isometric</span></a></div></div>
+      <div id="isoHostPanel" hidden>
+        <label>Depth <output id="isoDepthOut">0.40</output><input id="isoDepth" type="range" min="0" max="1.5" step="0.05" value="0.4"></label>
+        <label>Angle <output id="isoAngleOut">30°</output><input id="isoAngle" type="range" min="10" max="55" step="1" value="30"></label>
+        <label class="inline"><input type="checkbox" id="isoRandom"> A random angle for each step</label>
+      </div>
       <div id="gifHostPanel"><div class="links" id="gifFormat" role="radiogroup" aria-label="GIF shape"><span>Shape</span><a href="#" role="radio" data-g="sq" aria-checked="true">Square 1:1</a><a href="#" role="radio" data-g="st" aria-checked="false">Story 9:16</a></div></div>
       <div id="spdHostPanel"><label>Animation speed <output id="spdOut">400 ms</output><input id="spd" type="range" min="80" max="1500" step="20" value="400"></label></div>
       <div id="colourHostPanel">
@@ -60,7 +65,7 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make and unmake you</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.69<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.70<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
