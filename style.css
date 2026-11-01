@@ -409,3 +409,14 @@ body[data-step="3"] #dlWrap #bookInclude,body[data-step="3"] #dlWrap #bookFormat
 #out #viewIcons a[aria-checked=true]{background:none;color:var(--ink)}
 #out #viewIcons a[aria-checked=true] span{text-decoration:underline;text-decoration-color:var(--yellow);text-decoration-thickness:3px;text-underline-offset:5px}
 #viewIcons a svg{width:34px;height:34px}
+/* Wide desktop: the controls sit at the side, always open, as on Spot. The bottom sheet is for phones and narrow windows. */
+@media(min-width:901px) and (pointer:fine){
+#panel{top:16px;right:16px;bottom:16px;left:auto;width:320px;max-width:none;transform:none;max-height:none;border:1px solid var(--line);border-radius:14px}
+.cp-grab{display:none}
+#panel.collapsed .cp-body{display:block}
+.cp-head{display:block;padding:14px 16px 4px}
+.cp-head h1{margin:0;font-size:15px}
+body{padding-bottom:0!important;padding-right:368px}
+#screen,#out{margin-left:auto;margin-right:auto}
+}
+#shadeLab[hidden],#isoHostPanel[hidden]{display:none!important}
