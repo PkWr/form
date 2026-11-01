@@ -29,7 +29,7 @@
 <main>
   <section id="pieceNote" hidden aria-label="Source and caption"></section>
   <section id="screen">
-    <div class="links" id="paneSwitch" role="radiogroup" aria-label="Show"><a href="#" role="radio" data-pane="draw" aria-checked="true">Draw</a><a href="#" role="radio" data-pane="rule" aria-checked="false">Rule</a><a href="#" role="radio" data-pane="results" aria-checked="false">Results</a><a href="#" role="radio" data-pane="outputs" aria-checked="false">Outputs</a></div>
+    <div id="paneSwitch" aria-live="polite"><span id="stepNow">Step 1 of 7 · Draw</span></div>
     <div id="drawHostScreen"></div>
     <div id="processHostScreen"></div>
   </section>
@@ -67,7 +67,7 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make you up</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.54<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.55<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
@@ -79,7 +79,7 @@
       <svg id="anim" viewBox="0 0 100 100"></svg>
       <div class="row"><button id="dlAnim"><svg class="dlico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Download animated SVG</button></div>
       <div id="spdHostOut"></div>
-      <div class="row nav"><button class="next" data-go="2">Next: choose your variants</button></div>
+      <div class="row nav"><button class="back" id="backRule">Back</button><button class="next" data-go="2">Next: choose your variants</button></div>
     </div>
     <div class="step" id="step2">
       <h2>Contact sheet</h2>

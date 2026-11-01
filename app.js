@@ -540,7 +540,12 @@ if (typeof document !== 'undefined') {
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   // Three screens in order: Draw, Rule, Results. The rule is chosen after the shape is drawn, never while building.
   const paneNow = () => document.body.classList.contains('view-outputs') ? 'outputs' : document.body.classList.contains('view-results') ? 'results' : document.body.classList.contains('step-rule') ? 'rule' : 'draw';
-  function paneSwitch() { const p = paneNow(); [...$('paneSwitch').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.pane === p)); }
+  // One path, in order, with no jumping ahead: Draw, Rule, Animation, Sheet, Print, GIF or video, Book.
+  const STEP_NAMES = ['Draw', 'Rule', 'Animation', 'Sheet', 'Print', 'GIF or video', 'Book'];
+  function paneSwitch() {
+    const p = paneNow(), n = p === 'draw' ? 1 : p === 'rule' ? 2 : 2 + curStep;
+    $('stepNow').textContent = `Step ${n} of ${STEP_NAMES.length} · ${STEP_NAMES[n - 1]}`;
+  }
   function showPane(p) {
     document.body.classList.toggle('view-results', p === 'results' || p === 'outputs'); document.body.classList.toggle('step-rule', p === 'rule');
     document.body.classList.toggle('view-outputs', p === 'outputs');
@@ -552,6 +557,7 @@ if (typeof document !== 'undefined') {
     if ((a.dataset.pane === 'results' || a.dataset.pane === 'outputs') && !chain) { $('msg').textContent = 'Press the yellow button first.'; return; }
     showPane(a.dataset.pane);
   });
+  $('backRule').onclick = () => showPane('rule');
   $('toRule').onclick = () => showPane('rule');
   $('backDraw').onclick = () => showPane('draw');
   placeDraw(); verb();

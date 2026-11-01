@@ -306,3 +306,6 @@ body.step-rule #drawBox #grid{display:none}
 /* Results (animation, sheet) come first; Outputs (print, GIF, book) are a screen of their own after them. */
 body:not(.view-outputs) #steps a[data-s="3"],body:not(.view-outputs) #steps a[data-s="4"],body:not(.view-outputs) #steps a[data-s="5"],body.view-outputs #steps a[data-s="1"],body.view-outputs #steps a[data-s="2"]{display:none}
 body.view-outputs #viewHostOut,body.view-outputs #colourHostOut{display:none}
+/* Step by step: the step line shows where you are; there are no tabs to jump ahead, and the icon row is a marker, not a menu. */
+#paneSwitch{margin:0 0 10px;font-size:13px;color:#555}
+#steps{pointer-events:none}
