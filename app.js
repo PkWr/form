@@ -302,7 +302,7 @@ if (typeof document !== 'undefined') {
   const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
   // The subtitle number follows the grid, Moves and view live.
   let act = 'make'; // the rule: make (a block moves and stays joined), unmake (a block is taken away) or rearrange (a block moves away from the rest)
-  const verb = () => $('verb').textContent = act === 'make' ? 'make you up' : 'unmake you';
+  const verb = () => { const t = act === 'make' ? 'make you up' : 'unmake you'; $('verb').textContent = t; $('process').textContent = act === 'make' ? 'Make you up' : 'Unmake you'; };
   function updateCount() {
     const st = startBlocks();
     $('count').textContent = act !== 'make' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
@@ -368,7 +368,7 @@ if (typeof document !== 'undefined') {
     camBefore = null; drawGrid();
   }
   $('camera').onclick = () => camStream ? camStop(false) : camStart();
-  $('camTake').onclick = () => { camStop(true); $('msg').textContent = 'Taken. Press Process, or try Unmake: it does not need the blocks to touch.'; };
+  $('camTake').onclick = () => { camStop(true); $('msg').textContent = 'Taken. Press the yellow button, or try Unmake: it does not need the blocks to touch.'; };
   $('camStop').onclick = () => camStop(false);
   addEventListener('pagehide', () => { if (camStream) camStop(false); });
   $('process').onclick = () => { if (camStream) camStop(true); process(); };
@@ -409,7 +409,7 @@ if (typeof document !== 'undefined') {
   }
   // The book's inputs (shared by the download and the preview): the kept variants, the preface read from About, the message, the colours.
   async function bookInputs(imposed) {
-    if (!chain) { $('msg').textContent = 'Press Process first.'; return null; }
+    if (!chain) { $('msg').textContent = 'Press the yellow button first.'; return null; }
     const kc = kept(), orig = chain.states.find(s => s.id === 0), vs = kc.states.filter(s => s.id !== 0);
     if (!orig || !vs.length) { $('msg').textContent = 'There are no variants to put in a book.'; return null; }
     let preface = [];
@@ -428,7 +428,7 @@ if (typeof document !== 'undefined') {
   $('gifFormat').addEventListener('click', e => { const g = e.target.closest('a'); if (!g) return; e.preventDefault(); [...$('gifFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === g)); gifFmt = g.dataset.g; });
   // Frames for socials: each variant as an SVG at 720 wide (square 720 high, story 1280 high), with the title line, a small credit and, for a framed piece, its source and caption.
   function socialSetup() {
-    if (!chain) { $('msg').textContent = 'Press Process first.'; return null; }
+    if (!chain) { $('msg').textContent = 'Press the yellow button first.'; return null; }
     const kc = kept(); if (!kc.states.length) { $('msg').textContent = 'There are no variants to use.'; return null; }
     const W = 720, H = gifFmt === 'sq' ? 720 : 1280, skip = Math.max(1, Math.ceil(kc.states.length / 120)), idxs = []; for (let k = 0; k < kc.states.length; k += skip) idxs.push(k);
     const bb = bbox(kc, mode), fs = W / 38, perLine = Math.floor(W * 0.92 / (fs * 0.6)), lines = NOTE ? [...wrapText(NOTE.ref, perLine), ...wrapText(NOTE.text, perLine)] : [];
@@ -498,7 +498,7 @@ if (typeof document !== 'undefined') {
   document.querySelectorAll('input[type=range]').forEach(r => { sync(r); r.addEventListener('input', () => sync(r)); });
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   // Phones: the grid and shapes live on the screen, the settings in the sheet. One element moves between the two places.
-  const small = matchMedia('(pointer: coarse), (max-width: 600px)');
+  const small = matchMedia('all');
   // The treatments sit with the results on every screen size, which keeps the panel short.
   const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('viewHostOut').prepend($('viewBox')); $(small.matches ? 'colourHostPanel' : 'colourHostOut').prepend($('colours')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); });
@@ -523,7 +523,7 @@ if (typeof document !== 'undefined') {
   }
   $('paneSwitch').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
-    if (a.dataset.pane === 'results' && !chain) { $('msg').textContent = 'Press Process first.'; return; }
+    if (a.dataset.pane === 'results' && !chain) { $('msg').textContent = 'Press the yellow button first.'; return; }
     document.body.classList.toggle('view-results', a.dataset.pane === 'results'); paneSwitch();
   });
   placeDraw();

@@ -42,7 +42,7 @@ button:hover{border-color:var(--accent-line)}
 #screen{display:none}
 .draw-shapes .row{margin:0 0 12px}
 /* Phones / touch: the grid and the shapes sit on the screen; the controls are a short bottom sheet (grab handle, settings, Process always in reach), as in Spot. */
-@media(pointer:coarse),(max-width:600px){
+@media all{
 #screen{display:block;padding:16px 16px 0}
 #paneSwitch{margin:0 0 10px;font-size:13px}
 #paneSwitch a{color:#555}
@@ -151,7 +151,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #pieceNote p{margin:0 0 8px;max-width:720px;overflow-wrap:anywhere}
 #pieceNote a{color:inherit;text-underline-offset:3px}
 @media(max-width:900px){#pieceNote{padding-right:24px}}
-@media(pointer:coarse),(max-width:600px){#pieceNote{padding:16px 16px 0}}
+@media all{#pieceNote{padding:16px 16px 0}}
 #camBar{margin:0 0 10px}
 #camBar .row{margin:6px 0 0}
 #camera[aria-pressed=true]{border-color:var(--yellow);color:var(--yellow)}
@@ -175,7 +175,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .card h3{margin:0 0 6px;font-size:15px;font-weight:400}
 .card .row{margin:12px 0 0}
 #out{min-height:0}
-@media(pointer:coarse),(max-width:600px){#sheet svg{height:max(220px,calc(100svh - 430px))}}
+@media all{#sheet svg{height:max(220px,calc(100svh - 430px))}}
 /* Icon buttons: steps, rule and treatments. Quiet: the selected one is yellow on the dark panel and ink with a yellow icon on paper. */
 .links.ico{display:flex;flex-wrap:nowrap;gap:4px;margin:6px 0;font-size:9.5px;color:var(--muted)}
 .ico a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:56px;padding:6px 4px 5px;border-radius:8px;text-decoration:none;color:var(--text);line-height:1.1;text-align:center;overflow-wrap:anywhere}
@@ -202,7 +202,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .shape-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px}
 .shape-row #palette{margin:0}
 .shape-row #act{margin:0}
-@media(pointer:coarse),(max-width:600px){
+@media all{
 .draw-shapes{display:block}
 .shape-row{flex-wrap:nowrap;gap:8px;margin:0 0 10px}
 .draw-shapes #palette{gap:4px}
@@ -210,7 +210,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .shape-row #act a{min-width:50px;padding:5px 2px 4px}
 .draw-shapes>.row{margin:0}
 }
-@media(pointer:coarse),(max-width:600px){
+@media all{
 #drawBox #grid{width:auto;height:min(calc(100vw - 32px),calc(100svh - 360px));max-width:100%;margin:0 auto}
 }
 #grid{border-color:var(--line)}
@@ -220,7 +220,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .checks{display:flex;flex-wrap:wrap;gap:2px 16px}
 #makeTabs{margin:4px 0 12px}
 #makeTabs a{min-width:84px}
-@media(pointer:coarse),(max-width:600px){
+@media all{
 #out h2{display:none}
 body.view-results #processRow .row{display:none}
 #processRow #msg{margin:0 0 4px}
@@ -236,7 +236,7 @@ body.view-results #processRow .row{display:none}
 #out #colours .swatch{color:#555}
 #out #colours input[type=color]{border-color:var(--ink)}
 #out .preset{border-color:var(--ink)}
-@media(pointer:coarse),(max-width:600px){#sheet svg{height:max(200px,calc(100svh - 440px))}}
+@media all{#sheet svg{height:max(200px,calc(100svh - 440px))}}
 @media(min-width:601px) and (pointer:fine){#panel #grid{width:min(100%,calc(100vh - 505px));margin:0 auto}}
 .dlico{display:inline-block}
 #out #viewIcons,#out #projIcons,#out #colours,#makeTabs{max-width:460px}
@@ -264,3 +264,10 @@ body.view-results #processRow .row{display:none}
 .bp-nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 14px;border-top:1px solid #3d3d3d;font-size:12px}
 .bp-nav button:disabled{opacity:.35}
 #bookPreviewBtn{background:transparent;color:var(--ink);border-color:var(--ink)}
+/* Desktop follows the phone flow: Draw, then Results, one at a time, in a centred column. The fixed panel is gone. */
+@media(min-width:601px) and (pointer:fine){
+#panel{display:none}
+#screen,#out{max-width:640px;margin:0 auto}
+#out{padding:0 16px 16px;min-height:0}
+#drawBox #grid{width:min(100%,calc(100vh - 360px));height:auto;aspect-ratio:1;margin:0 auto;display:block}
+}
