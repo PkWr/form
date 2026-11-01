@@ -449,7 +449,7 @@ if (typeof document !== 'undefined') {
     draw(); bookTimer = setInterval(draw, 1100);
   }
   $('bookFrame').onclick = () => { if (bookPages) openBookPreview(bookPages); };
-  $('bookInclude').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); const k = a.dataset.o; BOOKOPT[k] = !BOOKOPT[k]; a.setAttribute('aria-checked', BOOKOPT[k]); showBook(); });
+  // The book has no options besides its format: no preface and no end papers.
   $('bookFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); bookFmt = a.dataset.f; [...$('bookFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); });
   // A looping GIF of the animation for socials: each variant is drawn as an SVG, rasterised, mapped to 32 steps between paper and ink, and written by gifEncode.
   let gifFmt = 'sq';
