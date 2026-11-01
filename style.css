@@ -214,3 +214,35 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #drawBox #grid{width:auto;height:min(calc(100vw - 32px),calc(100svh - 360px));max-width:100%;margin:0 auto}
 }
 #grid{border-color:var(--line)}
+/* Less scrolling: the closing step shows one choice at a time; the results sit under a shorter header on phones. */
+.card{display:none}
+.card.on{display:block}
+.checks{display:flex;flex-wrap:wrap;gap:2px 16px}
+#makeTabs{margin:4px 0 12px}
+#makeTabs a{min-width:84px}
+@media(pointer:coarse),(max-width:600px){
+#out h2{display:none}
+body.view-results #processRow .row{display:none}
+#processRow #msg{margin:0 0 4px}
+#anim{max-height:max(150px,calc(100svh - 470px))}
+#sheet svg{height:max(200px,calc(100svh - 400px))}
+.row.nav{margin-top:10px}
+#step2 .hint2{margin:0 0 6px;font-size:11px}
+#out .links.ico{margin:4px 0}
+#viewIcons a{padding:4px 2px 3px}
+}
+.dlico{width:16px;height:16px;margin-right:7px;vertical-align:-3px;flex:none}
+#out #colours{color:#555;margin:6px 0 2px}
+#out #colours .swatch{color:#555}
+#out #colours input[type=color]{border-color:var(--ink)}
+#out .preset{border-color:var(--ink)}
+@media(pointer:coarse),(max-width:600px){#sheet svg{height:max(200px,calc(100svh - 440px))}}
+@media(min-width:601px) and (pointer:fine){#panel #grid{width:min(100%,calc(100vh - 505px));margin:0 auto}}
+.dlico{display:inline-block}
+#out #viewIcons,#out #projIcons,#out #colours,#makeTabs{max-width:460px}
+#out #projIcons{justify-content:flex-start}
+/* Selected is always yellow. On paper a yellow word would vanish, so a selected text link there is an ink pill with yellow text, like the icon tiles. */
+#paneSwitch a,#out .links:not(.ico) a{padding:2px 10px;border-radius:999px;text-decoration:none}
+#paneSwitch a[aria-checked=true],#out .links:not(.ico) a[aria-checked=true]{background:var(--ink);color:var(--yellow);text-decoration:none}
+.preset.on{border:2px solid var(--yellow);box-shadow:0 0 0 1px var(--ink)}
+#out .preset.on,.preset.on{border-color:var(--yellow)}

@@ -488,7 +488,8 @@ if (typeof document !== 'undefined') {
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'd' && !/INPUT/.test(e.target.tagName)) $('panel').classList.toggle('hidden'); });
   // Phones: the grid and shapes live on the screen, the settings in the sheet. One element moves between the two places.
   const small = matchMedia('(pointer: coarse), (max-width: 600px)');
-  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $(small.matches ? 'viewHostOut' : 'viewHostPanel').prepend($('viewBox')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
+  // The treatments sit with the results on every screen size, which keeps the panel short.
+  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('viewHostOut').prepend($('viewBox')); $(small.matches ? 'colourHostPanel' : 'colourHostOut').prepend($('colours')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); });
   const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 16 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));
@@ -498,6 +499,11 @@ if (typeof document !== 'undefined') {
     [...$('steps').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.s === String(n)));
     scrollTo(0, 0);
   }
+  $('makeTabs').addEventListener('click', e => {
+    const t = e.target.closest('a'); if (!t) return; e.preventDefault();
+    [...$('makeTabs').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === t));
+    document.querySelectorAll('#step3 .card').forEach(c => c.classList.toggle('on', c.dataset.m === t.dataset.m));
+  });
   $('steps').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); goStep(+a.dataset.s); });
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
   function paneSwitch() {
@@ -516,6 +522,7 @@ if (typeof document !== 'undefined') {
   const PRESETS = [['Default', '#f4f2ee', '#111111'], ['Book', '#deddd2', '#231f20'], ['Night', '#231f20', '#deddd2'], ['Yellow', '#ffe100', '#111111']];
   $('presets').innerHTML = PRESETS.map(([n, p, i]) => `<button type="button" class="preset" title="${n}" aria-label="${n}" data-p="${p}" data-i="${i}" style="background:linear-gradient(135deg,${p} 50%,${i} 50%)"></button>`).join('');
   function setColours(p, i) {
+    [...$('presets').children].forEach(b => b.classList.toggle('on', b.dataset.p === p && b.dataset.i === i)); // the chosen preset is ringed in yellow
     PAPER = p; INK = i; $('paperCol').value = p; $('inkCol').value = i; $('anim').style.background = p;
     drawGrid(true); // the drawing grid shows the colours too, so the change is visible wherever you are
     if (chain) show();
@@ -523,7 +530,7 @@ if (typeof document !== 'undefined') {
   $('paperCol').addEventListener('input', () => setColours($('paperCol').value, INK));
   $('inkCol').addEventListener('input', () => setColours(PAPER, $('inkCol').value));
   $('presets').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setColours(b.dataset.p, b.dataset.i); });
-  $('anim').style.background = PAPER;
+  $('anim').style.background = PAPER; $('presets').firstChild.classList.add('on');
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   const pieceName = new URLSearchParams(location.search).get('piece');
   if (PIECES[pieceName]) {
