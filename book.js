@@ -65,12 +65,12 @@ function makeBook(bc, opt) {
     return out + s.blocks.map(b => blockOps(b, X, Y, c, ink)).join('');
   };
   const fit = (n, bw, bh, rw, rh, cmax) => { let best = null; for (let c = 1; c <= n; c++) { const r = Math.ceil(n / c), s = Math.min(cmax, rw / (c * bw), rh / (r * bh)); if (!best || s > best.s - 1e-9) best = { cols: c, rows: r, s }; } return best; };
-  const foot = (th) => {
-    let out = text(title, 2, 5.5, W / 2, H * 0.962, th.dim);
+  const foot = (th, hasTitle) => {
+    let out = hasTitle ? '' : text(title, 2, 5.5, W / 2, H * 0.962, th.dim); // pages that already show the title do not repeat it
     if (note) { const n = Math.floor(W * 0.86 / (5 * 0.6)), lines = [...wrapText(note.ref, n), ...wrapText(note.text, n)]; lines.forEach((l, i) => { out += text(l, 3, 5, W / 2, H * 0.9 + i * 7, th.dim); }); }
     return out;
   };
-  const page = (th, body) => `${rgb(th.bg)} rg 0 0 ${n2(W)} ${n2(H)} re f\n` + body + foot(th);
+  const page = (th, body, hasTitle = false) => `${rgb(th.bg)} rg 0 0 ${n2(W)} ${n2(H)} re f\n` + body + foot(th, hasTitle);
   const slot = (view, th) => { // the original, large, on the cover and on dark plates (registered on the shared frame)
     const bb = bbox(bc, view), bw = bb.w / U, bh = bb.h / U, c = Math.min(0.11 * W, 0.76 * W / bw, 0.5 * H / bh);
     return { bb, c, X: W / 2 - bw * c / 2 - bb.x / U * c, Y: 0.435 * H - bh * c / 2 - bb.y / U * c };
@@ -107,7 +107,7 @@ function makeBook(bc, opt) {
     const o = bc.states[0].blocks, x0 = Math.min(...o.map(b => b.x)), x1 = Math.max(...o.map(b => b.x)) + 1, y0 = Math.min(...o.map(b => b.y)), y1 = Math.max(...o.map(b => b.y)) + 1;
     const cc = Math.min(0.11 * W, 0.7 * W / (x1 - x0), 0.5 * H / (y1 - y0));
     pages.push(page(THEME.light, frameOps(0, 'form', W / 2 - (x0 + x1) / 2 * cc, 0.435 * H - (y0 + y1) / 2 * cc, cc, THEME.light.ink) +
-      text(title, 0, 8, W / 2, H * 0.808, THEME.light.ink) + text('Form', 2, 8, W / 2, H * 0.826, THEME.light.ink))); }
+      text(title, 0, 8, W / 2, H * 0.808, THEME.light.ink) + text('Form', 2, 8, W / 2, H * 0.826, THEME.light.ink), true)); }
   if (opt.endpapers) pages.push(endpaper(false));
   if (opt.message) pages.push(messagePage(opt.message));
   if (opt.preface && opt.preface.length) pages.push(prefacePage(opt.preface));
@@ -127,7 +127,7 @@ function makeBook(bc, opt) {
   });
   // dark plates: the original, then every variant one to a page (or in grids when there are many)
   { const sl = slot('form'), d = THEME.dark;
-    pages.push(page(d, frameOps(0, 'form', sl.X, sl.Y, sl.c, d.ink) + text(waysLabel(N, opt.verb).split(' ')[0] + ' ways', 2, 6, W / 2, H * 0.805, d.dim) + text('Form', 0, 8, W / 2, H * 0.824, d.dim)));
+    pages.push(page(d, frameOps(0, 'form', sl.X, sl.Y, sl.c, d.ink) + text(waysLabel(N, opt.verb).split(' ')[0] + ' ways', 2, 6, W / 2, H * 0.805, d.dim) + text('Form', 0, 8, W / 2, H * 0.824, d.dim), true));
     if (N <= 16) for (let k = 1; k <= N; k++) pages.push(page(d, frameOps(k, 'form', sl.X, sl.Y, sl.c, d.ink)));
     else { const bb = bbox(bc, 'form'), bw = bb.w / U, bh = bb.h / U;
       for (let p = 0; p * 12 < N; p++) { const ks = []; for (let k = 1 + p * 12; k <= Math.min(N, p * 12 + 12); k++) ks.push(k);
@@ -139,7 +139,7 @@ function makeBook(bc, opt) {
   if (opt.endpapers) pages.push(endpaper(true));
   const total = pages.length + 1, L = THEME.light;
   pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
-    text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch, no bleed.', 2, 6.5, W / 2, H * 0.83, L.ink)));
+    text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch, no bleed.', 2, 6.5, W / 2, H * 0.83, L.ink), true));
   return pdfBuild(pages, opt.imposed, gs);
 }
 
