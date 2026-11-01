@@ -139,14 +139,15 @@ function makeBook(bc, opt) {
   if (opt.endpapers) pages.push(endpaper(true));
   const total = pages.length + 1, L = THEME.light;
   pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
-    text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch, no bleed.', 2, 6.5, W / 2, H * 0.83, L.ink), true));
-  return pdfBuild(pages, opt.imposed, gs);
+    text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch, no bleed.', 2, 6.5, W / 2, H * 0.83, L.ink) +
+    text('\u00a9 2026 Patrick Walker. Free to share and print for non-commercial use, with credit.', 2, 6.5, W / 2, H * 0.845, L.ink) + text('Ask before commercial use.', 2, 6.5, W / 2, H * 0.86, L.ink), true));
+  return pdfBuild(pages, opt.imposed, gs, { title, date: opt.date || '' });
 }
 
 // Booklet imposition: for n pages (a multiple of four) the sides of the sheets, each as [left page, right page], 0-based.
 function imposition(n) { const out = []; for (let i = 0; i < n / 4; i++) { out.push([n - 1 - 2 * i, 2 * i]); out.push([2 * i + 1, n - 2 - 2 * i]); } return out; }
 
-function pdfBuild(pageOps, imposed, gs) {
+function pdfBuild(pageOps, imposed, gs, meta) {
   const W = A5W, H = A5H, objs = [null, null];
   const add = s => { objs.push(s); return objs.length; };
   const stream = (dict, body) => add(`<< ${dict} /Length ${body.length} >>\nstream\n${body}endstream`);
@@ -160,12 +161,13 @@ function pdfBuild(pageOps, imposed, gs) {
   const kids = [];
   if (imposed) { const sw = A4W, off = (sw - 2 * W) / 2; imposition(pageOps.length).forEach(([l, r]) => { const c = stream('', `q 1 0 0 1 ${n2(off)} 0 cm /P${l} Do Q q 1 0 0 1 ${n2(off + W)} 0 cm /P${r} Do Q\n`); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(sw)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); }); }
   else pageOps.forEach(o => { const c = stream('', wrap(o)); kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n2(W)} ${n2(H)}] /Resources ${resId} 0 R /Contents ${c} 0 R >>`)); });
+  const info = add(`<< /Title (${pdfStr(meta.title)}) /Author (Patrick Walker) /Creator (Form, form.pkwr.co) /Producer (Form) /Subject (${pdfStr('Made with Form, form.pkwr.co.')}) /Rights (${pdfStr(CREDIT)}) /CreationDate (D:${meta.date.replace(/-/g, '')}000000Z) >>`);
   objs[1] = `<< /Type /Pages /Kids [${kids.map(k => k + ' 0 R').join(' ')}] /Count ${kids.length} >>`;
   objs[0] = '<< /Type /Catalog /Pages 2 0 R >>';
   let out = '%PDF-1.4\n'; const offs = [];
   objs.forEach((s, i) => { offs.push(out.length); out += `${i + 1} 0 obj\n${s}\nendobj\n`; });
   const xref = out.length;
-  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('') + `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('') + `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Uint8Array.from(out, c => c.charCodeAt(0) & 255);
 }
 if (typeof module !== 'undefined' && typeof document === 'undefined') module.exports = { makeBook, imposition };

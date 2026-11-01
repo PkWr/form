@@ -165,7 +165,10 @@ function bbox(chain, mode) {
   const x0 = Math.min(...all.map(b => b.x)) - 1, y0 = Math.min(...all.map(b => b.y)) - 1;
   return { x: x0 * U, y: y0 * U, w: (Math.max(...all.map(b => b.x)) + 2 - (x0 + 1) + 1) * U, h: (Math.max(...all.map(b => b.y)) + 2 - (y0 + 1) + 1) * U };
 }
-const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${extra}><rect width="${w}" height="${h}" fill="${PAPER}"/>${defs()}${inner}</svg>`;
+// Credit and terms travel with every file: in SVGs as a description and Dublin Core metadata (no title element, which would show as a tooltip), in PDFs as document properties, in GIFs as a comment.
+const CREDIT = 'Made with Form, form.pkwr.co. \u00a9 2026 Patrick Walker. Free to share and print for non-commercial use with this credit; ask before commercial use.';
+const metaSVG = `<desc>${CREDIT}</desc><metadata><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Description><dc:creator>Patrick Walker</dc:creator><dc:publisher>form.pkwr.co</dc:publisher><dc:rights>${CREDIT}</dc:rights></rdf:Description></rdf:RDF></metadata>`;
+const svgWrap = (w, h, inner, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${extra}>${metaSVG}<rect width="${w}" height="${h}" fill="${PAPER}"/>${defs()}${inner}</svg>`;
 // Portrait paper sizes in mm (ISO A series). The contact sheet is laid out on one page of the chosen size and exported at that physical size.
 const PAPERS = { A3: [297, 420], A2: [420, 594], A1: [594, 841], A0: [841, 1189] };
 function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', title = '') {
@@ -398,7 +401,7 @@ if (typeof document !== 'undefined') {
       for (let i = 0; i < px.length; i++) px[i] = Math.max(0, Math.min(31, Math.round((PL - (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2])) / (PL - IL) * 31)));
       frames.push(px);
     }
-    const bytes = gifEncode(W, H, pal, frames, Math.max(2, Math.round(+$('spd').value / 10)));
+    const bytes = gifEncode(W, H, pal, frames, Math.max(2, Math.round(+$('spd').value / 10)), CREDIT.replace('\u00a9', '(c)'));
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' })); a.download = `form-${gifFmt === 'sq' ? 'square' : 'story'}.gif`; a.click(); URL.revokeObjectURL(a.href);
     $('msg').textContent = `GIF ready: ${idxs.length} frames.`;
   }

@@ -1,12 +1,13 @@
 'use strict';
 // A small GIF writer (no library): a palette of up to 256 colours, any number of frames, looping. Frames are arrays of palette indices.
-function gifEncode(w, h, palette, frames, delayCs) {
+function gifEncode(w, h, palette, frames, delayCs, comment) {
   const bits = Math.max(1, Math.ceil(Math.log2(palette.length))), size = 1 << bits, minCode = Math.max(2, bits), bytes = [];
   const u16 = v => bytes.push(v & 255, v >> 8);
   '47 49 46 38 39 61'.split(' ').forEach(x => bytes.push(parseInt(x, 16))); // GIF89a
   u16(w); u16(h); bytes.push(0x80 | (bits - 1), 0, 0);
   for (let i = 0; i < size; i++) bytes.push(...(palette[i] || [0, 0, 0]));
   bytes.push(0x21, 0xff, 11, ...[...'NETSCAPE2.0'].map(c => c.charCodeAt(0)), 3, 1, 0, 0, 0); // loop forever
+  if (comment) { const c = [...comment].map(ch => ch.charCodeAt(0) & 127); bytes.push(0x21, 0xfe); for (let i = 0; i < c.length; i += 255) { const n = Math.min(255, c.length - i); bytes.push(n, ...c.slice(i, i + n)); } bytes.push(0); } // comment block: the credit
   frames.forEach(px => {
     bytes.push(0x21, 0xf9, 4, 0, delayCs & 255, delayCs >> 8, 0, 0, 0x2c); u16(0); u16(0); u16(w); u16(h); bytes.push(0, minCode);
     const data = lzw(px, minCode);
