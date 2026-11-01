@@ -554,7 +554,11 @@ if (typeof document !== 'undefined') {
   // Phones: the grid and shapes live on the screen, the settings in the sheet. One element moves between the two places.
   const small = matchMedia('all'), phone = matchMedia('(pointer: coarse), (max-width: 600px)');
   // The treatments sit with the results on every screen size, which keeps the panel short.
-  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('colourHostPanel').prepend($('colours')); $('spdHostPanel').prepend($('spd').closest('label')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
+  const wide = matchMedia('(min-width: 901px) and (pointer: fine)');
+  // On a wide desktop window the drawing tools (shapes, Clear, Random and the hint) sit in the side panel, beside the grid; elsewhere they stay under the grid.
+  const placeTools = () => { if (wide.matches) $('toolsHostPanel').append($('drawTools')); else $('grid').after($('drawTools')); };
+  wide.addEventListener('change', placeTools);
+  const placeDraw = () => { placeTools(); $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('colourHostPanel').prepend($('colours')); $('spdHostPanel').prepend($('spd').closest('label')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); }); phone.addEventListener('change', () => { placeDraw(); sizeBody(); });
   const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 4 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));

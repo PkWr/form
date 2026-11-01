@@ -7,7 +7,7 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=v0.95">
+<link rel="stylesheet" href="style.css?v=v0.96">
 </head>
 <body>
 <script>if (!location.search) document.documentElement.classList.add("show-start");</script>
@@ -37,18 +37,19 @@
     <button class="cp-grab" id="grab" aria-label="Collapse controls" aria-expanded="true"><span></span></button>
     <div class="cp-head"><h1>Form</h1></div>
     <div class="cp-body">
+      <div id="toolsHostPanel"></div>
       <div id="drawHostPanel">
         <div id="drawBox">
           <p class="sub"><span id="count">0</span> ways I can make you up · <span id="countU">0</span> to unmake you</p>
           <div class="links" id="size" role="radiogroup" aria-label="Grid size"><span>Grid size</span><a href="#" role="radio" data-n="7" aria-checked="false">7</a><a href="#" role="radio" data-n="9" aria-checked="true">9</a><a href="#" role="radio" data-n="11" aria-checked="false">11</a><a href="#" role="radio" data-n="15" aria-checked="false">15</a></div>
           <svg id="grid" viewBox="0 0 800 800" aria-label="Grid: click a cell to place or remove a block"></svg>
-          <div class="draw-ui">
+          <div id="drawTools"><div class="draw-ui">
           <div class="draw-shapes">
             <div class="shape-row"><div id="palette" role="radiogroup" aria-label="Shape"></div></div>
             <div class="row"><button id="clear">Clear</button><button id="random">Random</button><button id="camera" aria-pressed="false">Camera</button></div>
           </div></div>
           <div id="camBar" hidden><label>Blocks <input id="camT" type="range" min="0" max="100" value="50"></label><div class="row"><button id="camTake">Take</button><button id="camStop">Stop</button></div></div>
-          <p class="hint">Click a placed block again to turn it. After four turns it is removed.</p>
+          <p class="hint">Click a placed block again to turn it. After four turns it is removed.</p></div>
           </div>
       </div>
             <div id="projHostPanel"><div class="links ico" id="projIcons" role="radiogroup" aria-label="Projection"><a href="#" role="radio" data-proj="flat" aria-checked="true" title="Flat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4" y="4" width="16" height="16"/></svg><span>Flat</span></a><a href="#" role="radio" data-proj="iso" aria-checked="false" title="Isometric"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 3l8.5 4.9v10.2L12 23 3.5 18.1V7.9z" opacity=".35"/><path d="M12 3l8.5 4.9L12 12.8 3.5 7.9z"/></svg><span>Isometric</span></a></div></div>
@@ -65,7 +66,7 @@
     </div>
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make and unmake you</button></div><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.95<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.96<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
@@ -93,10 +94,10 @@
   <div class="bp-stage" id="bpStage"></div>
   <div class="bp-nav"><button id="bpPrev">Previous</button><span id="bpPos"></span><button id="bpNext">Next</button></div>
 </div>
-<script src="app.js?v=v0.95"></script>
-<script src="book.js?v=v0.95"></script>
-<script src="gif.js?v=v0.95"></script>
-<script src="preview.js?v=v0.95"></script>
-<script src="start.js?v=v0.95"></script>
+<script src="app.js?v=v0.96"></script>
+<script src="book.js?v=v0.96"></script>
+<script src="gif.js?v=v0.96"></script>
+<script src="preview.js?v=v0.96"></script>
+<script src="start.js?v=v0.96"></script>
 </body>
 </html>
