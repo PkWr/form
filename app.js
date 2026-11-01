@@ -516,7 +516,7 @@ if (typeof document !== 'undefined') {
   // Phones: the grid and shapes live on the screen, the settings in the sheet. One element moves between the two places.
   const small = matchMedia('all'), phone = matchMedia('(pointer: coarse), (max-width: 600px)');
   // The treatments sit with the results on every screen size, which keeps the panel short.
-  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('viewHostOut').prepend($('viewBox')); $(phone.matches ? 'colourHostPanel' : 'colourHostOut').prepend($('colours')); $(phone.matches ? 'spdHostPanel' : 'spdHostOut').prepend($('spd').closest('label')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
+  const placeDraw = () => { $(small.matches ? 'drawHostScreen' : 'drawHostPanel').prepend($('drawBox')); $('viewHostOut').prepend($('viewBox')); $('colourHostPanel').prepend($('colours')); $('spdHostPanel').prepend($('spd').closest('label')); (small.matches ? $('processHostScreen') : $('panel').querySelector('.cp-foot')).prepend($('processRow')); };
   small.addEventListener('change', () => { placeDraw(); sizeBody(); }); phone.addEventListener('change', () => { placeDraw(); sizeBody(); });
   const sizeBody = () => { document.body.style.paddingBottom = small.matches ? $('panel').offsetHeight + 16 + 'px' : ''; };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizeBody).observe($('panel'));

@@ -266,8 +266,8 @@ body.view-results #processRow .row{display:none}
 #bookPreviewBtn{background:transparent;color:var(--ink);border-color:var(--ink)}
 /* Desktop follows the phone flow: Draw, then Results, one at a time, in a centred column. The fixed panel is gone. */
 @media(min-width:601px) and (pointer:fine){
-#panel{display:none}
 #screen,#out{max-width:640px;margin:0 auto}
+#panel{left:50%;right:auto;width:640px;max-width:100%;transform:translateX(-50%);border-radius:14px 14px 0 0}
 #out{padding:0 16px 16px;min-height:0}
 #drawBox #grid{width:min(100%,calc(100vh - 360px));height:auto;aspect-ratio:1;margin:0 auto;display:block}
 }
