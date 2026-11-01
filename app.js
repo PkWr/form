@@ -381,31 +381,70 @@ if (typeof document !== 'undefined') {
   // A looping GIF of the animation for socials: each variant is drawn as an SVG, rasterised, mapped to 32 steps between paper and ink, and written by gifEncode.
   let gifFmt = 'sq';
   $('gifFormat').addEventListener('click', e => { const g = e.target.closest('a'); if (!g) return; e.preventDefault(); [...$('gifFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === g)); gifFmt = g.dataset.g; });
-  async function dlGif() {
-    if (!chain) return $('msg').textContent = 'Press Process first.';
-    const kc = kept(); if (!kc.states.length) return $('msg').textContent = 'There are no variants to put in a GIF.';
+  // Frames for socials: each variant as an SVG at 720 wide (square 720 high, story 1280 high), with the title line, a small credit and, for a framed piece, its source and caption.
+  function socialSetup() {
+    if (!chain) { $('msg').textContent = 'Press Process first.'; return null; }
+    const kc = kept(); if (!kc.states.length) { $('msg').textContent = 'There are no variants to use.'; return null; }
     const W = 720, H = gifFmt === 'sq' ? 720 : 1280, skip = Math.max(1, Math.ceil(kc.states.length / 120)), idxs = []; for (let k = 0; k < kc.states.length; k += skip) idxs.push(k);
     const bb = bbox(kc, mode), fs = W / 38, perLine = Math.floor(W * 0.92 / (fs * 0.6)), lines = NOTE ? [...wrapText(NOTE.ref, perLine), ...wrapText(NOTE.text, perLine)] : [];
-    const band = 90 + (lines.length ? lines.length * fs * 1.45 + 24 : 0), availW = W * 0.84, availH = H - band - H * 0.06, sc = Math.min(availW / bb.w, availH / bb.h), tx = (W - bb.w * sc) / 2, ty = H * 0.06 + (availH - bb.h * sc) / 2;
-    const hex = c => { const n = parseInt(c.length === 4 ? '#' + [...c.slice(1)].map(x => x + x).join('') : c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
-    const P = hex(PAPER), I = hex(INK), pal = []; for (let i = 0; i < 32; i++) pal.push(P.map((v, c) => Math.round(v + (I[c] - v) * i / 31)));
-    const lum = c => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2], PL = lum(P), IL = lum(I);
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d', { willReadFrequently: true }), frames = [], title = titleText(kc);
-    for (let n = 0; n < idxs.length; n++) {
-      $('msg').textContent = `Making the GIF: ${n + 1} of ${idxs.length}`;
-      const notes = lines.map((l, i) => `<text x="${W * 0.04}" y="${H - band + 30 + i * fs * 1.45}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(l)}</text>`).join('');
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${PAPER}"/>${defs()}<g transform="translate(${tx} ${ty}) scale(${sc})"><g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, idxs[n], mode)}</g></g>${notes}<text x="${W / 2}" y="${H - 34}" text-anchor="middle" font-family="monospace" font-style="italic" font-size="${fs * 1.15}" fill="${INK}">${esc(title)}</text></svg>`;
-      const img = new Image(); img.src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })); await img.decode(); URL.revokeObjectURL(img.src);
-      cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H); cx.drawImage(img, 0, 0, W, H);
-      const d = cx.getImageData(0, 0, W, H).data, px = new Uint8Array(W * H);
-      for (let i = 0; i < px.length; i++) px[i] = Math.max(0, Math.min(31, Math.round((PL - (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2])) / (PL - IL) * 31)));
-      frames.push(px);
-    }
-    const bytes = gifEncode(W, H, pal, frames, Math.max(2, Math.round(+$('spd').value / 10)), CREDIT.replace('\u00a9', '(c)'));
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' })); a.download = `form-${gifFmt === 'sq' ? 'square' : 'story'}.gif`; a.click(); URL.revokeObjectURL(a.href);
-    $('msg').textContent = `GIF ready: ${idxs.length} frames.`;
+    const band = 100 + (lines.length ? lines.length * fs * 1.45 + 24 : 0), availW = W * 0.84, availH = H - band - H * 0.06, sc = Math.min(availW / bb.w, availH / bb.h), tx = (W - bb.w * sc) / 2, ty = H * 0.06 + (availH - bb.h * sc) / 2, title = titleText(kc);
+    const notes = lines.map((l, i) => `<text x="${W * 0.04}" y="${H - band + 30 + i * fs * 1.45}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(l)}</text>`).join('');
+    const svgAt = n => `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${PAPER}"/>${defs()}<g transform="translate(${tx} ${ty}) scale(${sc})"><g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, idxs[n], mode)}</g></g>${notes}<text x="${W / 2}" y="${H - 46}" text-anchor="middle" font-family="monospace" font-style="italic" font-size="${fs * 1.15}" fill="${INK}">${esc(title)}</text><text x="${W / 2}" y="${H - 18}" text-anchor="middle" font-family="monospace" font-size="${fs * 0.7}" fill="${INK}" opacity=".6">Made with Form, form.pkwr.co</text></svg>`;
+    return { W, H, idxs, svgAt, delay: Math.max(20, +$('spd').value) };
+  }
+  const loadSvg = async svg => { const img = new Image(); img.src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })); await img.decode(); return img; };
+  let socialBusy = false;
+  // A looping GIF: each frame is rasterised, mapped to 32 steps between paper and ink, and written by gifEncode.
+  async function dlGif() {
+    if (socialBusy) return; const S = socialSetup(); if (!S) return; socialBusy = true;
+    try {
+      const hex = c => { const n = parseInt(c.length === 4 ? '#' + [...c.slice(1)].map(x => x + x).join('') : c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+      const P = hex(PAPER), I = hex(INK), pal = []; for (let i = 0; i < 32; i++) pal.push(P.map((v, c) => Math.round(v + (I[c] - v) * i / 31)));
+      const lum = c => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2], PL = lum(P), IL = lum(I);
+      const cv = document.createElement('canvas'); cv.width = S.W; cv.height = S.H; const cx = cv.getContext('2d', { willReadFrequently: true }), frames = [];
+      for (let n = 0; n < S.idxs.length; n++) {
+        $('msg').textContent = `Making the GIF: ${n + 1} of ${S.idxs.length}`;
+        const img = await loadSvg(S.svgAt(n)); URL.revokeObjectURL(img.src);
+        cx.fillStyle = PAPER; cx.fillRect(0, 0, S.W, S.H); cx.drawImage(img, 0, 0, S.W, S.H);
+        const d = cx.getImageData(0, 0, S.W, S.H).data, px = new Uint8Array(S.W * S.H);
+        for (let i = 0; i < px.length; i++) px[i] = Math.max(0, Math.min(31, Math.round((PL - (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2])) / (PL - IL) * 31)));
+        frames.push(px);
+      }
+      const bytes = gifEncode(S.W, S.H, pal, frames, Math.max(2, Math.round(S.delay / 10)), CREDIT.replace('©', '(c)'));
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' })); a.download = `form-${gifFmt === 'sq' ? 'square' : 'story'}.gif`; a.click(); URL.revokeObjectURL(a.href);
+      $('msg').textContent = `GIF ready: ${S.idxs.length} frames.`;
+    } finally { socialBusy = false; }
   }
   $('dlGif').onclick = dlGif;
+  // A video, recorded in the browser from a canvas playing the frames in real time, repeated to run at least six seconds. MP4 where the browser can write it, otherwise WebM.
+  async function dlVideo() {
+    if (socialBusy) return; const S = socialSetup(); if (!S) return;
+    if (typeof MediaRecorder === 'undefined') return $('msg').textContent = 'This browser cannot record video.';
+    const type = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(t => MediaRecorder.isTypeSupported(t));
+    if (!type) return $('msg').textContent = 'This browser cannot record video.';
+    socialBusy = true;
+    try {
+      $('msg').textContent = 'Getting the frames ready...';
+      const imgs = []; for (let n = 0; n < S.idxs.length; n++) imgs.push(await loadSvg(S.svgAt(n)));
+      const cv = document.createElement('canvas'); cv.width = S.W; cv.height = S.H; const cx = cv.getContext('2d');
+      const reps = Math.min(30, Math.max(1, Math.ceil(6000 / (S.idxs.length * S.delay)))), chunks = [];
+      const rec = new MediaRecorder(cv.captureStream(30), { mimeType: type, videoBitsPerSecond: 4000000 });
+      rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      const stopped = new Promise(r => { rec.onstop = r; });
+      cx.drawImage(imgs[0], 0, 0, S.W, S.H); rec.start(200);
+      const total = reps * imgs.length; let done = 0;
+      for (let r = 0; r < reps; r++) for (let n = 0; n < imgs.length; n++) {
+        const t0 = performance.now(); $('msg').textContent = `Recording the video: ${Math.round(done / total * 100)}%`;
+        do { cx.drawImage(imgs[n], 0, 0, S.W, S.H); await new Promise(res => setTimeout(res, 33)); } while (performance.now() - t0 < S.delay);
+        done++;
+      }
+      rec.stop(); await stopped; imgs.forEach(i => URL.revokeObjectURL(i.src));
+      const ext = type.startsWith('video/mp4') ? 'mp4' : 'webm', a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(chunks, { type })); a.download = `form-${gifFmt === 'sq' ? 'square' : 'story'}.${ext}`; a.click(); URL.revokeObjectURL(a.href);
+      $('msg').textContent = ext === 'mp4' ? 'Video ready.' : 'Video ready, but this browser made WebM; Instagram and TikTok need MP4. Try Safari or a recent Chrome.';
+    } finally { socialBusy = false; }
+  }
+  $('dlVideo').onclick = dlVideo;
   $('dlBookImposed').onclick = () => dlBook(true);
   $('dlBook').onclick = () => dlBook(false);
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
