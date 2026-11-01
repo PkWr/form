@@ -429,8 +429,8 @@ if (typeof document !== 'undefined') {
     const kc = kept(), orig = chain.states.find(s => s.id === 0), vs = kc.states.filter(s => s.id !== 0);
     if (!orig || !vs.length) { $('msg').textContent = 'There are no variants to put in a book.'; return null; }
     let preface = [];
-    if ($('prefacePage').checked) { try { preface = await fetchPreface(); } catch (e) { $('msg').textContent = 'The preface could not be read from the About page.'; return null; } }
-    return [{ states: [orig, ...vs], orig }, { imposed, preface, message: $('personalMsg').value.trim(), title: waysTitle(kc), note: NOTE, endpapers: $('endPapers').checked, date: new Date().toISOString().slice(0, 10) }];
+    if (BOOKOPT.preface) { try { preface = await fetchPreface(); } catch (e) { $('msg').textContent = 'The preface could not be read from the About page.'; return null; } }
+    return [{ states: [orig, ...vs], orig }, { imposed, preface, title: waysTitle(kc), note: NOTE, endpapers: BOOKOPT.end, date: new Date().toISOString().slice(0, 10) }];
   }
   async function dlBook(imposed) {
     const inp = await bookInputs(imposed); if (!inp) return;
@@ -438,7 +438,19 @@ if (typeof document !== 'undefined') {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
     a.download = `form-publication-A5${imposed ? '-imposed' : ''}.pdf`; a.click(); URL.revokeObjectURL(a.href);
   }
-  $('bookPreviewBtn').onclick = async () => { const inp = await bookInputs(false); if (!inp) return; openBookPreview(buildPages(inp[0], inp[1]).pages); };
+  // The Book step shows the book as a visual, like the others: its pages, one after another, in the same square. Clicking it opens the full preview.
+  const BOOKOPT = { preface: false, end: false }; let bookFmt = 'imposed', bookPages = null, bookTimer = 0;
+  async function showBook() {
+    clearInterval(bookTimer); const inp = await bookInputs(false); if (!inp) return;
+    bookPages = buildPages(inp[0], inp[1]).pages;
+    const fr = $('bookFrame'), cv = $('bookCanvas'), dpr = window.devicePixelRatio || 1, h = fr.clientHeight - 24, w = h * A5W / A5H; let i = 0;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.width = w + 'px'; cv.style.height = h + 'px';
+    const draw = () => { const ctx = cv.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); renderOps(ctx, bookPages[i], cv.width / A5W, A5W, A5H); i = (i + 1) % bookPages.length; };
+    draw(); bookTimer = setInterval(draw, 1100);
+  }
+  $('bookFrame').onclick = () => { if (bookPages) openBookPreview(bookPages); };
+  $('bookInclude').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); const k = a.dataset.o; BOOKOPT[k] = !BOOKOPT[k]; a.setAttribute('aria-checked', BOOKOPT[k]); showBook(); });
+  $('bookFormat').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); bookFmt = a.dataset.f; [...$('bookFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a)); });
   // A looping GIF of the animation for socials: each variant is drawn as an SVG, rasterised, mapped to 32 steps between paper and ink, and written by gifEncode.
   let gifFmt = 'sq';
   $('gifFormat').addEventListener('click', e => { const g = e.target.closest('a'); if (!g) return; e.preventDefault(); [...$('gifFormat').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === g)); gifFmt = g.dataset.g; });
@@ -504,8 +516,7 @@ if (typeof document !== 'undefined') {
       $('msg').textContent = ext === 'mp4' ? 'Video ready.' : 'Video ready, but this browser made WebM; Instagram and TikTok need MP4. Try Safari or a recent Chrome.';
     } finally { socialBusy = false; }
   }
-  $('dlBookImposed').onclick = () => dlBook(true);
-  $('dlBook').onclick = () => dlBook(false);
+  $('dlBook').onclick = () => dlBook(bookFmt === 'imposed');
   $('dlSheet').onclick = () => chain && kept().states.length && dl(`form-sheet-${mode}-${paper}.svg`, sheetSVG(kept(), mode, new Set(), false, paper, titleText(kept())));
   // One download for the animation; the format (SVG, GIF or video) is chosen beside it, like the print size.
   let animFmt = 'svg';
@@ -533,11 +544,7 @@ if (typeof document !== 'undefined') {
     const panel = n > 2 ? 3 : n;
     document.querySelector('#step' + panel + ' .row.nav').append($('dlWrap')); // the downloads sit at the right of Back and Next
     document.querySelectorAll('#out .step').forEach(el => el.classList.toggle('on', el.id === 'step' + panel));
-    if (n > 2) {
-      document.querySelectorAll('#step3 .card').forEach(c => c.classList.toggle('on', c.dataset.m === CARDS[n]));
-      const nx = document.querySelector('#step3 .next'), bk = document.querySelector('#step3 .back');
-      nx.hidden = true; bk.dataset.go = n - 1;
-    }
+    if (n > 2) { document.querySelector('#step3 .next').hidden = true; document.querySelector('#step3 .back').dataset.go = n - 1; showBook(); } else clearInterval(bookTimer);
     scrollTo(0, 0);
   }
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });

@@ -363,3 +363,12 @@ body[data-step="2"] #dlWrap #paper{display:flex}
 #dlWrap #animFormat{display:none;margin:0;font-size:13px;flex:0 0 auto}
 body[data-step="1"] #dlWrap #animFormat{display:flex}
 .row.nav #dlWrap #animFormat{order:-1;flex:0 0 100%;justify-content:flex-end;margin:0 0 4px}
+/* The Book step: the book as a visual in the same square and outline as the animation, its choices above the download. */
+#bookFrame{display:flex;align-items:center;justify-content:center;width:min(100%,calc(100vh - 360px));aspect-ratio:1;margin:0 auto;border:1px solid var(--line);border-radius:6px;background:var(--paper);cursor:pointer}
+@media(max-height:700px){#bookFrame{width:min(100%,calc(100svh - 348px))}}
+#bookCanvas{display:block;box-shadow:0 1px 6px rgba(0,0,0,.25)}
+#dlWrap #bookInclude,#dlWrap #bookFormat{display:none;margin:0;font-size:13px;flex:0 0 auto}
+body[data-step="3"] #dlWrap #bookInclude,body[data-step="3"] #dlWrap #bookFormat{display:flex}
+.row.nav #dlWrap #bookInclude,.row.nav #dlWrap #bookFormat{order:-1;flex:0 0 100%;justify-content:flex-end;margin:0 0 4px}
+.row.nav #dlWrap #bookInclude{order:-2}
+#bookInclude a[aria-checked=true]{background:var(--ink);color:var(--yellow)}
