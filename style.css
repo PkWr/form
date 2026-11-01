@@ -291,3 +291,10 @@ button#process,#processRow .row button{font-size:14px;line-height:1.2;padding:10
 #spdHostOut label{display:block;color:#555;margin:10px 0 0;font-size:13px}
 #spdHostOut output{float:right;color:var(--ink)}
 #spdHostOut input[type=range]{width:100%;accent-color:var(--ink)}
+/* The rule is a screen of its own, after drawing and before the results. */
+#ruleBox h2{margin:6px 0 10px;font-size:15px;font-weight:400}
+#ruleBox #act{margin:0 0 6px}
+body:not(.step-rule) #ruleBox{display:none}
+body.step-rule #drawBox #size,body.step-rule #drawBox .draw-shapes,body.step-rule #drawBox #camBar,body.step-rule #drawBox .hint,body.step-rule #drawNav{display:none}
+body:not(.step-rule) #processRow .row{display:none}
+#screen .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}

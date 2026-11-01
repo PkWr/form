@@ -305,7 +305,8 @@ if (typeof document !== 'undefined') {
   const startBlocks = () => grid.map((c, i) => c && { x: i % G, y: Math.floor(i / G), s: c.s, r: 0, q: c.q }).filter(Boolean);
   // The subtitle number follows the grid, Moves and view live.
   let act = 'make'; // the rule: make (a block moves and stays joined), unmake (a block is taken away) or rearrange (a block moves away from the rest)
-  const verb = () => { $('verb').textContent = VERBS[act]; $('process').textContent = VERBS[act][0].toUpperCase() + VERBS[act].slice(1); };
+  const RULE_NOTES = { make: 'One block moves and stays joined to the rest. Its old place stays marked.', unmake: 'One block is taken away at a time. Nothing is added back.', rearrange: 'One block moves away from the rest, to somewhere else on the grid.' };
+  const verb = () => { $('ruleNote').textContent = RULE_NOTES[act]; $('verb').textContent = VERBS[act]; $('process').textContent = VERBS[act][0].toUpperCase() + VERBS[act].slice(1); };
   function updateCount() {
     const st = startBlocks();
     $('count').textContent = act !== 'make' ? st.length : st.length && connected(st) ? variants(st, MOVES, mode === 'direction', TRACED.has(mode)).states.length - 1 : 0;
@@ -319,7 +320,7 @@ if (typeof document !== 'undefined') {
     const n = chain.states.length - 1;
     $('msg').textContent = act === 'unmake' ? `${n} step${n > 1 ? 's' : ''}. Each takes one block away; nothing is added back.` : act === 'rearrange' ? `${n} step${n > 1 ? 's' : ''}. Each moves one block away from the rest.` : n ? `${n} variant${n > 1 ? 's' : ''}${chain.capped ? ` (stopped at the cap of ${MAXCAP})` : ''}.` : 'No variants: nothing can move.';
     show();
-    if (!quiet) { document.body.classList.add('view-results'); paneSwitch(); goStep(1); }
+    if (!quiet) { showPane('results'); goStep(1); }
   }
   const dl = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
   $('size').addEventListener('click', e => {
@@ -523,16 +524,21 @@ if (typeof document !== 'undefined') {
   }
   $('steps').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); goStep(+a.dataset.s); });
   $('out').addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) goStep(+b.dataset.go); });
-  function paneSwitch() {
-    const res = document.body.classList.contains('view-results');
-    [...$('paneSwitch').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', (x.dataset.pane === 'results') === res));
+  // Three screens in order: Draw, Rule, Results. The rule is chosen after the shape is drawn, never while building.
+  const paneNow = () => document.body.classList.contains('view-results') ? 'results' : document.body.classList.contains('step-rule') ? 'rule' : 'draw';
+  function paneSwitch() { const p = paneNow(); [...$('paneSwitch').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.pane === p)); }
+  function showPane(p) {
+    document.body.classList.toggle('view-results', p === 'results'); document.body.classList.toggle('step-rule', p === 'rule');
+    paneSwitch(); scrollTo(0, 0);
   }
   $('paneSwitch').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     if (a.dataset.pane === 'results' && !chain) { $('msg').textContent = 'Press the yellow button first.'; return; }
-    document.body.classList.toggle('view-results', a.dataset.pane === 'results'); paneSwitch();
+    showPane(a.dataset.pane);
   });
-  placeDraw();
+  $('toRule').onclick = () => showPane('rule');
+  $('backDraw').onclick = () => showPane('draw');
+  placeDraw(); verb();
   if (small.matches) { $('panel').classList.add('collapsed'); $('grab').setAttribute('aria-expanded', 'false'); $('grab').setAttribute('aria-label', 'Open controls'); }
   sizeBody();
   // Colour: paper and ink for the artwork (the results, every download and the book). The app's own screen keeps its colours.
