@@ -211,12 +211,18 @@ const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-wid
 const GHOSTS = [0.3, 0.2, 0.13, 0.09, 0.06, 0.04];
 const ghosts = (chain, k) => GHOSTS.map((o, a) => { const st = pastOf(chain, k)[a], s = chain.states[k]; if (!st) return null;
   return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
+// Cumulative Solid: every place vacated so far stays solid, so the earlier moves of the same set (and the original) add up as the sequence runs. Each past state's traces are shifted into this state's frame.
+function solidTraces(chain, k) {
+  const s = chain.states[k], seen = new Set(), out = [];
+  [s, ...pastOf(chain, k)].forEach(st => st.tr.forEach(t => { const b = { ...t, x: t.x + st.ox - s.ox, y: t.y + st.oy - s.oy }, key = b.x + ',' + b.y + b.s + b.r + (b.q || 0); if (!seen.has(key)) { seen.add(key); out.push(b); } }));
+  return out;
+}
 function frame(chain, k, mode) { return frame0(chain, k, mode); }
 function frame0(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(b => stripes(b, s.blocks)).join('');
   if (mode === 'dens') return densLayers(chain, k);
-  return (mode === 'solid' ? s.tr.map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
+  return (mode === 'solid' ? solidTraces(chain, k).map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
 }
 function bbox(chain, mode) {
   // The same frame for every treatment (blocks, traces, the density overlay and the ghosts), so changing treatment never changes the scale.

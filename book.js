@@ -59,7 +59,7 @@ function buildPages(bc, opt) {
     if (view === 'direction') return s.blocks.map(b => stripeOps(b, X, Y, c, ink, s.blocks)).join('');
     if (view === 'dens') return densOps(k, X, Y, c, ink === THEME.dark.ink && ink !== THEME.light.ink);
     if (view === 'trans') { ghosts(bc, k).forEach(g => g.blocks.forEach(b => { out += blockOps(b, X + g.dx * c, Y + g.dy * c, c, ink, g.o); })); s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink, TONE); }); }
-    else if (view === 'solid') s.tr.forEach(t => { out += blockOps(t, X, Y, c, ink); });
+    else if (view === 'solid') solidTraces(bc, k).forEach(t => { out += blockOps(t, X, Y, c, ink); });
     return out + s.blocks.map(b => blockOps(b, X, Y, c, ink)).join('');
   };
   const frameOps = (k, view, X, Y, c, ink) => frameOps0(k, view, X, Y, c, ink);
