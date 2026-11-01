@@ -58,8 +58,8 @@ function variants(start, moves, ax = false, withTr = false, cap = MAXCAP) {
         for (const o of rest) for (const [dx, dy] of DIRS) { const x = o.x + dx, y = o.y + dy; if (!occ.has(x + ',' + y)) targets.set(x + ',' + y, [x, y]); }
         for (const [tx, ty] of [...targets.values()].sort((p, q) => Math.abs(p[0] - old.x) + Math.abs(p[1] - old.y) - Math.abs(q[0] - old.x) - Math.abs(q[1] - old.y) || p[1] - q[1] || p[0] - q[0])) {
           const dx = tx - old.x, dy = ty - old.y, dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3);
-          const nb = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir } : o);
-          nb[i].a = axisOf(nb[i], nb);
+          const nb0 = st.blocks.map((o, j) => j === i ? { ...o, x: tx, y: ty, r: dir } : o);
+          const nb = nb0.map(b => ({ ...b, a: axisOf(b, nb0) })); // a move changes who is joined to whom, so every block's stripe direction is worked out again
           if (!connected(nb)) continue;
           const n = norm(nb, [...st.tr, { x: old.x, y: old.y, s: old.s, r: old.r, q: old.q }], st.ox, st.oy);
           if (Math.max(...n.blocks.map(b => b.x)) >= G || Math.max(...n.blocks.map(b => b.y)) >= G) continue;
@@ -87,7 +87,7 @@ function unmake(start, order) {
   const states = [first];
   idx.forEach((bi, k) => {
     const gone = new Set(idx.slice(0, k + 1));
-    states.push({ blocks: first.blocks.filter((_, i) => !gone.has(i)), tr: first.blocks.filter((_, i) => gone.has(i)).map(b => ({ x: b.x, y: b.y, s: b.s, r: b.r, q: b.q })), ox: first.ox, oy: first.oy });
+    const left = first.blocks.filter((_, i) => !gone.has(i)); states.push({ blocks: left.map(b => ({ ...b, a: axisOf(b, left) })), tr: first.blocks.filter((_, i) => gone.has(i)).map(b => ({ x: b.x, y: b.y, s: b.s, r: b.r, q: b.q })), ox: first.ox, oy: first.oy });
   });
   const out = states.map((st, id) => ({ ...st, id }));
   return { states: out, capped: false, orig: out[0] };

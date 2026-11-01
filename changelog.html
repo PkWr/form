@@ -15,6 +15,11 @@
   <p><a href="./">← Form</a></p>
   <h1>Changelog</h1>
 
+  <h2>v0.90, 2026-11-01</h2>
+  <ul>
+    <li>Fixed Direction so the branches always meet the verticals. When a block moved, only that block had its stripe direction worked out again; every other block kept the direction it had before the move, so a block whose neighbours had changed could keep stripes running the wrong way and miss its neighbour. Every block's direction is now worked out again after each move and after each block is taken away. On a test letter F, 39 of its 74 variants had at least one block with the wrong direction before; none do now.</li>
+  </ul>
+
   <h2>v0.89, 2026-11-01</h2>
   <ul>
     <li>The last step has a Start again button. It returns to Draw with a fresh starter symbol, as on a first visit, and keeps nothing from the last run.</li>
