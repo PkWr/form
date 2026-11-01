@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Form in space</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#DEDDD2;color:#231F20;font:14px/1.4 ui-monospace,Menlo,monospace}
+#view{position:fixed;inset:0;touch-action:none}
+#view canvas{display:block}
+#count{position:fixed;left:0;right:0;bottom:18px;text-align:center;font-style:italic;font-size:15px;padding:0 16px}
+#msg{position:fixed;left:0;right:0;top:40%;text-align:center;padding:0 24px}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+<div id="view"></div>
+<div id="count"></div>
+<div id="msg"></div>
+<script src="../app.js"></script>
+<script src="space.js"></script>
+<script type="module" src="model.js"></script>
+</body>
+</html>
