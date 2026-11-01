@@ -312,3 +312,6 @@ body.view-outputs #viewHostOut,body.view-outputs #colourHostOut{display:none}
 /* Keep each step on one screen. The animation gives up height on desktop for its controls; on short phones the card's explanatory text steps aside (the step line already names the card). */
 @media(min-width:601px) and (pointer:fine){#anim{max-height:max(140px,calc(100vh - 470px))}}
 @media(max-height:700px){.card .hint2,.card h3{display:none}#personalMsg{height:2.4em}}
+/* The word "open" lives inside the F's top bar (start.js), so the line under the mark is not needed. */
+#startOpen span{display:none}
+#startOpen .mark-word{fill:#000;font:italic 400 52px/1 var(--font);letter-spacing:.04em}
