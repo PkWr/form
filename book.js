@@ -149,7 +149,7 @@ function buildPages(bc, opt) {
   if (opt.endpapers) pages.push(endpaper(true));
   const total = pages.length + 1, L = THEME.light;
   pages.push(page(L, text(title, 0, 8, W / 2, H * 0.78, L.ink) + text('Made with Form, form.pkwr.co, on ' + (opt.date || '') + '.', 2, 6.5, W / 2, H * 0.80, L.ink) +
-    text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) + text('A5, ' + total + ' pages, saddle stitch.', 2, 6.5, W / 2, H * 0.83, L.ink) +
+    text('Based on the publication 11 ways I can make you up by Patrick Walker.', 2, 6.5, W / 2, H * 0.815, L.ink) +
     text('\u00a9 2026 Patrick Walker. Free to share and print for non-commercial use, with credit.', 2, 6.5, W / 2, H * 0.845, L.ink) + text('Ask before commercial use.', 2, 6.5, W / 2, H * 0.86, L.ink), true));
   return { pages, gs, title };
 }
