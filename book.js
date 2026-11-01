@@ -123,10 +123,10 @@ function buildPages(bc, opt) {
   if (opt.preface && opt.preface.length) pages.push(prefacePage(opt.preface));
   // the five treatments, each with the original on top and the variants in a grid
   VIEWS.forEach(([view, name], vi) => {
-    const bb = bbox(bc, view), bw = bb.w / U, bh = bb.h / U, per = 48, pc = Math.max(1, Math.ceil(N / per));
+    const bb = bbox(bc, view), bw = bb.w / U, bh = bb.h / U, per = view === 'dens' ? 12 : 48, pc = Math.max(1, Math.ceil(N / per)); // the density pages hold fewer, larger, as the original's enlarged page does
     for (let p = 0; p < pc; p++) {
       const ks = []; for (let k = 1 + p * per; k <= Math.min(N, (p + 1) * per); k++) ks.push(k);
-      const rx = 0.78 * W, ry = 0.445 * H, f = fit(ks.length, bw, bh, rx, ry, 0.0373 * W);
+      const rx = 0.78 * W, ry = 0.445 * H, f = fit(ks.length, bw, bh, rx, ry, (view === 'dens' ? 0.075 : 0.0373) * W);
       const left = 0.11 * W + (rx - f.cols * f.s * bw) / 2; let body = '';
       const [x0, x1, y0] = extents(bc.states[0].blocks, bc.states[0]);
       body += frameOps(0, view, W / 2 - (x0 + x1) / 2 * 0.0373 * W, 0.12 * H - y0 * 0.0373 * W, 0.0373 * W, THEME.light.ink);
