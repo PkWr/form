@@ -134,10 +134,14 @@ function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs *
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
   `<path id="hl" fill="none" stroke-width="1.1" d="${(() => { let d = ''; for (let x = -30; x <= 130; x += 3.2) d += `M${+x.toFixed(1)} -30V130`; return d; })()}"/>` +
-  '<g id="hs" shape-rendering="crispEdges"><rect y="0" width="100" height="20"/><rect y="40" width="100" height="20"/><rect y="80" width="100" height="20"/></g>' +
-  '<g id="vs" shape-rendering="crispEdges"><rect x="0" width="20" height="100"/><rect x="40" width="20" height="100"/><rect x="80" width="20" height="100"/></g></defs>';
+  // Direction stripes: three lines a sixth of the cell wide with equal gaps, inset by half a gap, so the pattern carries on evenly across neighbouring blocks (flush edge stripes joined into doubled lines).
+  '<g id="hs"><rect y="8.33" width="100" height="16.67"/><rect y="41.67" width="100" height="16.67"/><rect y="75" width="100" height="16.67"/></g>' +
+  '<g id="vs"><rect x="8.33" width="16.67" height="100"/><rect x="41.67" width="16.67" height="100"/><rect x="75" width="16.67" height="100"/></g>' +
+  // for square blocks the stripes run a hair past the cell, so lines carry on without a seam where blocks join
+  '<g id="hs2"><rect x="-0.6" y="8.33" width="101.2" height="16.67"/><rect x="-0.6" y="41.67" width="101.2" height="16.67"/><rect x="-0.6" y="75" width="101.2" height="16.67"/></g>' +
+  '<g id="vs2"><rect x="8.33" y="-0.6" width="16.67" height="101.2"/><rect x="41.67" y="-0.6" width="16.67" height="101.2"/><rect x="75" y="-0.6" width="16.67" height="101.2"/></g></defs>';
 // Direction: each block is three stripes running along its last move (vertical until it moves).
-const stripes = b => `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
+const stripes = b => b.s === 'square' ? `<g transform="translate(${b.x * U} ${b.y * U})"><use href="#${b.a === 0 ? 'hs2' : 'vs2'}"/></g>` : `<g transform="translate(${b.x * U} ${b.y * U})" clip-path="url(#c_${b.s}_${ang(b)})"><use href="#${b.a === 0 ? 'hs' : 'vs'}"/></g>`;
 // Density: every block is drawn as fine lines, and each iteration adds a layer at its own angle. Where layers overlap the lines cross into a darker mesh,
 // so tone builds up as texture. Layers: the original (vertical), this variant, and the two variants before it.
 const DENS = [0, 45, 135, 90];

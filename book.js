@@ -43,8 +43,12 @@ function makeBook(bc, opt) {
   const text = (t, f, size, x, y, col, align = 'c') => { const w = textWidth(t, f, size), xx = align === 'c' ? x - w / 2 : x; return `${rgb(col)} rg BT /F${f + 1} ${size} Tf 1 0 0 -1 ${n2(xx)} ${n2(y)} Tm (${pdfStr(t)}) Tj ET\n`; };
   // blocks, stripes and hatching, in a frame whose cell (0,0) sits at (X,Y) with cells c points wide
   const blockOps = (b, X, Y, c, ink, o = 1) => `q ${o < 1 ? alpha(o) : ''}${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm ${rgb(ink)} rg ${rgb(ink)} RG 1.5 w ${pathOps(b.s, ang(b))} B Q\n`;
-  const stripeOps = (b, X, Y, c, ink) => `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm ${rgb(ink)} rg ${pathOps(b.s, ang(b))} W n ` +
-    (b.a === 0 ? '0 0 100 20 re 0 40 100 20 re 0 80 100 20 re' : '0 0 20 100 re 40 0 20 100 re 80 0 20 100 re') + ' f Q\n';
+  const stripeOps = (b, X, Y, c, ink) => {
+    const sq = b.s === 'square'; // square blocks: stripes run a hair past the cell, with no clip, so lines carry on without a seam
+    const r = b.a === 0 ? (sq ? '-0.6 8.33 101.2 16.67 re -0.6 41.67 101.2 16.67 re -0.6 75 101.2 16.67 re' : '0 8.33 100 16.67 re 0 41.67 100 16.67 re 0 75 100 16.67 re')
+      : (sq ? '8.33 -0.6 16.67 101.2 re 41.67 -0.6 16.67 101.2 re 75 -0.6 16.67 101.2 re' : '8.33 0 16.67 100 re 41.67 0 16.67 100 re 75 0 16.67 100 re');
+    return `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm ${rgb(ink)} rg ${sq ? '' : pathOps(b.s, ang(b)) + ' W n '}${r} f Q\n`;
+  };
   // Density: every block is filled with a fine-line pattern, one layer for the original and one for each of this variant and the two before it,
   // each layer at its own angle (DENS in app.js), so overlaps cross into a darker mesh. The patterns are defined once for the whole file.
   const patBlock = (b, X, Y, c, slot) => `q ${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm /Pattern cs /H${slot} scn ${pathOps(b.s, ang(b))} f Q\n`;
