@@ -283,3 +283,7 @@ body.view-results #processRow .row{display:none}
 .row.nav{align-items:center}
 button#process,#processRow .row button{font-size:14px;line-height:1.2;padding:10px 16px;min-height:44px}
 #startOpen svg path{stroke:var(--yellow);stroke-width:1}
+/* Grid size sits under the grid on the screen, styled like the other text choices: selected is an ink pill with yellow text. */
+#screen #size{color:#555;margin:8px 0 0;font-size:13px}
+#screen #size a{color:#555;padding:2px 10px;border-radius:999px;text-decoration:none}
+#screen #size a[aria-checked=true]{background:var(--ink);color:var(--yellow)}
