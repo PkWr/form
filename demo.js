@@ -1,7 +1,7 @@
 // Demo: a random symbol, then the rule sentence picks itself at random (the words spin and lock one by one: the rule, how many blocks at a time, and what follows), then the loop runs
 // through every iteration, then a new symbol and a new draw of the rule. Nothing else is shown.
 (function () {
-  const REST = 1400, TICK = 85, LOCK = [900, 1700, 2500], HOLD = 1700; // ms: when each word locks, and how long the finished sentence stays
+  const REST = 1400, TICK = 85, LOCK = [1400, 3000, 4800], HOLD = 4500; // ms: when each word locks, and how long the finished sentence stays
   G = 9; // the whole symbol list fits a 9 grid
   INK = '#231F20'; PAPER = '#DEDDD2'; // the colours of the printed book
   const stage = document.getElementById('stage'), intro = document.getElementById('intro');
@@ -28,12 +28,14 @@
     const final = { n: fmtN(made.total, made.more), ways: made.total === 1 && !made.more ? 'way' : 'ways', a: RULE_VERB[sel.rules[0]], per: PER_BLOCKS[sel.per], b: sel.rules[1] ? RULE_VERB[sel.rules[1]] : '' };
     const spin = { a: MAKES.map(r => RULE_VERB[r]), per: [1, 2, 3, 0].map(p => PER_BLOCKS[p]), b: ['unmake you', 'make you up', 'change you', 'grow you', '\u2026'] };
     stage.style.display = 'none'; intro.style.display = 'block'; let t = 0;
-    const spinning = setInterval(() => {
-      t += TICK; const locked = [t >= LOCK[0], t >= LOCK[1], t >= LOCK[2]], all = locked[0] && locked[1] && locked[2];
+    const step = () => {
+      t += 85 + t * 0.1; // the words spin quickly, then slow towards each lock
+      const locked = [t >= LOCK[0], t >= LOCK[1], t >= LOCK[2]], all = locked[0] && locked[1] && locked[2];
       const w = { n: all ? final.n : '\u2026', ways: all ? final.ways : 'ways', a: locked[0] ? final.a : pick(spin.a), per: locked[1] ? final.per : pick(spin.per), b: locked[2] ? final.b : pick(spin.b) };
       drawIntro(w, [locked[0], locked[1], locked[2], all]);
-      if (t >= LOCK[2] + HOLD) { clearInterval(spinning); play(chain, bb); }
-    }, TICK);
+      if (t >= LOCK[2] + HOLD) play(chain, bb); else setTimeout(step, 85 + t * 0.1);
+    };
+    step();
   }
   function play(chain, bb) {
     intro.style.display = 'none'; stage.style.display = 'block';
