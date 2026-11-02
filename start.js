@@ -87,5 +87,6 @@
   new MutationObserver(function () {
     if (!root.classList.contains("show-start")) { dead = true; clearTimeout(timer); G = keepG; INK = keepINK; svg.innerHTML = ""; this.disconnect(); }
   }).observe(root, { attributes: true, attributeFilter: ["class"] });
+  svg.addEventListener("click", function () { document.getElementById("startOpen").click(); }); // the whole loop is the way in
   round();
 })();
