@@ -118,6 +118,8 @@ def changelog_body(text):
     return re.sub(r"^## (v\d+(?:\.\d+)*) \((\d{4}-\d{2}-\d{2})\)\s*$", r"## \1, \2", text, flags=re.M)
 
 
+# pkwr.co does not render *italics* in paragraphs or tables, so the copy there is plain text.
+PLAIN = lambda s: re.sub(r"(?<![\w*])\*([^*\n]+)\*(?!\w)", r"\1", s)
 CORE = ("Summary", "Description", "Publication model", "Details")
 
 
@@ -133,7 +135,7 @@ def sync_core(check):
         a, b = section(src_t, n), section(t, n)
         if not a or not b:
             sys.exit(f"core section '{n}' missing in {'About Form' if not a else 'Form project page'}")
-        t = t[:b.start(1)] + a.group(1) + t[b.end(1):]
+        t = t[:b.start(1)] + PLAIN(a.group(1)) + t[b.end(1):]
     if t == old:
         print("project page core: up to date"); return False
     if check:
