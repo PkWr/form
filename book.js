@@ -22,8 +22,33 @@ const VIEWS = [['form', 'Form'], ['direction', 'Direction'], ['solid', 'Cumulati
 
 // Text width, by the browser's metric-compatible fonts when there is a canvas, otherwise a rough average.
 const FONTS = [['Helvetica-Bold', 'bold 100px Arial, Helvetica, sans-serif'], ['Helvetica', '100px Arial, Helvetica, sans-serif'], ['Times-Italic', 'italic 100px "Times New Roman", Times, serif'], ['Courier-Oblique', 'italic 100px "Courier New", Courier, monospace']];
+// The book's type is Libre Franklin (bold and regular) and Libre Baskerville Italic, drawn as outlines from glyphs.js, so the PDF needs no embedded or installed fonts and its layout is the same everywhere.
+// The four old font slots map to them: 0 bold sans (titles), 1 sans (small lines), 2 serif italic (numerals and captions), 3 serif italic (a framed piece's note).
+const GKEY = ['sansBold', 'sans', 'serif', 'serif'], outlined = () => typeof GLYPHS !== 'undefined';
+const GPDF = {}; // glyph -> drawing instructions in font units, made once
+function glyphOps(key, ch) {
+  const id = key + ch; if (id in GPDF) return GPDF[id];
+  const g = GLYPHS[key].g[ch] || GLYPHS[key].g['?']; if (!g || !g[1]) return (GPDF[id] = '');
+  const tk = g[1].match(/[MLHVQCZ]|-?\d+(?:\.\d+)?/g), o = []; let i = 0, cx = 0, cy = 0, sx = 0, sy = 0, cmd = '';
+  const num = () => +tk[i++];
+  while (i < tk.length) { if (/[A-Z]/.test(tk[i])) cmd = tk[i++];
+    if (cmd === 'M') { cx = num(); cy = num(); sx = cx; sy = cy; o.push(`${cx} ${cy} m`); cmd = 'L'; }
+    else if (cmd === 'L') { cx = num(); cy = num(); o.push(`${cx} ${cy} l`); }
+    else if (cmd === 'H') { cx = num(); o.push(`${cx} ${cy} l`); }
+    else if (cmd === 'V') { cy = num(); o.push(`${cx} ${cy} l`); }
+    else if (cmd === 'Q') { const qx = num(), qy = num(), ex = num(), ey = num(); o.push(`${n2(cx + 2 / 3 * (qx - cx))} ${n2(cy + 2 / 3 * (qy - cy))} ${n2(ex + 2 / 3 * (qx - ex))} ${n2(ey + 2 / 3 * (qy - ey))} ${ex} ${ey} c`); cx = ex; cy = ey; }
+    else if (cmd === 'C') { const a = num(), b = num(), c = num(), d = num(), ex = num(), ey = num(); o.push(`${a} ${b} ${c} ${d} ${ex} ${ey} c`); cx = ex; cy = ey; }
+    else if (cmd === 'Z') { o.push('h'); cx = sx; cy = sy; } else break; }
+  return (GPDF[id] = o.join(' ') + ' f');
+}
+function outlineText(t, f, size, xx, y) { // in the page's own space (y down); returns drawing instructions
+  const key = GKEY[f], F = GLYPHS[key], sc = size / F.upm; let off = 0, out = `q ${n2(sc * 1000) / 1000} 0 0 ${-n2(sc * 1000) / 1000} ${n2(xx)} ${n2(y)} cm\n`;
+  [...t].forEach(ch => { const g = F.g[ch] || F.g['?'] || [F.upm / 2, '']; const ops = glyphOps(key, ch); if (ops) out += `q 1 0 0 1 ${off} 0 cm ${ops} Q\n`; off += g[0]; });
+  return out + 'Q\n';
+}
 let measureCtx = null;
 function textWidth(t, f, size) {
+  if (outlined()) { const F = GLYPHS[GKEY[f]]; return [...t].reduce((s, ch) => s + (F.g[ch] || F.g['?'] || [F.upm / 2])[0], 0) * size / F.upm; }
   if (typeof document !== 'undefined') { measureCtx = measureCtx || document.createElement('canvas').getContext('2d'); measureCtx.font = FONTS[f][1]; return measureCtx.measureText(t).width * size / 100; }
   return t.length * size * (f === 3 ? 0.6 : 0.5);
 }
@@ -43,7 +68,7 @@ function buildPages(bc, opt) {
   const N = bc.states.length - 1, W = A5W, H = A5H, gs = new Set();
   const title = opt.title || waysLabel(N, opt.verb), note = opt.note || null;
   const alpha = o => { const p = Math.round(o * 100); gs.add(p); return `/G${p} gs `; };
-  const text = (t, f, size, x, y, col, align = 'c') => { const w = textWidth(t, f, size), xx = align === 'c' ? x - w / 2 : x; return `${rgb(col)} rg BT /F${f + 1} ${size} Tf 1 0 0 -1 ${n2(xx)} ${n2(y)} Tm (${pdfStr(t)}) Tj ET\n`; };
+  const text = (t, f, size, x, y, col, align = 'c') => { const w = textWidth(t, f, size), xx = align === 'c' ? x - w / 2 : x; if (outlined()) return `${rgb(col)} rg\n` + outlineText(t, f, size, xx, y); return `${rgb(col)} rg BT /F${f + 1} ${size} Tf 1 0 0 -1 ${n2(xx)} ${n2(y)} Tm (${pdfStr(t)}) Tj ET\n`; };
   // blocks, stripes and hatching, in a frame whose cell (0,0) sits at (X,Y) with cells c points wide
   const blockOps = (b, X, Y, c, ink, o = 1) => `q ${o < 1 ? alpha(o) : ''}${n2(c / 100)} 0 0 ${n2(c / 100)} ${n2(X + b.x * c)} ${n2(Y + b.y * c)} cm ${rgb(ink)} rg ${rgb(ink)} RG 1.5 w ${pathOps(b.s, ang(b))} B Q\n`;
   const stripeOps = (b, X, Y, c, ink, all) => { // geometry from stripeRects in app.js
@@ -71,7 +96,7 @@ function buildPages(bc, opt) {
   const fit = (n, bw, bh, rw, rh, cmax) => { let best = null; for (let c = 1; c <= n; c++) { const r = Math.ceil(n / c), s = Math.min(cmax, rw / (c * bw), rh / (r * bh)); if (!best || s > best.s - 1e-9) best = { cols: c, rows: r, s }; } return best; };
   const foot = (th, hasTitle) => {
     let out = hasTitle ? '' : text(title, 2, 5.5, W / 2, H * 0.962, th.dim); // pages that already show the title do not repeat it
-    if (note) { const n = Math.floor(W * 0.86 / (5 * 0.6)), lines = [...wrapText(note.ref, n), ...wrapText(note.text, n)]; lines.forEach((l, i) => { out += text(l, 3, 5, W / 2, H * 0.9 + i * 7, th.dim); }); }
+    if (note) { const n = Math.floor(W * 0.86 / (5 * (outlined() ? 0.5 : 0.6))), lines = [...wrapText(note.ref, n), ...wrapText(note.text, n)]; lines.forEach((l, i) => { out += text(l, 3, 5, W / 2, H * 0.9 + i * 7, th.dim); }); }
     return out;
   };
   const page = (th, body, hasTitle = false) => `${rgb(th.bg)} rg 0 0 ${n2(W)} ${n2(H)} re f\n` + body + foot(th, hasTitle);
@@ -162,7 +187,7 @@ function pdfBuild(pageOps, imposed, gs, meta) {
   const add = s => { objs.push(s); return objs.length; };
   const stream = (dict, body) => add(`<< ${dict} /Length ${body.length} >>\nstream\n${body}endstream`);
   const wrap = ops => `1 0 0 -1 0 ${n2(H)} cm\n${ops}`;
-  const fonts = FONTS.map(f => add(`<< /Type /Font /Subtype /Type1 /BaseFont /${f[0]} /Encoding /WinAnsiEncoding >>`));
+  const fonts = outlined() ? [] : FONTS.map(f => add(`<< /Type /Font /Subtype /Type1 /BaseFont /${f[0]} /Encoding /WinAnsiEncoding >>`));
   const gsIds = [...gs].map(p => [p, add(`<< /Type /ExtGState /CA ${p / 100} /ca ${p / 100} >>`)]);
   const pats = DENS.map(d => { const P = 1.1 * d[1], r = d[0] * Math.PI / 180; return stream(`/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 ${P} ${P}] /XStep ${P} /YStep ${P} /Resources << >> /Matrix [${n2(Math.cos(r))} ${n2(Math.sin(r))} ${n2(-Math.sin(r))} ${n2(Math.cos(r))} 0 0]`, `${rgb(THEME.light.ink)} rg 0 0 ${n2(P * 0.3)} ${P} re f\n`); });
   const patsD = DENS.map(d => { const P = 1.1 * d[1], r = d[0] * Math.PI / 180; return stream(`/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 ${P} ${P}] /XStep ${P} /YStep ${P} /Resources << >> /Matrix [${n2(Math.cos(r))} ${n2(Math.sin(r))} ${n2(-Math.sin(r))} ${n2(Math.cos(r))} 0 0]`, `${rgb(THEME.dark.ink)} rg 0 0 ${n2(P * 0.3)} ${P} re f\n`); });
