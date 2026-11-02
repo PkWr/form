@@ -15,18 +15,19 @@
     return { cells, start };
   }
   // the sentence, centred, in three lines; words still spinning are drawn lighter
-  // The number of ways sits on a line of its own. From 10,000 up (or when the count is "at least", the + case) it is written as a power of ten: 5.3 × 10 with a raised 5.
-  const GW = (t, sz) => { const F = typeof GLYPHS !== 'undefined' && GLYPHS.serif; if (!F) return t.length * sz * 0.55; return [...t].reduce((a, c) => a + (F.g[c] || F.g['?'])[0], 0) * sz / F.upm; };
-  function numLine(n, more, y, sz) {
-    if (typeof n !== 'number') return glyphText(String(n), 600, y, sz, 'serif', 'middle');
-    if (n < 10000 && !more) return glyphText(n.toLocaleString('en-GB'), 600, y, sz, 'serif', 'middle');
-    const k = Math.floor(Math.log10(n)), m = (Math.floor(n / Math.pow(10, k) * 10) / 10).toFixed(1).replace('.0', ''), pre = (more ? 'over ' : '') + m + ' \u00d7 10', ex = String(k), es = sz * 0.55;
-    const w = GW(pre, sz) + GW(ex, es), x0 = 600 - w / 2;
-    return glyphText(pre, x0, y, sz, 'serif') + glyphText(ex, x0 + GW(pre, sz), y - sz * 0.42, es, 'serif');
+  // The sentence is live text in IBM Plex Mono Light Italic (the tool's own face), every line the same size. The number of ways has a line of its own,
+  // written as a power of ten from 10,000 up (or "over" when it is a minimum): 5.3 × 10 with a raised 5.
+  const SZ = 64, esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  function numText(n, more) {
+    if (typeof n !== 'number') return esc(n);
+    if (n < 10000 && !more) return esc(n.toLocaleString('en-GB'));
+    const k = Math.floor(Math.log10(n)), m = (Math.floor(n / Math.pow(10, k) * 10) / 10).toFixed(1).replace('.0', '');
+    return esc((more ? 'over ' : '') + m + ' \u00d7 10') + `<tspan baseline-shift="super" font-size="${SZ * 0.6}">${k}</tspan>`;
   }
   function drawIntro(w, locked) {
-    const line = (t, y, lk) => t ? `<g opacity="${lk ? 1 : 0.3}">${glyphText(t, 600, y, 58, 'serif', 'middle')}</g>` : '';
-    intro.innerHTML = `<g opacity="${locked[3] ? 1 : 0.3}">${numLine(w.n, w.more, 310, 110)}</g>` + line(`${w.ways} I can ${w.a}`, 390, locked[0]) + line(`${w.per} at a time`, 455, locked[1]) + line(w.b ? `and ${w.b}` : '', 520, locked[2]);
+    const line = (t, y, lk) => t ? `<text x="600" y="${y}" opacity="${lk ? 1 : 0.3}">${t}</text>` : '';
+    intro.innerHTML = `<g text-anchor="middle" fill="#231F20" font-family="'IBM Plex Mono',ui-monospace,monospace" font-style="italic" font-weight="300" font-size="${SZ}">`
+      + line(numText(w.n, w.more), 330, locked[3]) + line(esc(`${w.ways} I can ${w.a}`), 410, locked[0]) + line(esc(`${w.per} at a time`), 490, locked[1]) + line(w.b ? esc(`and ${w.b}`) : '', 570, locked[2]) + '</g>';
   }
   function run() {
     const { cells, start } = symbol(), sel = choose(), code = patternCode(G, cells, sel.rules, sel.per), R = rng(codeSeed(code));
