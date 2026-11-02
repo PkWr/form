@@ -459,9 +459,9 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
   let grid = Array(G * G).fill(null);
   let shape = 'square', chain = null, mode = 'form', cur = 0, timer = null, rules = ['move', 'unmake'], per = 2; // two blocks at a time to start
   const mk = s => ({ s, r: 0, q: 0 });
-  let lastSymbol = '';
-  function startSymbol() { // only symbols that fit the grid are picked (a 5 grid is too small for the 7-row letters)
-    const names = Object.keys(SYMBOLS).filter(n => n !== lastSymbol && SYMBOLS[n].length <= G && SYMBOLS[n][0].length <= G), name = lastSymbol = names[Math.floor(Math.random() * names.length)], rows = SYMBOLS[name];
+  let lastSymbol = ''; // two buttons: Random symbol (the signs and shapes) and Random character (the 5x5 letters and numbers)
+  function startSymbol(kind) { // only symbols that fit the grid are picked (a 5 grid is too small for the 7-row letters)
+    const names = Object.keys(SYMBOLS).filter(n => n !== lastSymbol && (!kind || (/^(letter|number) /.test(n) === (kind === 'char'))) && SYMBOLS[n].length <= G && SYMBOLS[n][0].length <= G), name = lastSymbol = names[Math.floor(Math.random() * names.length)], rows = SYMBOLS[name];
     grid = Array(G * G).fill(null);
     const ox = Math.floor((G - rows[0].length) / 2), oy = Math.floor((G - rows.length) / 2);
     rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'X') grid[(oy + y) * G + ox + x] = mk('square'); }));
@@ -550,7 +550,8 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     G = n; grid = ng; $('msg').textContent = ''; drawGrid(); if (chain) process(true);
   });
   $('process').onclick = () => process();
-  $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
+  $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol('sym') + '.'; drawGrid(); };
+  $('randomChar').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol('char') + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
   // The rule is a sentence in the panel: "35 ways I can [make you up] and [change you]". Tap the first word to choose the rule; tap the second to add another rule, or none. It is part of the pattern code.
