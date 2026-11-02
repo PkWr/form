@@ -506,3 +506,7 @@ body.view-results #secDraw h3::before{content:"Treatment and grid"}
 #bookPreview.sheet #bpZoom{display:flex}
 #bookPreview.sheet .bp-nav{display:flex}
 #bookPreview.sheet #bpPrev,#bookPreview.sheet #bpNext,#bookPreview.sheet #bpPos{display:none}
+
+#rule{margin:0}
+#panel #ruleHint{margin:8px 0 0;color:var(--muted)}
+#viewIcons a[hidden]{display:none}
