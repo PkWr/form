@@ -104,7 +104,7 @@ function makeWays(start, ax, withTr, R) {
 }
 
 // The other rules. Change: one block becomes another of the eleven states (a circle, or an arch or triangle in any turn), in the same cell, so the shape never moves.
-// Grow: one new square is added touching the shape. Each variant is the original with one such step, as with Move. Hidden from nothing: the pattern code names the rule.
+// Grow: the shape is built up from nothing, one block at a time (the opposite of Unmake). The pattern code names the rule.
 function changeWays(start) {
   const first = norm(start.map(b => ({ ...b, r: 0, a: axisOf(b, start) })), []), states = [first];
   first.blocks.forEach((b, i) => CODE_CELLS.slice(1).forEach(c => {
@@ -114,13 +114,12 @@ function changeWays(start) {
   }));
   const out = states.map((st, id) => ({ ...st, id })); return { states: out, capped: false, orig: out[0] };
 }
-function growWays(start) {
-  const first = norm(start.map(b => ({ ...b, r: 0, a: axisOf(b, start) })), []), states = [first], occ = new Set(first.blocks.map(b => b.x + ',' + b.y)), seen = new Set(), cand = [];
-  first.blocks.forEach(b => DIRS.forEach(([dx, dy]) => { const x = b.x + dx, y = b.y + dy, k = x + ',' + y; if (occ.has(k) || seen.has(k)) return; seen.add(k); const ax = x + first.ox, ay = y + first.oy; if (ax >= 0 && ay >= 0 && ax < G && ay < G) cand.push([x, y]); }));
-  cand.sort((p, q) => p[1] - q[1] || p[0] - q[0]).forEach(([x, y]) => { const nb0 = first.blocks.concat([{ x, y, s: 'square', r: 0, q: 0 }]), nb = nb0.map(o => ({ ...o, a: axisOf(o, nb0) })); states.push(norm(nb, [], first.ox, first.oy)); });
+function growWays(start, R) { // Grow is the opposite of Unmake: the shape is built up from nothing, one block at a time, in an order drawn from the code. The last step is the whole shape.
+  const first = norm(start.map(b => ({ ...b, r: 0, a: axisOf(b, start) })), []), order = first.blocks.map((_, i) => i).sort((p, q) => R() - R() || p - q), states = [first];
+  order.forEach((_, k) => { const keep = new Set(order.slice(0, k + 1)), left = first.blocks.filter((_, i) => keep.has(i)); states.push({ blocks: left.map(b => ({ ...b, a: axisOf(b, left) })), tr: [], ox: first.ox, oy: first.oy }); });
   const out = states.map((st, id) => ({ ...st, id })); return { states: out, capped: false, orig: out[0] };
 }
-const oneRule = (rule, start, ax, withTr, R) => rule === 'change' ? changeWays(start) : rule === 'grow' ? growWays(start) : makeWays(start, ax, withTr, R);
+const oneRule = (rule, start, ax, withTr, R) => rule === 'change' ? changeWays(start) : rule === 'grow' ? growWays(start, R) : makeWays(start, ax, withTr, R);
 // One rule or two. With two, the second rule's ways follow the first's (a variant already there is not repeated). Move needs the blocks joined; if they are not, that rule has no ways.
 function ruleWays(rules, start, ax, withTr, R) {
   const parts = rules.filter(r => r !== 'move' || connected(start)).map(r => oneRule(r, start, ax, withTr, R)); if (!parts.length) return null;
@@ -503,7 +502,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
   // The rule is a sentence in the panel: "35 ways I can [make you up] and [change you]". Tap the first word to choose the rule; tap the second to add another rule, or none. It is part of the pattern code.
   // Direction (stripes along a move) means nothing for Change, so it is hidden whenever Change is in use.
-  const RULE_NAMES = ['move', 'change', 'grow'], RULE_HINT = { move: 'Move: a block moves to a new place and leaves its old place marked.', change: 'Change: a block changes into another shape, in the same place.', grow: 'Grow: a new block is added, touching the shape.' };
+  const RULE_NAMES = ['move', 'change', 'grow'], RULE_HINT = { move: 'Move: a block moves to a new place and leaves its old place marked.', change: 'Change: a block changes into another shape, in the same place.', grow: 'Grow: the shape is built up from nothing, one block at a time.' };
   function setRules(r, quiet) {
     rules = r.slice(0, 2); $('rsA').textContent = RULE_VERB[rules[0]]; const b = rules[1];
     $('rsAnd').hidden = !b; $('rsB').textContent = b ? RULE_VERB[b] : 'add another rule'; $('rsB').classList.toggle('none', !b);
