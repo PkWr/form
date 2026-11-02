@@ -129,7 +129,7 @@ def main():
     new_i = re.sub(r'(style\.css|glyphs\.js|app\.js|book\.js|gif\.js|preview\.js|start\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', new_i)
     page_d = (HERE / "demo.html").read_text(encoding="utf-8")
     new_d = re.sub(r'(app\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', page_d)
-    new_d = re.sub(r'(demo\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', new_d)
+    new_d = re.sub(r'(demo\.js|glyphs\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', new_d)
     changed = False
     for name, old, new in (("demo.html", page_d, new_d), ("about.html", page_a, new_a),
                            ("changelog.html", (HERE / "changelog.html").read_text(encoding="utf-8") if (HERE / "changelog.html").exists() else "", new_c),
