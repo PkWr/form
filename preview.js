@@ -93,9 +93,25 @@ function bpShow() {
   bpEl('bpPrev').disabled = BP.i === 0; bpEl('bpNext').disabled = BP.i === items.length - 1;
   [...bpEl('bpMode').querySelectorAll('a')].forEach(a => a.setAttribute('aria-checked', a.dataset.v === BP.mode));
 }
-function openSheetPreview(svg) { // the contact sheet, large, in the same viewer: one page, no spreads or arrows
+function openSheetPreview(svg) { // the contact sheet, large, in the same viewer: one page that can be zoomed (wheel, pinch, + and -, double click) and moved by dragging
   BP = { pages: [], mode: 'read', i: 0, sheet: true }; const v = bpEl('bookPreview'); v.classList.add('sheet'); v.hidden = false; document.body.style.overflow = 'hidden';
-  bpEl('bpStage').innerHTML = svg; bpEl('bpClose').focus();
+  const stage = bpEl('bpStage'); stage.innerHTML = svg; const el = stage.querySelector('svg'); el.removeAttribute('width'); el.removeAttribute('height');
+  const sw = stage.clientWidth, sh = stage.clientHeight, vb = el.viewBox.baseVal, ratio = vb && vb.width ? vb.width / vb.height : 0.707;
+  const fitH = Math.max(120, Math.min(sh - 24, (sw - 24) / ratio)), fitW = fitH * ratio; el.style.width = fitW + 'px'; el.style.height = fitH + 'px';
+  const Z = { s: 1, x: (sw - fitW) / 2, y: (sh - fitH) / 2 }, MAX = 12, pts = new Map(); let lastD = 0;
+  const apply = () => { el.style.transform = `translate(${Z.x}px,${Z.y}px) scale(${Z.s})`; bpEl('bpPct').textContent = Math.round(Z.s * 100) + '%'; };
+  const fit = () => { Z.s = 1; Z.x = (sw - fitW) / 2; Z.y = (sh - fitH) / 2; apply(); };
+  const zoomAt = (f, cx, cy) => { const ns = Math.max(1, Math.min(MAX, Z.s * f)), k = ns / Z.s; Z.x = cx - (cx - Z.x) * k; Z.y = cy - (cy - Z.y) * k; Z.s = ns; if (ns === 1) { Z.x = (sw - fitW) / 2; Z.y = (sh - fitH) / 2; } apply(); };
+  const rect = () => stage.getBoundingClientRect(), mid = () => ({ x: sw / 2, y: sh / 2 });
+  stage.onwheel = e => { e.preventDefault(); const r = rect(); zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); };
+  stage.onpointerdown = e => { pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); stage.setPointerCapture(e.pointerId); lastD = 0; stage.style.cursor = 'grabbing'; };
+  stage.onpointermove = e => { const p = pts.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+    if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y), r = rect(); if (lastD) zoomAt(d / lastD, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top); lastD = d; }
+    else if (Z.s > 1) { Z.x += dx; Z.y += dy; apply(); } };
+  const up = e => { pts.delete(e.pointerId); lastD = 0; stage.style.cursor = 'grab'; }; stage.onpointerup = up; stage.onpointercancel = up;
+  stage.ondblclick = e => { const r = rect(); if (Z.s > 1.01) fit(); else zoomAt(3, e.clientX - r.left, e.clientY - r.top); };
+  bpEl('bpIn').onclick = () => zoomAt(1.5, mid().x, mid().y); bpEl('bpOut').onclick = () => zoomAt(1 / 1.5, mid().x, mid().y); bpEl('bpFit').onclick = fit;
+  apply(); bpEl('bpClose').focus();
 }
 function openBookPreview(pages) {
   bpEl('bookPreview').classList.remove('sheet'); BP = { pages, mode: 'read', i: 0 }; bpEl('bookPreview').hidden = false; document.body.style.overflow = 'hidden'; bpShow(); bpEl('bpNext').focus();

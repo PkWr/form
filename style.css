@@ -482,3 +482,27 @@ body{padding-right:388px}
 /* The count of ways sits under the make button on Draw, and is hidden once the results show (the steps carry their own count) */
 #processRow .sub{margin:8px 0 0;color:#555;font-size:12px}
 body.view-results #processRow .sub{display:none}
+
+/* Panel in Spot's organisation: a header with a status line, then cards with small-caps labels */
+.cp-head h1{margin:0;font-size:15px;font-weight:600}
+.cp-now{margin:2px 0 0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panel .cp-sec{margin:12px 0 0;padding:12px;border:1px solid #24272b;border-radius:12px;background:var(--surface);font-size:12px}
+#panel .cp-sec h3{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#secDraw h3::before{content:"Shapes and grid"}
+body.view-results #secDraw h3::before{content:"Treatment and grid"}
+#panel #toolsHostPanel:empty{display:none}
+#panel #sizeHostPanel{margin:8px 0 0}
+#panel #codeBox{margin:12px 0 0}
+#panel #codeBox .code-row:first-of-type .lab{display:none}
+#panel #dlHelp{border-top:1px solid #24272b;margin:12px 0 0;padding:12px;color:#9a9a9a}
+#panel #dlHelp h3{margin:0 0 6px}
+#panel #secAnim #gifHostPanel,#panel #secAnim #spdHostPanel{margin:0 0 8px}
+#panel #secAnim #spdHostPanel{margin:0}
+#secDraw:has(#toolsHostPanel:empty) h3::before{content:"Grid"}
+/* Contact sheet preview: zoom and pan */
+#bookPreview.sheet .bp-stage{overflow:hidden;touch-action:none;cursor:grab;position:relative}
+#bookPreview.sheet .bp-stage svg{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;box-shadow:0 6px 30px rgba(0,0,0,.5)}
+#bpZoom{display:none;align-items:center;justify-content:center;gap:10px}
+#bookPreview.sheet #bpZoom{display:flex}
+#bookPreview.sheet .bp-nav{display:flex}
+#bookPreview.sheet #bpPrev,#bookPreview.sheet #bpNext,#bookPreview.sheet #bpPos{display:none}

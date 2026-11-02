@@ -7,7 +7,7 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=v0.124">
+<link rel="stylesheet" href="style.css?v=v0.125">
 </head>
 <body>
 <script>if (!location.search) document.documentElement.classList.add("show-start");</script>
@@ -35,11 +35,11 @@
   </section>
   <section id="panel">
     <button class="cp-grab" id="grab" aria-label="Collapse controls" aria-expanded="true"><span></span></button>
-    <div class="cp-head"><h1>Form</h1></div>
+    <div class="cp-head"><h1>Controls</h1><p class="cp-now" id="cpNow"></p></div>
     <div class="cp-body">
-      <div id="toolsHostPanel"></div>
-      <div id="sizeHostPanel"><div class="links" id="size" role="radiogroup" aria-label="Grid size"><span>Grid size</span><a href="#" role="radio" data-n="5" aria-checked="true">5</a><a href="#" role="radio" data-n="7" aria-checked="false">7</a><a href="#" role="radio" data-n="9" aria-checked="false">9</a></div></div>
-      <div id="codeBox">
+      <div class="cp-sec" id="secDraw"><h3></h3><div id="toolsHostPanel"></div>
+      <div id="sizeHostPanel"><div class="links" id="size" role="radiogroup" aria-label="Grid size"><span>Grid size</span><a href="#" role="radio" data-n="5" aria-checked="true">5</a><a href="#" role="radio" data-n="7" aria-checked="false">7</a><a href="#" role="radio" data-n="9" aria-checked="false">9</a></div></div></div>
+      <div class="cp-sec" id="codeBox"><h3>Pattern code</h3>
         <div class="code-row"><span class="lab">Pattern code</span><output id="codeOut" aria-live="polite"></output><button type="button" id="codeCopy">Copy</button></div>
         <div class="code-row"><label class="lab" for="codeIn">Enter a code</label><input id="codeIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XX"><button type="button" id="codeLoad">Load</button></div>
         <p id="codeMsg" class="hint" role="status"></p>
@@ -57,10 +57,10 @@
           <p class="hint">Click a placed block again to turn it. After four turns it is removed.</p></div>
           </div>
       </div>
-            <div id="gifHostPanel"><div class="links" id="gifFormat" role="radiogroup" aria-label="GIF shape"><span>Shape</span><a href="#" role="radio" data-g="sq" aria-checked="true">Square 1:1</a><a href="#" role="radio" data-g="st" aria-checked="false">Story 9:16</a></div></div>
-      <div id="spdHostPanel"><label>Animation speed <output id="spdOut">400 ms</output><input id="spd" type="range" min="80" max="1500" step="20" value="400"></label></div>
-      <div id="dlHelp">
-        <h2>About the downloads</h2>
+            <div class="cp-sec" id="secAnim"><h3>Animation</h3><div id="gifHostPanel"><div class="links" id="gifFormat" role="radiogroup" aria-label="GIF shape"><span>Shape</span><a href="#" role="radio" data-g="sq" aria-checked="true">Square 1:1</a><a href="#" role="radio" data-g="st" aria-checked="false">Story 9:16</a></div></div>
+      <div id="spdHostPanel"><label>Animation speed <output id="spdOut">400 ms</output><input id="spd" type="range" min="80" max="1500" step="20" value="400"></label></div></div>
+      <div class="cp-sec" id="dlHelp">
+        <h3>About the downloads</h3>
         <p data-for="1">An SVG is a drawing that stays sharp at any size. This one is animated and plays in a web browser. A GIF is a looping picture for social media, in the shape chosen above. A video is recorded as the animation plays, so it takes as long as it runs: MP4 where your browser can make it, otherwise WebM.</p>
         <p data-for="2">The contact sheet is an SVG set out at its real size on a portrait page, A3 to A0. Open it in a web browser to look at it, or in design software such as Illustrator, Affinity, Inkscape or Figma to change it or to print it.</p>
         <p data-for="3">Imposed puts two A5 pages on each SRA4 landscape sheet (320 by 225 mm) in booklet order, with 3 mm of bleed and crop marks: print double sided at full size, flip on the short edge, fold, staple and trim to the marks. Pages gives the plain A5 pages for reading on screen.</p>
@@ -71,7 +71,7 @@
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make and unmake you</button></div>
       <p class="sub"><span id="count">0</span> ways I can make you up · <span id="countU">0</span> to unmake you</p><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.124<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.125<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
@@ -99,12 +99,12 @@
 <div id="bookPreview" hidden role="dialog" aria-modal="true" aria-label="Book preview">
   <div class="bp-bar"><button id="bpClose">Close</button><div class="links ico" id="bpMode" role="radiogroup" aria-label="View"><a href="#" role="radio" data-v="read" aria-checked="true"><span>Reading</span></a><a href="#" role="radio" data-v="sheets" aria-checked="false"><span>Printer's sheets</span></a></div></div>
   <div class="bp-stage" id="bpStage"></div>
-  <div class="bp-nav"><button id="bpPrev">Previous</button><span id="bpPos"></span><button id="bpNext">Next</button></div>
+  <div class="bp-nav"><div id="bpZoom"><button id="bpOut" aria-label="Zoom out">−</button><button id="bpFit">Fit</button><button id="bpIn" aria-label="Zoom in">+</button><span id="bpPct"></span></div><button id="bpPrev">Previous</button><span id="bpPos"></span><button id="bpNext">Next</button></div>
 </div>
-<script src="app.js?v=v0.124"></script>
-<script src="book.js?v=v0.124"></script>
-<script src="gif.js?v=v0.124"></script>
-<script src="preview.js?v=v0.124"></script>
-<script src="start.js?v=v0.124"></script>
+<script src="app.js?v=v0.125"></script>
+<script src="book.js?v=v0.125"></script>
+<script src="gif.js?v=v0.125"></script>
+<script src="preview.js?v=v0.125"></script>
+<script src="start.js?v=v0.125"></script>
 </body>
 </html>
