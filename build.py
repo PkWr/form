@@ -3,13 +3,15 @@
 
 The notes in the vault are the master. about.html (between its markers),
 changelog.html and the version label in index.html are generated: edit the
-notes, then run this script. Usage: python3 build.py [--check]
+notes, then run this script. The shared core of the About note (Summary, Description, Publication model, Details)
+is also copied into the pkwr.co project note in Project Pages/form. Usage: python3 build.py [--check]
 --check shows what would change and writes nothing (exit 1 if anything differs).
 """
 import difflib, html, os, pathlib, re, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 VAULT = pathlib.Path(os.environ.get("FORM_VAULT", pathlib.Path.home() / "Vaults/2026-PkWr/40 Projects/Form"))
+PAGES = pathlib.Path(os.environ.get("FORM_PAGES", VAULT.parent / "Project Pages"))
 ROMAN = r"(?:i|ii|iii|iv|v|vi|vii|viii|ix|x)"
 
 
@@ -26,7 +28,7 @@ def inline(t):
 
 
 def blocks(text):
-    """Yield (kind, value): h1, h2, p, li, rule."""
+    """Yield (kind, value): h1, h2, p, li, tr (table row), rule."""
     para = []
     def flush():
         if para:
@@ -43,6 +45,8 @@ def blocks(text):
             yield from flush(); yield ("h1", s[2:]); continue
         if s.startswith("- "):
             yield from flush(); yield ("li", s[2:]); continue
+        if s.startswith("|"):
+            yield from flush(); yield ("tr", [c.strip() for c in s.strip("|").split("|")]); continue
         para.append(s)
     yield from flush()
 
@@ -51,13 +55,23 @@ def render(text, back=True):
     out, in_ul, foot = [], False, False
     if back:
         out.append('  <p><a href="./">← Form</a></p>')
+    in_tb = False
     def close_ul():
-        nonlocal in_ul
+        nonlocal in_ul, in_tb
         if in_ul:
             out.append("  </ul>"); in_ul = False
+        if in_tb:
+            out.append("  </table>"); in_tb = False
     for kind, val in blocks(text):
-        if kind != "li":
+        if kind not in ("li", "tr"):
             close_ul()
+        if kind == "tr":
+            if all(re.fullmatch(r":?-+:?|", c) for c in val) or not any(val):
+                continue                      # separator row and empty header row
+            if not in_tb:
+                out.append('  <table class="details">'); in_tb = True
+            out.append("    <tr><th>" + inline(val[0]) + "</th><td>" + inline(" ".join(val[1:])) + "</td></tr>")
+            continue
         if kind == "h1":
             out.append(f"  <h1>{inline(val)}</h1>")
         elif kind == "h2":
@@ -104,6 +118,31 @@ def changelog_body(text):
     return re.sub(r"^## (v\d+(?:\.\d+)*) \((\d{4}-\d{2}-\d{2})\)\s*$", r"## \1, \2", text, flags=re.M)
 
 
+CORE = ("Summary", "Description", "Publication model", "Details")
+
+
+def section(t, name):
+    return re.search(r"^## " + re.escape(name) + r"\n(.*?)(?=^## |\Z)", t, re.S | re.M)
+
+
+def sync_core(check):
+    """Copy the shared core sections from the About note into the pkwr.co project note (same wording on both)."""
+    dst = PAGES / "form" / "Form.md"
+    src_t = (VAULT / "About Form.md").read_text(encoding="utf-8"); t = old = dst.read_text(encoding="utf-8")
+    for n in CORE:
+        a, b = section(src_t, n), section(t, n)
+        if not a or not b:
+            sys.exit(f"core section '{n}' missing in {'About Form' if not a else 'Form project page'}")
+        t = t[:b.start(1)] + a.group(1) + t[b.end(1):]
+    if t == old:
+        print("project page core: up to date"); return False
+    if check:
+        sys.stdout.writelines(difflib.unified_diff(old.splitlines(True), t.splitlines(True), "Form.md (now)", "Form.md (core)"))
+    else:
+        dst.write_text(t, encoding="utf-8"); print("wrote", dst)
+    return True
+
+
 def between(src, a, b, new, name):
     pat = re.compile(re.escape(a) + r".*?" + re.escape(b), re.S)
     if not pat.search(src):
@@ -113,6 +152,7 @@ def between(src, a, b, new, name):
 
 def main():
     check = "--check" in sys.argv
+    core_changed = sync_core(check)
     about = read_note("About Form.md"); chlog = read_note("Changelog.md")
     version = changelog_entries(chlog)[0][0]
     A0 = "<!-- about:start (generated from the vault note 'About Form' by build.py; do not edit) -->"
@@ -130,7 +170,7 @@ def main():
     page_d = (HERE / "demo.html").read_text(encoding="utf-8")
     new_d = re.sub(r'(app\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', page_d)
     new_d = re.sub(r'(demo\.js|glyphs\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', new_d)
-    changed = False
+    changed = core_changed
     for name, old, new in (("demo.html", page_d, new_d), ("about.html", page_a, new_a),
                            ("changelog.html", (HERE / "changelog.html").read_text(encoding="utf-8") if (HERE / "changelog.html").exists() else "", new_c),
                            ("index.html", page_i, new_i)):
