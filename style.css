@@ -99,12 +99,10 @@ body.view-results #drawBox{display:none}
 html.show-start{overflow:hidden}
 html.show-start #startScreen{display:flex;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;overflow:hidden;background:#000;transition:opacity .5s ease;--strip-w:44px;--panel-w:max(320px,calc(100vw / 3 - var(--strip-w)))}
 html.start-leaving #startScreen{opacity:0;pointer-events:none}
-#startOpen{display:flex;flex-direction:column;align-items:center;gap:clamp(18px,4vmin,34px);padding:0;border:0;border-radius:0;background:none;color:#fff;font:italic 400 clamp(16px,2.6vmin,24px)/1 var(--font);letter-spacing:.04em;cursor:pointer}
-#startOpen svg{height:clamp(170px,40vmin,360px);width:auto;fill:var(--yellow);transform:rotate(-14deg);transition:transform .7s cubic-bezier(.2,.7,.2,1)}
-#startOpen span{transition:color .35s ease}
-#startOpen:hover svg,#startOpen:focus-visible svg{transform:rotate(0deg) scale(1.06)}
-#startOpen:hover span,#startOpen:focus-visible span{color:var(--yellow)}
-#startOpen:focus-visible{outline:2px solid var(--yellow);outline-offset:14px}
+#startLoop{position:absolute;left:6vmin;right:6vmin;top:6vmin;bottom:24vmin;width:calc(100% - 12vmin);height:calc(100% - 30vmin);pointer-events:none}
+#startOpen{position:absolute;left:50%;bottom:max(28px,5vmin);transform:translateX(-50%);z-index:2;display:flex;align-items:center;justify-content:center;width:clamp(76px,13vmin,110px);height:clamp(76px,13vmin,110px);padding:0;border:1px solid #fff;border-radius:50%;background:#000;color:#fff;font:italic 300 clamp(14px,2.2vmin,19px)/1 var(--font);letter-spacing:.04em;cursor:pointer;transition:background .3s ease,color .3s ease,border-color .3s ease}
+#startOpen:hover,#startOpen:focus-visible{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+#startOpen:focus-visible{outline:2px solid var(--yellow);outline-offset:6px}
 .start-version{position:fixed;left:16px;bottom:max(12px,env(safe-area-inset-bottom));z-index:3;font-size:11px;color:rgba(255,255,255,.55);text-decoration:none}
 .start-version:hover,.start-version:focus-visible{color:var(--yellow);outline:none}
 .start-drawer{position:fixed;top:0;right:0;bottom:0;z-index:3;display:flex;transform:translateX(var(--panel-w));transition:transform .45s cubic-bezier(.2,.7,.2,1)}
@@ -117,7 +115,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .start-drawer.is-open .strip-icon{transform:rotate(45deg)}
 @media(prefers-reduced-motion:no-preference){.start-drawer:not(.is-open) .strip-icon{animation:form-nudge 2.4s ease-in-out 1.2s 2}}
 @keyframes form-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-4px)}}
-@media(prefers-reduced-motion:reduce){html.show-start #startScreen,#startOpen svg,#startOpen span,.sa-open,.start-drawer,.strip-icon{transition:none}}
+@media(prefers-reduced-motion:reduce){html.show-start #startScreen,#startOpen span,.sa-open,.start-drawer,.strip-icon{transition:none}}
 .start-panel{width:var(--panel-w);max-width:calc(100vw - var(--strip-w));background:#fff;color:var(--ink);overflow-y:auto;display:flex;flex-direction:column}
 .sa-content{padding:28px 28px 8px}
 .sa-content h1{margin:0 0 14px;font-size:clamp(30px,2.6vw,42px);line-height:1;letter-spacing:-.03em;font-weight:300}
@@ -277,7 +275,6 @@ body.view-results #processRow .row{display:none}
 #out .row.nav .back{background:transparent;color:var(--ink);border-color:var(--ink)}
 .row.nav{align-items:center}
 button#process,#processRow .row button{font-size:14px;line-height:1.2;padding:10px 16px;min-height:44px}
-#startOpen svg path{stroke:var(--yellow);stroke-width:1}
 /* Grid size sits under the grid on the screen, styled like the other text choices: selected is an ink pill with yellow text. */
 #screen #size{color:#555;margin:8px 0 0;font-size:13px}
 #screen #size a{color:#555;padding:2px 10px;border-radius:999px;text-decoration:none}
@@ -303,9 +300,6 @@ body:not([data-step="1"]):not([data-step="2"]) #viewHostOut{display:none}
 /* Keep each step on one screen. The animation gives up height on desktop for its controls; on short phones the card's explanatory text steps aside (the step line already names the card). */
 @media(min-width:601px) and (pointer:fine){#anim{max-height:max(140px,calc(100vh - 470px))}}
 @media(max-height:700px){.card .hint2,.card h3{display:none}#personalMsg{height:2.4em}}
-/* The word "open" lives inside the F's top bar (start.js), so the line under the mark is not needed. */
-#startOpen span{display:none}
-#startOpen .mark-word{fill:#000;font:italic 400 30px/1 var(--font);letter-spacing:.02em}
 /* On Draw the controls share a row (and wrap only when the screen is too narrow): shapes, grid size, then Clear and Random symbol. */
 .draw-ui{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:8px 0}
 .draw-ui .draw-shapes,.draw-ui .shape-row{display:contents}
@@ -372,13 +366,6 @@ body[data-step="3"] #dlWrap #bookInclude,body[data-step="3"] #dlWrap #bookFormat
 #out #dlBar .dlbtn,#out .row.nav #dlBar .dlbtn{background:none;color:var(--ink);border:0;padding:2px 4px;min-width:0;min-height:0;font-size:0;line-height:0}
 #out #dlBar .dlbtn:hover svg{opacity:.6}
 #dlBar .dlbtn svg{width:26px;height:26px}
-/* The start mark is white and keeps moving; rolling over it (or focusing it) only turns it yellow. No tilt, no growing. */
-#startOpen svg{fill:currentColor;transform:none;transition:none}
-#startOpen svg path{stroke:currentColor}
-#startOpen{transition:color .35s ease}
-#startOpen:hover,#startOpen:focus-visible{color:var(--yellow)}
-#startOpen:hover svg,#startOpen:focus-visible svg{transform:none}
-#startOpen .mark-word{fill:#000}
 /* The download choice and its icon share the row with Back and Next, at its right. The words Format and Size step aside to leave room. */
 .row.nav #dlWrap #animFormat,.row.nav #dlWrap #paper,.row.nav #dlWrap #bookFormat{order:0;flex:0 0 auto;margin:0 0 0 auto;gap:2px}
 .row.nav #dlWrap #animFormat>span,.row.nav #dlWrap #paper>span,.row.nav #dlWrap #bookFormat>span{display:none}
@@ -414,7 +401,6 @@ body{padding-bottom:0!important;padding-right:368px}
 }
 #shadeLab[hidden],#isoHostPanel[hidden]{display:none!important}
 /* Pieces swing past the edge of the mark while they turn, so the drawing is not clipped to its box. */
-#startOpen svg{overflow:visible}
 /* Instructions for the downloads, in the control panel, for the step you are on. */
 #dlHelp{display:none;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--line);font-size:12px;line-height:1.5;color:#9a9a9a}
 #dlHelp h2{margin:0 0 6px;font-size:12px;font-weight:400;color:#cfcfcf}

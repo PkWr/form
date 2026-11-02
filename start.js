@@ -55,58 +55,36 @@
     if ((e.key === "Enter" || e.key === " ") && root.classList.contains("show-start") && e.target === document.body) { e.preventDefault(); open(); }
   });
 })();
-// The start mark: the F's three blocks (the stem, the top bar and the arm) iterating repeatedly, drifting from one random arrangement to the next, turned and never overlapping. It does not become the F. Only these three shapes are used.
+// The start loop: the demo's loop (a random symbol made up and unmade by a random rule, one step at a time, then the next), white on black, with no text. It borrows the engine
+// in app.js, so the grid and the ink colour are set for the loop and put back when the screen is left.
 (function () {
-  if (!document.documentElement.classList.contains("show-start")) return;
-  var btn = document.getElementById("startOpen"), svg = btn && btn.querySelector("svg");
-  if (!svg) return;
-  var NS = "http://www.w3.org/2000/svg";
-  // w, h and home position (top left) in the F's 300 x 500 box.
-  var F = [{ w: 100, h: 500, x: 0, y: 0 }, { w: 200, h: 100, x: 100, y: 0 }, { w: 100, h: 100, x: 100, y: 200 }];
-  var AREA = { x0: -150, x1: 450, y0: 0, y1: 500 }, TURNS = [-180, -90, 0, 90, 180];
-  svg.setAttribute("viewBox", "-152 -2 604 504");
-  while (svg.firstChild) svg.removeChild(svg.firstChild);
-  // The word "open" sits in the middle bar (the arm) and turns with it, so it is read at whatever angle the bar is at.
-  var nodes = F.map(function (p, i) {
-    var g = document.createElementNS(NS, "g"), n = document.createElementNS(NS, "path");
-    n.setAttribute("d", "M0 0H" + p.w + "V" + p.h + "H0Z"); g.appendChild(n);
-    if (i === 2) {
-      var t = document.createElementNS(NS, "text");
-      t.setAttribute("x", p.w / 2); t.setAttribute("y", p.h / 2); t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central");
-      t.setAttribute("class", "mark-word"); t.textContent = "open"; g.appendChild(t);
-    }
-    svg.appendChild(g); return g;
-  });
-  // Each piece has a current pose; every move runs from wherever it is now to a target pose, so nothing ever jumps. Leaving picks a fresh scatter as the target.
-  var cur = [], HOME = F.map(function (p) { return { x: p.x, y: p.y, rot: 0 }; });
-  function scatter() {
-    var placed = [], tries = 0;
-    return F.map(function (p) {
-      for (;;) {
-        var rot = TURNS[Math.floor(Math.random() * TURNS.length)], q = Math.abs(rot) === 90, w = q ? p.h : p.w, h = q ? p.w : p.h;
-        var cx = AREA.x0 + w / 2 + Math.random() * (AREA.x1 - AREA.x0 - w), cy = AREA.y0 + h / 2 + Math.random() * (AREA.y1 - AREA.y0 - h);
-        var box = { l: cx - w / 2 - 24, r: cx + w / 2 + 24, t: cy - h / 2 - 24, b: cy + h / 2 + 24 };
-        var clash = placed.some(function (o) { return box.l < o.r && box.r > o.l && box.t < o.b && box.b > o.t; });
-        if (!clash || ++tries > 400) { placed.push(box); return { x: cx - p.w / 2, y: cy - p.h / 2, rot: rot }; }
-      }
-    });
+  var root = document.documentElement;
+  if (!root.classList.contains("show-start")) return;
+  var svg = document.getElementById("startLoop"); if (!svg || typeof ruleWays !== "function") return;
+  var keepG = G, keepINK = INK, dead = false, last = "", timer = 0;
+  var pick = function (a) { return a[Math.floor(Math.random() * a.length)]; }, MAKES = ["move", "change", "grow"];
+  function round() {
+    if (dead) return;
+    G = 9; INK = "#ffffff"; // the whole symbol list fits a 9 grid
+    var names = Object.keys(SYMBOLS).filter(function (n) { return n !== last; }), name = last = pick(names), rows = SYMBOLS[name];
+    var ox = Math.floor((G - rows[0].length) / 2), oy = Math.floor((G - rows.length) / 2), cells = Array(G * G).fill(null), start = [];
+    rows.forEach(function (row, y) { [].forEach.call(row, function (c, x) { if (c === "X") { cells[(oy + y) * G + ox + x] = { s: "square", r: 0, q: 0 }; start.push({ x: ox + x, y: oy + y, s: "square", r: 0, q: 0 }); } }); });
+    var A = pick(MAKES), others = MAKES.filter(function (x) { return x !== A; }), B = pick(["unmake", others[0], others[1], null]), rules = B ? [A, B] : [A], per = pick([1, 2, 3, 0]);
+    var code = patternCode(G, cells, rules, per), made = ruleWays(rules, start, false, false, rng(codeSeed(code)), per);
+    if (!made || made.states.length < 2) return round();
+    var states = made.states.map(function (s, id) { return Object.assign({}, s, { id: id, phase: id ? s.phase : "start" }); }), chain = { states: states, orig: states[0] }, bb = bbox(chain, "form");
+    svg.setAttribute("viewBox", bb.x + " " + bb.y + " " + bb.w + " " + bb.h);
+    svg.innerHTML = '<g id="startLoopG" fill="#fff"></g>';
+    var g = svg.firstChild, n = states.length, step = Math.max(60, Math.min(220, 24000 / n)), k = 0;
+    (function tick() {
+      if (dead) return;
+      g.innerHTML = frame(chain, k, "form"); k++;
+      timer = setTimeout(k < n ? tick : function () { timer = setTimeout(round, 1400); }, k < n ? step : 0);
+    })();
   }
-  function draw() {
-    F.forEach(function (p, i) { var c = cur[i]; nodes[i].setAttribute("transform", "translate(" + c.x.toFixed(1) + " " + c.y.toFixed(1) + ") rotate(" + c.rot.toFixed(1) + " " + p.w / 2 + " " + p.h / 2 + ")"); });
-  }
-  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0;
-  function ease(u) { return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; }
-  function go(target) {
-    cancelAnimationFrame(raf);
-    if (reduce) { cur = target.map(function (t) { return { x: t.x, y: t.y, rot: t.rot }; }); draw(); return; }
-    var start = cur.map(function (c) { return { x: c.x, y: c.y, rot: c.rot }; }), t0 = performance.now();
-    (function step(now) {
-      var u = Math.min(1, (now - t0) / 1300), e = ease(u);
-      cur = start.map(function (s, i) { var t = target[i]; return { x: s.x + (t.x - s.x) * e, y: s.y + (t.y - s.y) * e, rot: s.rot + (t.rot - s.rot) * e }; });
-      draw(); if (u < 1) raf = requestAnimationFrame(step);
-    })(t0);
-  }
-  cur = scatter(); draw();
-  // The mark keeps iterating: every moment the three pieces drift to a new random arrangement. It never settles into the F. Rolling over it only turns it yellow (see style.css).
-  if (!reduce) setInterval(function () { go(scatter()); }, 1500);
+  // Leaving the start screen stops the loop and gives the tool its grid and ink back.
+  new MutationObserver(function () {
+    if (!root.classList.contains("show-start")) { dead = true; clearTimeout(timer); G = keepG; INK = keepINK; svg.innerHTML = ""; this.disconnect(); }
+  }).observe(root, { attributes: true, attributeFilter: ["class"] });
+  round();
 })();
