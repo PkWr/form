@@ -120,8 +120,14 @@ function growWays(start) {
   cand.sort((p, q) => p[1] - q[1] || p[0] - q[0]).forEach(([x, y]) => { const nb0 = first.blocks.concat([{ x, y, s: 'square', r: 0, q: 0 }]), nb = nb0.map(o => ({ ...o, a: axisOf(o, nb0) })); states.push(norm(nb, [], first.ox, first.oy)); });
   const out = states.map((st, id) => ({ ...st, id })); return { states: out, capped: false, orig: out[0] };
 }
-const ruleWays = (rule, start, ax, withTr, R) => rule === 'change' ? changeWays(start) : rule === 'grow' ? growWays(start) : makeWays(start, ax, withTr, R);
-const ruleReady = (rule, start) => rule !== 'move' || connected(start);
+const oneRule = (rule, start, ax, withTr, R) => rule === 'change' ? changeWays(start) : rule === 'grow' ? growWays(start) : makeWays(start, ax, withTr, R);
+// One rule or two. With two, the second rule's ways follow the first's (a variant already there is not repeated). Move needs the blocks joined; if they are not, that rule has no ways.
+function ruleWays(rules, start, ax, withTr, R) {
+  const parts = rules.filter(r => r !== 'move' || connected(start)).map(r => oneRule(r, start, ax, withTr, R)); if (!parts.length) return null;
+  const seen = new Set(parts[0].states.map(s => keyOf(s, false, false))), states = [...parts[0].states];
+  parts.slice(1).forEach(p => p.states.slice(1).forEach(s => { const k = keyOf(s, false, false); if (!seen.has(k)) { seen.add(k); states.push(s); } }));
+  const out = states.map((s, id) => ({ ...s, id })); return { states: out, capped: parts.some(p => p.capped), orig: out[0] };
+}
 
 // Unmake: the reverse rule. One block is taken away per step, in a random order, and never comes back. The place it left stays marked (a trace),
 // so the cumulative views still work. Blocks keep their positions (no re-centring), and the last state is empty.
@@ -199,7 +205,7 @@ const waysLabel = (n, verb) => `${n} way${n === 1 ? '' : 's'} I can ${verb}`;
 // The title carries both sets: "36 ways I can make you up and 9 ways to unmake you". A set with nothing in it is left out.
 const RULE_VERB = { move: 'make you up', change: 'change you', grow: 'grow you' };
 const waysTitle = c => { const m = c.states.filter(s => s.phase === 'make').length, u = c.states.filter(s => s.phase === 'unmake').length;
-  return [m && `${m} way${m === 1 ? '' : 's'} I can ${RULE_VERB[c.rule || 'move']}`, u && `${u} way${u === 1 ? '' : 's'} to unmake you`].filter(Boolean).join(' and '); };
+  return [m && `${m} way${m === 1 ? '' : 's'} I can ${(c.rules || ['move']).map(r => RULE_VERB[r]).join(' and ')}`, u && `${u} way${u === 1 ? '' : 's'} to unmake you`].filter(Boolean).join(' and '); };
 // The states before this one that count as its past: the same set only (making looks back at earlier makes, unmaking at earlier unmakes), then the original.
 const pastOf = (c, k) => { const s = c.states[k], o = c.orig || c.states[0]; if (s === o) return [];
   return [...c.states.slice(0, k).filter(x => x !== o && x.phase === s.phase).reverse(), o]; };
@@ -306,14 +312,14 @@ const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', CODE_GRIDS = [5, 7, 9],
 const CODE_CELLS = [null, { s: 'square', q: 0 }, { s: 'circle', q: 0 }, ...[0, 1, 2, 3].map(q => ({ s: 'arch', q })), ...[0, 1, 2, 3].map(q => ({ s: 'tri', q }))]; // state 0 is empty
 const cellState = c => !c ? 0 : c.s === 'square' ? 1 : c.s === 'circle' ? 2 : (c.s === 'arch' ? 3 : 7) + ((c.q || 0) & 3);
 function toDigits(n, radix, alphabet) { let out = ''; const r = BigInt(radix); do { out = alphabet[Number(n % r)] + out; n /= r; } while (n > 0n); return out; }
-const RULES = ['move', 'change', 'grow'];
-function patternCode(G, cells, rule = 'move') {
+const RULESETS = [['move'], ['change'], ['grow'], ['move', 'change'], ['move', 'grow'], ['change', 'move'], ['change', 'grow'], ['grow', 'move'], ['grow', 'change']]; // the rule or rules, in order; the number is the digit in the code
+function patternCode(G, cells, rules = ['move']) {
   const gi = CODE_GRIDS.indexOf(G); if (gi < 0) throw new Error('Grid size ' + G + ' has no code.');
   const occ = []; cells.forEach((c, i) => { if (c) occ.push([i % G, Math.floor(i / G)]); });
   const x0 = occ.length ? Math.min(...occ.map(p => p[0])) : 0, y0 = occ.length ? Math.min(...occ.map(p => p[1])) : 0;
   const w = occ.length ? Math.max(...occ.map(p => p[0])) - x0 + 1 : 1, h = occ.length ? Math.max(...occ.map(p => p[1])) - y0 + 1 : 1;
   let num = 0n; for (let i = w * h - 1; i >= 0; i--) num = num * 11n + BigInt(cellState(cells[(y0 + Math.floor(i / w)) * G + x0 + i % w]));
-  num += BigInt(Math.max(0, RULES.indexOf(rule))) * 11n ** BigInt(w * h); // the rule is one more digit above the cells; Move is 0, so Move codes are the same as before
+  num += BigInt(Math.max(0, RULESETS.findIndex(r => r.join() === rules.join()))) * 11n ** BigInt(w * h); // the rule or rules are one more digit above the cells; Move alone is 0, so those codes are the same as before
   const value = BigInt(gi | (w - 1) << 2 | (h - 1) << 6) + num * 1024n, chk = Number(value % CODE_PRIME);
   const text = toDigits(value, 31, CODE_ALPHABET) + CODE_ALPHABET[Math.floor(chk / 31)] + CODE_ALPHABET[chk % 31];
   return text.match(/.{1,5}/g).join('-');
@@ -329,13 +335,13 @@ function decodePatternCode(code) {
   let num = value >> 10n; if (w > G || h > G) throw new Error('That code is not a valid pattern.');
   const cells = Array(G * G).fill(null), box = [];
   for (let i = 0; i < w * h; i++) { const st = Number(num % 11n); num /= 11n; box.push(st); }
-  if (num >= BigInt(RULES.length)) throw new Error('That code is not a valid pattern.');
-  const rule = RULES[Number(num)];
+  if (num >= BigInt(RULESETS.length)) throw new Error('That code is not a valid pattern.');
+  const rules = RULESETS[Number(num)];
   const used = box.some(Boolean), top = box.slice(0, w).some(Boolean), left = box.some((v, i) => v && i % w === 0), right = box.some((v, i) => v && i % w === w - 1), bottom = box.slice((h - 1) * w).some(Boolean);
   if (used ? !(top && left && right && bottom) : (w !== 1 || h !== 1)) throw new Error('That code is not a valid pattern.');
   const ox = Math.floor((G - w) / 2), oy = Math.floor((G - h) / 2);
   box.forEach((st, i) => { if (st) { const c = CODE_CELLS[st]; cells[(oy + Math.floor(i / w)) * G + ox + i % w] = { s: c.s, r: 0, q: c.q }; } });
-  return { G, cells, rule };
+  return { G, cells, rules };
 }
 // A fixed number from a code, to seed the one random choice the output has (the order Unmake takes blocks away, and the random isometric angles), so a code always gives the same book.
 const codeSeed = code => { let h = 2166136261; for (const ch of code) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -399,7 +405,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
   { const now = () => { $('cpNow').textContent = $('stepNow').textContent; }; new MutationObserver(now).observe($('stepNow'), { childList: true, characterData: true, subtree: true }); now(); } // the panel's status line follows the step
   document.body.insertAdjacentHTML('afterbegin', `<svg id="sharedDefs" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">${defs()}</svg>`);
   let grid = Array(G * G).fill(null);
-  let shape = 'square', chain = null, mode = 'form', cur = 0, timer = null, rule = 'move';
+  let shape = 'square', chain = null, mode = 'form', cur = 0, timer = null, rules = ['move'];
   const mk = s => ({ s, r: 0, q: 0 });
   let lastSymbol = '';
   function startSymbol() { // only symbols that fit the grid are picked (a 5 grid is too small for the 7-row letters)
@@ -438,7 +444,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
   const kept = () => ({ ...chain, states: chain.states.filter(st => !hidden.has(st.id)) });
   let paper = 'A3';
   const titleText = c => waysTitle(c);
-  const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, false, paper, titleText({ states: chain.states.filter(s => !hidden.has(s.id)), rule: chain.rule })); };
+  const renderSheet = () => { $('sheet').innerHTML = sheetSVG(chain, mode, hidden, false, paper, titleText({ states: chain.states.filter(s => !hidden.has(s.id)), rules: chain.rules })); };
   function show() {
     if (!chain) return;
     const kc = kept();
@@ -455,8 +461,8 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
   let act = 'both'; // 'both': the output holds the ways to make you up and the ways to unmake you; 'unmake' (the framed piece) holds only the unmaking
   function updateCount() {
     const st = startBlocks();
-    $('count').textContent = act === 'both' && st.length && ruleReady(rule, st) ? ruleWays(rule, st, mode === 'direction', TRACED.has(mode), rng(codeSeed(patternCode(G, grid, rule)))).states.length - 1 : 0;
-    $('countVerb').textContent = RULE_VERB[rule];
+    $('count').textContent = act === 'both' && st.length ? (((ruleWays(rules, st, mode === 'direction', TRACED.has(mode), rng(codeSeed(patternCode(G, grid, rules)))) || { states: [0] }).states.length) - 1) : 0;
+    $('countVerb').textContent = rules.map(r => RULE_VERB[r]).join(' and '); $('ruleN').textContent = $('count').textContent;
     $('countU').textContent = st.length;
   }
   function process(quiet) { // quiet: redo the results in place, without moving to step 1 or to the results pane
@@ -465,13 +471,13 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     hidden = new Set();
     // One sequence: the original, then every way to make you up (when the blocks touch), then every way to unmake you.
     // The only random choices (the order blocks are taken away, the random isometric angles) are drawn from the pattern's own code, so a code always gives the same results.
-    const code = patternCode(G, grid, rule), R = rng(codeSeed(code));
-    const made = act === 'both' && ruleReady(rule, start) ? ruleWays(rule, start, mode === 'direction', TRACED.has(mode), R) : null, unmade = unmake(start, start.map(() => R()));
+    const code = patternCode(G, grid, rules), R = rng(codeSeed(code));
+    const made = act === 'both' ? ruleWays(rules, start, mode === 'direction', TRACED.has(mode), R) : null, unmade = unmake(start, start.map(() => R()));
     const states = [{ ...(made ? made.states[0] : unmade.states[0]), phase: 'start' },
       ...(made ? made.states.slice(1).map(s => ({ ...s, phase: 'make' })) : []), ...unmade.states.slice(1).map(s => ({ ...s, phase: 'unmake' }))].map((s, id) => ({ ...s, id }));
-    chain = { states, capped: !!(made && made.capped), orig: states[0], code, rule };
+    chain = { states, capped: !!(made && made.capped), orig: states[0], code, rules };
     document.querySelectorAll('[data-tally=iter]').forEach(p => { p.textContent = states.length + (states.length === 1 ? ' iteration' : ' iterations'); });
-    $('msg').textContent = act === 'both' && !made && rule === 'move' ? 'The blocks do not touch edge to edge, so there is only the unmaking.' : chain.capped ? `Making stopped at the cap of ${MAXCAP}.` : '';
+    $('msg').textContent = act === 'both' && !made ? 'The blocks do not touch edge to edge, so there is only the unmaking.' : chain.capped ? `Making stopped at the cap of ${MAXCAP}.` : '';
     show();
     if (!quiet) { showPane('results'); goStep(1); }
   }
@@ -495,15 +501,21 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
   $('random').onclick = () => { $('msg').textContent = 'Starter: ' + startSymbol() + '.'; drawGrid(); };
   $('clear').onclick = () => { grid.fill(null); drawGrid(); };
   $('spd').oninput = () => { $('spdOut').textContent = $('spd').value + ' ms'; show(); };
-  // The rule: how the shape is made up. It is part of the pattern code. Direction (stripes along a move) means nothing for Change, so it is hidden there.
-  const RULE_HINT = { move: 'A block moves to a new place and leaves its old place marked.', change: 'A block changes into another shape, in the same place.', grow: 'A new block is added, touching the shape.' };
-  function setRule(r, quiet) {
-    rule = r; [...$('rule').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.r === r)); $('ruleHint').textContent = RULE_HINT[r];
-    const dir = $('viewIcons').querySelector('[data-mode="direction"]'); dir.hidden = r === 'change';
-    if (r === 'change' && mode === 'direction') { mode = 'form'; [...$('viewIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.mode === 'form')); }
+  // The rule is a sentence in the panel: "35 ways I can [make you up] and [change you]". Tap the first word to choose the rule; tap the second to add another rule, or none. It is part of the pattern code.
+  // Direction (stripes along a move) means nothing for Change, so it is hidden whenever Change is in use.
+  const RULE_NAMES = ['move', 'change', 'grow'], RULE_HINT = { move: 'Move: a block moves to a new place and leaves its old place marked.', change: 'Change: a block changes into another shape, in the same place.', grow: 'Grow: a new block is added, touching the shape.' };
+  function setRules(r, quiet) {
+    rules = r.slice(0, 2); $('rsA').textContent = RULE_VERB[rules[0]]; const b = rules[1];
+    $('rsAnd').hidden = !b; $('rsB').textContent = b ? RULE_VERB[b] : 'add another rule'; $('rsB').classList.toggle('none', !b);
+    $('ruleHint').textContent = rules.map(x => RULE_HINT[x]).join(' ') + ' Tap a word to change it.';
+    const dir = $('viewIcons').querySelector('[data-mode="direction"]'); dir.hidden = rules.includes('change');
+    if (rules.includes('change') && mode === 'direction') { mode = 'form'; [...$('viewIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.mode === 'form')); }
     if (!quiet) { updateCount(); codeShow(); if (chain) process(true); }
   }
-  $('rule').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); setRule(a.dataset.r); });
+  const nextOf = (list, cur) => list[(list.indexOf(cur) + 1) % list.length];
+  $('rsA').onclick = () => { const n = nextOf(RULE_NAMES, rules[0]); setRules(rules[1] && rules[1] !== n ? [n, rules[1]] : [n]); };
+  $('rsB').onclick = () => { const opts = RULE_NAMES.filter(x => x !== rules[0]), cur = rules[1], i = opts.indexOf(cur); setRules(i < 0 ? [rules[0], opts[0]] : i + 1 < opts.length ? [rules[0], opts[i + 1]] : [rules[0]]); };
+  setRules(['move'], true);
   $('viewIcons').addEventListener('click', e => {
     const a = e.target.closest('a'); if (!a) return; e.preventDefault();
     [...$('viewIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x === a));
@@ -679,9 +691,9 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
   $('anim').style.background = PAPER;
   $('grab').onclick = () => { const c = $('panel').classList.toggle('collapsed'); document.body.classList.toggle('sheet-collapsed', c); $('grab').setAttribute('aria-expanded', !c); $('grab').setAttribute('aria-label', c ? 'Open controls' : 'Collapse controls'); };
   // Pattern code: shown with a copy button, and a field that loads a pattern from a code. A ?code= address loads one on opening.
-  function codeShow() { try { $('codeOut').textContent = patternCode(G, grid, rule); } catch (e) { $('codeOut').textContent = ''; } }
+  function codeShow() { try { $('codeOut').textContent = patternCode(G, grid, rules); } catch (e) { $('codeOut').textContent = ''; } }
   function loadCode(text) {
-    try { const d = decodePatternCode(text); G = d.G; grid = d.cells; setRule(d.rule, true); [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', +x.dataset.n === G)); $('codeMsg').textContent = ''; drawGrid(); if (chain) process(true); return true; }
+    try { const d = decodePatternCode(text); G = d.G; grid = d.cells; setRules(d.rules, true); [...$('size').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', +x.dataset.n === G)); $('codeMsg').textContent = ''; drawGrid(); if (chain) process(true); return true; }
     catch (e) { $('codeMsg').textContent = e.message; return false; }
   }
   $('codeLoad').onclick = () => { if (loadCode($('codeIn').value)) $('codeIn').value = ''; };

@@ -7,7 +7,7 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=v0.129">
+<link rel="stylesheet" href="style.css?v=v0.130">
 </head>
 <body>
 <script>if (!location.search) document.documentElement.classList.add("show-start");</script>
@@ -39,7 +39,7 @@
     <div class="cp-body">
       <div class="cp-sec" id="secDraw"><h3></h3><div id="toolsHostPanel"></div>
       <div id="sizeHostPanel"><div class="links" id="size" role="radiogroup" aria-label="Grid size"><span>Grid size</span><a href="#" role="radio" data-n="5" aria-checked="true">5</a><a href="#" role="radio" data-n="7" aria-checked="false">7</a><a href="#" role="radio" data-n="9" aria-checked="false">9</a></div></div></div>
-      <div class="cp-sec" id="secRule"><h3>Rule</h3><div class="links" id="rule" role="radiogroup" aria-label="Rule"><a href="#" role="radio" data-r="move" aria-checked="true">Move</a><a href="#" role="radio" data-r="change" aria-checked="false">Change</a><a href="#" role="radio" data-r="grow" aria-checked="false">Grow</a></div><p class="hint" id="ruleHint"></p></div>
+      <div class="cp-sec" id="secRule"><h3>Rule</h3><p id="ruleSentence"><span id="ruleN">0</span> ways I can <button type="button" id="rsA" class="rule-word">make you up</button> <span id="rsAnd" hidden>and</span> <button type="button" id="rsB" class="rule-word none">add another rule</button></p><p class="hint" id="ruleHint"></p></div>
       <div class="cp-sec" id="codeBox"><h3>Pattern code</h3>
         <div class="code-row"><span class="lab">Pattern code</span><output id="codeOut" aria-live="polite"></output><button type="button" id="codeCopy">Copy</button></div>
         <div class="code-row"><label class="lab" for="codeIn">Enter a code</label><input id="codeIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XX"><button type="button" id="codeLoad">Load</button></div>
@@ -72,7 +72,7 @@
     <div class="cp-foot">
       <div id="processRow"><div class="row"><button id="process">Make and unmake you</button></div>
       <p class="sub"><span id="count">0</span> ways I can <span id="countVerb">make you up</span> · <span id="countU">0</span> to unmake you</p><p id="msg" role="status"></p></div>
-      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.129<!-- version:end --></a></p>
+      <p class="hint"><span class="keys">D hides this panel · </span><a href="about.html">About</a> · <a href="changelog.html"><!-- version:start -->v0.130<!-- version:end --></a></p>
     </div>
   </section>
   <section id="out">
@@ -102,11 +102,11 @@
   <div class="bp-stage" id="bpStage"></div>
   <div class="bp-nav"><div id="bpZoom"><button id="bpOut" aria-label="Zoom out">−</button><button id="bpFit">Fit</button><button id="bpIn" aria-label="Zoom in">+</button><span id="bpPct"></span></div><button id="bpPrev">Previous</button><span id="bpPos"></span><button id="bpNext">Next</button></div>
 </div>
-<script src="glyphs.js?v=v0.129"></script>
-<script src="app.js?v=v0.129"></script>
-<script src="book.js?v=v0.129"></script>
-<script src="gif.js?v=v0.129"></script>
-<script src="preview.js?v=v0.129"></script>
-<script src="start.js?v=v0.129"></script>
+<script src="glyphs.js?v=v0.130"></script>
+<script src="app.js?v=v0.130"></script>
+<script src="book.js?v=v0.130"></script>
+<script src="gif.js?v=v0.130"></script>
+<script src="preview.js?v=v0.130"></script>
+<script src="start.js?v=v0.130"></script>
 </body>
 </html>

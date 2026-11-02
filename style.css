@@ -507,6 +507,9 @@ body.view-results #secDraw h3::before{content:"Treatment and grid"}
 #bookPreview.sheet .bp-nav{display:flex}
 #bookPreview.sheet #bpPrev,#bookPreview.sheet #bpNext,#bookPreview.sheet #bpPos{display:none}
 
-#rule{margin:0}
 #panel #ruleHint{margin:8px 0 0;color:var(--muted)}
 #viewIcons a[hidden]{display:none}
+#ruleSentence{margin:0;font-size:14px;line-height:1.9;color:var(--text)}
+#panel .rule-word{display:inline;padding:0 2px;border:0;border-bottom:1px dashed var(--accent-line);border-radius:0;background:none;font:inherit;color:var(--yellow);cursor:pointer}
+#panel .rule-word.none{color:var(--muted);border-bottom-color:#555}
+#panel .rule-word:hover{background:var(--accent-bg)}
