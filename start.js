@@ -46,7 +46,8 @@
     more.addEventListener("click", function () { box.classList.remove("is-short"); more.remove(); });
     var lead = document.createElement("div");
     lead.className = "sa-lead"; lead.appendChild(circle()); lead.appendChild(more);
-    first.after(lead);
+    // The lead goes before the first heading (after the title, quote and one-line description), so the open circle is always on the first screen however long the Summary grows.
+    var h2 = box.querySelector("h2"); if (h2) h2.before(lead); else first.after(lead);
     var tail = circle(); tail.classList.add("sa-open-end"); box.appendChild(tail);
   }).catch(function () { /* keeps the plain link to about.html */ });
   // First visit: the About panel slides out by itself, so the project is introduced before the circle.
