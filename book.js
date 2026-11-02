@@ -1,8 +1,8 @@
 'use strict';
 // Publication: the current shape, its variants and the five treatments laid out as a small book in the design of the original
 // (11 ways I can make you up, and Form): light pages with the shape on top and its variants in a grid under it, then dark plates.
-// Output is a real PDF written by hand (no library): A5 pages, imposed two to a sheet for saddle stitch on A4 landscape
-// (print double sided, flip on short edge, fold and staple), or the plain A5 pages for proofing.
+// Output is a real PDF written by hand (no library): A5 pages, imposed two to a sheet for binding on SRA4 landscape
+// (print double sided, flip on short edge, fold and bind), or the plain A5 pages for proofing.
 // It relies on globals from app.js: SHAPES, ang, ghosts, TONE, U, bbox, waysLabel.
 const PT = 72 / 25.4, A5W = 148 * PT, A5H = 210 * PT, A4W = 297 * PT, SRA4W = 320 * PT, SRA4H = 225 * PT;
 const THEME = { light: { bg: '#DEDDD2', ink: '#231F20', dim: '#231F20' }, dark: { bg: '#231F20', ink: '#DEDDD2', dim: '#7A776F' }, yellow: { bg: '#FFE100', ink: '#FFFFFF', dim: '#231F20' } };
