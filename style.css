@@ -99,10 +99,12 @@ body.view-results #drawBox{display:none}
 html.show-start{overflow:hidden}
 html.show-start #startScreen{display:flex;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;overflow:hidden;background:#000;transition:opacity .5s ease;--strip-w:44px;--panel-w:max(320px,calc(100vw / 3 - var(--strip-w)))}
 html.start-leaving #startScreen{opacity:0;pointer-events:none}
-#startLoop{position:absolute;left:6vmin;right:6vmin;top:6vmin;bottom:24vmin;width:calc(100% - 12vmin);height:calc(100% - 30vmin);pointer-events:none}
-#startOpen{position:absolute;left:50%;bottom:max(28px,5vmin);transform:translateX(-50%);z-index:2;display:flex;align-items:center;justify-content:center;width:clamp(76px,13vmin,110px);height:clamp(76px,13vmin,110px);padding:0;border:1px solid #fff;border-radius:50%;background:#000;color:#fff;font:italic 300 clamp(14px,2.2vmin,19px)/1 var(--font);letter-spacing:.04em;cursor:pointer;transition:background .3s ease,color .3s ease,border-color .3s ease}
-#startOpen:hover,#startOpen:focus-visible{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
-#startOpen:focus-visible{outline:2px solid var(--yellow);outline-offset:6px}
+#startLoop{position:absolute;inset:6vmin;width:calc(100% - 12vmin);height:calc(100% - 12vmin)}
+#startLoop .open-hit{cursor:pointer}
+#startLoop:hover #startLoopG{fill:var(--yellow)}
+#startLoop:hover use{stroke:var(--yellow)}
+/* The open button is the word in one of the blocks (start.js); this one stays for keyboards and screen readers. */
+#startOpen{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);padding:0;border:0;opacity:0}
 .start-version{position:fixed;left:16px;bottom:max(12px,env(safe-area-inset-bottom));z-index:3;font-size:11px;color:rgba(255,255,255,.55);text-decoration:none}
 .start-version:hover,.start-version:focus-visible{color:var(--yellow);outline:none}
 .start-drawer{position:fixed;top:0;right:0;bottom:0;z-index:3;display:flex;transform:translateX(var(--panel-w));transition:transform .45s cubic-bezier(.2,.7,.2,1)}
