@@ -155,10 +155,20 @@ const PIECES = {
 let NOTE = null; // the active piece, when there is one
 const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function wrapText(t, n) { const out = []; let line = ''; t.split(' ').forEach(w => { if ((line + ' ' + w).trim().length > n) { out.push(line); line = w; } else line = (line + ' ' + w).trim(); }); if (line) out.push(line); return out; }
+// Type in the SVG downloads is drawn as outlines (glyphs.js), so the files look the same wherever they are opened and need no fonts installed.
+// key: 'serif' (Libre Baskerville Italic) or 'sans' (Libre Franklin). Without glyphs.js (tests) it falls back to ordinary text.
+function glyphText(t, x, y, size, key, anchor = 'start', fill = INK) {
+  const F = typeof GLYPHS !== 'undefined' && GLYPHS[key];
+  if (!F) return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="${key === 'sans' ? 'sans-serif' : 'serif'}"${key === 'sans' ? '' : ' font-style="italic"'} font-size="${size}" fill="${fill}">${esc(t)}</text>`;
+  const sc = size / F.upm, gl = [...t].map(c => F.g[c] || F.g['?'] || [F.upm / 2, '']), w = gl.reduce((s, g) => s + g[0], 0) * sc;
+  let ox = anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x, out = '';
+  gl.forEach(g => { if (g[1]) out += `<path transform="translate(${+ox.toFixed(2)} ${+(+y).toFixed(2)}) scale(${+sc.toFixed(5)} ${+(-sc).toFixed(5)})" d="${g[1]}"/>`; ox += g[0] * sc; });
+  return `<g fill="${fill}">${out}</g>`;
+}
 // The source and caption as SVG text under a drawing W wide. h is the height to reserve; svg(y0) draws it starting at y0.
 function noteBlock(W) {
-  const fs = Math.max(11, W / 70), n = Math.floor(W * 0.9 / (fs * 0.6)), lines = [...wrapText(NOTE.ref, n), '', ...wrapText(NOTE.text, n)];
-  return { h: (lines.length + 2) * fs * 1.5, svg: y0 => lines.map((l, i) => l ? `<text x="${W * 0.05}" y="${y0 + fs * 2 + i * fs * 1.5}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(l)}</text>` : '').join('') };
+  const fs = Math.max(11, W / 70), n = Math.floor(W * 0.9 / (fs * 0.5)), lines = [...wrapText(NOTE.ref, n), '', ...wrapText(NOTE.text, n)];
+  return { h: (lines.length + 2) * fs * 1.5, svg: y0 => lines.map((l, i) => l ? glyphText(l, W * 0.05, y0 + fs * 2 + i * fs * 1.5, fs, 'serif') : '').join('') };
 }
 
 // ---------- rendering ----------
@@ -172,7 +182,7 @@ const waysTitle = c => { const m = c.states.filter(s => s.phase === 'make').leng
 // The states before this one that count as its past: the same set only (making looks back at earlier makes, unmaking at earlier unmakes), then the original.
 const pastOf = (c, k) => { const s = c.states[k], o = c.orig || c.states[0]; if (s === o) return [];
   return [...c.states.slice(0, k).filter(x => x !== o && x.phase === s.phase).reverse(), o]; };
-function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs * 2.4, svg: `<text x="${W * 0.05}" y="${fs * 1.5}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(text)}</text>` }; }
+function titleBlock(W, text) { const fs = Math.max(14, W / 36); return { h: fs * 2.4, svg: glyphText(text, W * 0.05, fs * 1.5, fs, 'serif') }; }
 const defs = () => '<defs>' + Object.entries(SHAPES).map(([id, s]) => `<path id="${id}" d="${s.d}"/>` +
   [0, 90, 180, 270].map(a => `<clipPath id="c_${id}_${a}"><path d="${s.d}" transform="rotate(${a} 50 50)"/></clipPath>`).join('')).join('') +
   DENS.map((d, i) => `<path id="hl${i}" fill="none" stroke-width="${+(0.3 * 2.4 * d[1]).toFixed(2)}" d="${(() => { let p = ''; for (let x = -40; x <= 140; x += 2.4 * d[1]) p += `M${+x.toFixed(1)} -40V140`; return p; })()}"/>`).join('') +
@@ -242,7 +252,7 @@ const n2s = v => +v.toFixed(1);
 function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', title = '') {
   const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06, nb = NOTE ? noteBlock(W) : null, band = nb ? nb.h + (title ? 160 : 0) : 0, top = 0, fs = W / 105;
   // The title sits small in the bottom left corner with the name, in the margin, not across the top.
-  const cap = title ? `<text x="${m}" y="${n2s(H - m * 0.55 - fs * 1.7)}" font-family="Times New Roman, Times, serif" font-style="italic" font-size="${n2s(fs * 1.2)}" fill="${INK}">${esc(title)}</text><text x="${m}" y="${n2s(H - m * 0.55)}" font-family="Helvetica, Arial, sans-serif" font-size="${n2s(fs * 0.85)}" fill="${INK}">Form by Patrick Walker, form.pkwr.co</text>` : '';
+  const cap = title ? glyphText(title, m, +n2s(H - m * 0.55 - fs * 1.7), +n2s(fs * 1.2), 'serif') + glyphText('Form by Patrick Walker, form.pkwr.co', m, +n2s(H - m * 0.55), +n2s(fs * 0.85), 'sans') : '';
   // Choose the number of columns that makes the variants as large as possible on the page.
   let cols = 1, best = 0;
   for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m - band - top) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
@@ -251,7 +261,7 @@ function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', t
     const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh, off = edit && hidden.has(st.id);
     inner += `<g data-id="${st.id}" opacity="${off ? 0.12 : 1}">` + (edit ? `<rect x="${cx}" y="${cy}" width="${bb.w}" height="${fh}" fill="transparent" style="cursor:pointer"/>` : '') +
       `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
-      `<text x="${cx + bb.w / 2}" y="${cy + bb.h + 70}" text-anchor="middle" font-family="sans-serif" font-size="40" fill="${INK}">${st.id ? roman(st.id) : ''}</text></g>`;
+      (st.id ? glyphText(roman(st.id), cx + bb.w / 2, cy + bb.h + 70, 40, 'sans', 'middle') : '') + `</g>`;
   });
   return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m + top}) scale(${best})">${inner}</g>` + cap + (nb ? nb.svg(H - band - m / 2) : ''), `width="${pw}mm" height="${ph}mm"`);
 }
@@ -519,9 +529,9 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     if (!chain) { $('msg').textContent = 'Press the yellow button first.'; return null; }
     const kc = kept(); if (!kc.states.length) { $('msg').textContent = 'There are no variants to use.'; return null; }
     const W = 720, H = gifFmt === 'sq' ? 720 : 1280, skip = Math.max(1, Math.ceil(kc.states.length / 120)), idxs = []; for (let k = 0; k < kc.states.length; k += skip) idxs.push(k);
-    const bb = bbox(kc, mode), fs = W / 38, perLine = Math.floor(W * 0.92 / (fs * 0.6)), lines = NOTE ? [...wrapText(NOTE.ref, perLine), ...wrapText(NOTE.text, perLine)] : [];
+    const bb = bbox(kc, mode), fs = W / 38, perLine = Math.floor(W * 0.92 / (fs * 0.5)), lines = NOTE ? [...wrapText(NOTE.ref, perLine), ...wrapText(NOTE.text, perLine)] : [];
     const band = (lines.length ? lines.length * fs * 1.45 + 24 : 0), availW = W * 0.84, availH = H - band - H * 0.06, sc = Math.min(availW / bb.w, availH / bb.h), tx = (W - bb.w * sc) / 2, ty = H * 0.06 + (availH - bb.h * sc) / 2;
-    const notes = lines.map((l, i) => `<text x="${W * 0.04}" y="${H - band + 30 + i * fs * 1.45}" font-family="monospace" font-style="italic" font-size="${fs}" fill="${INK}">${esc(l)}</text>`).join('');
+    const notes = lines.map((l, i) => glyphText(l, W * 0.04, H - band + 30 + i * fs * 1.45, fs, 'serif')).join('');
     const svgAt = n => `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${PAPER}"/>${defs()}<g transform="translate(${tx} ${ty}) scale(${sc})"><g fill="${INK}" transform="translate(${-bb.x} ${-bb.y})">${frame(kc, idxs[n], mode)}</g></g>${notes}</svg>`;
     return { W, H, idxs, svgAt, delay: Math.max(20, +$('spd').value) };
   }

@@ -126,7 +126,7 @@ def main():
     page_i = (HERE / "index.html").read_text(encoding="utf-8")
     new_i = between(page_i, "<!-- version:start -->", "<!-- version:end -->", version, "index.html")
     # Browsers keep old copies of the stylesheet and scripts; tying them to the version makes every release load together.
-    new_i = re.sub(r'(style\.css|app\.js|book\.js|gif\.js|preview\.js|start\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', new_i)
+    new_i = re.sub(r'(style\.css|glyphs\.js|app\.js|book\.js|gif\.js|preview\.js|start\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', new_i)
     page_d = (HERE / "demo.html").read_text(encoding="utf-8")
     new_d = re.sub(r'(app\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', page_d)
     new_d = re.sub(r'(demo\.js)(\?v=[^"]*)?"', lambda m: m.group(1) + "?v=" + version + '"', new_d)
