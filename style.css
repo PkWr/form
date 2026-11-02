@@ -1,7 +1,7 @@
 /* Form — styled after Spot: IBM Plex Mono italic, one yellow accent, dark floating panel. Fonts: SIL OFL (vendor/fonts). */
 @font-face{font-family:"IBM Plex Mono";font-style:italic;font-weight:300;font-display:swap;src:url("vendor/fonts/ibm-plex-mono-latin-300-italic.woff2") format("woff2")}
 @font-face{font-family:"IBM Plex Mono";font-style:italic;font-weight:400;font-display:swap;src:url("vendor/fonts/ibm-plex-mono-latin-400-italic.woff2") format("woff2")}
-:root{--yellow:#ffe100;--ink:#111;--paper:#f4f2ee;--bg:#121315;--surface:#17191c;--line:#2a2d31;--text:#ececec;--muted:#a3a3a3;--accent-bg:#3a3410;--accent-line:#8f7d1a;--font:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+:root{--yellow:#ffe100;--ink:#111;--paper:#f4f2ee;--cp-bg:#121315;--cp-surface:#17191c;--cp-line:#2a2d31;--cp-text:#ececec;--cp-muted:#a3a3a3;--cp-accent-bg:#3a3410;--cp-accent-line:#8f7d1a;--font:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
 *{box-sizing:border-box}
 html{font-synthesis:none}
 body{margin:0;background:var(--paper);color:var(--ink);font:300 13px/1.5 var(--font);font-style:italic}
@@ -11,32 +11,32 @@ svg{display:block}
 #out h2{font-size:12px;margin:28px 0 8px;color:#555}
 #anim{width:100%;max-height:62vh;background:var(--paper)}
 #sheet svg{width:100%;height:auto}
-#panel{position:fixed;top:16px;right:16px;bottom:16px;width:380px;max-width:calc(100vw - 32px);overflow:auto;padding:16px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:30}
+#panel{position:fixed;top:16px;right:16px;bottom:16px;width:380px;max-width:calc(100vw - 32px);overflow:auto;padding:16px;background:var(--cp-bg);color:var(--cp-text);border:1px solid var(--cp-line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:30}
 #panel.hidden{display:none}
 #panel h1{font-size:15px}
-.sub{margin:0 0 14px;color:var(--muted);font-size:12px}
-#grid{width:100%;height:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;cursor:pointer;touch-action:manipulation}
+.sub{margin:0 0 14px;color:var(--cp-muted);font-size:12px}
+#grid{width:100%;height:auto;background:var(--cp-surface);border:1px solid var(--cp-line);border-radius:6px;cursor:pointer;touch-action:manipulation}
 #palette{display:flex;gap:8px;margin:12px 0}
-#palette button{width:44px;height:44px;padding:8px;background:none;border:0;border-radius:0;color:var(--text)}
-#palette svg{fill:var(--text);width:100%;height:100%}
+#palette button{width:44px;height:44px;padding:8px;background:none;border:0;border-radius:0;color:var(--cp-text)}
+#palette svg{fill:var(--cp-text);width:100%;height:100%}
 #palette button[aria-checked=true] svg{fill:var(--yellow)}
-label{display:block;margin:6px 0;color:var(--muted);font-size:12px}
-label.inline{display:inline-block;margin-right:16px;color:var(--text)}
-output{float:right;color:var(--text)}
+label{display:block;margin:6px 0;color:var(--cp-muted);font-size:12px}
+label.inline{display:inline-block;margin-right:16px;color:var(--cp-text)}
+output{float:right;color:var(--cp-text)}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;margin:0;background:none;cursor:pointer;--to:0%}
 input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--yellow) 0 var(--to),#33363b var(--to) 100%)}
 input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--yellow) 0 var(--to),#33363b var(--to) 100%)}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-8px;border:0;border-radius:10px;background:#f4f4f4;box-shadow:0 1px 3px rgba(0,0,0,.6)}
 input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:10px;background:#f4f4f4;box-shadow:0 1px 3px rgba(0,0,0,.6)}
-input[type=number]{width:80px;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+input[type=number]{width:80px;font:inherit;color:var(--cp-text);background:var(--cp-surface);border:1px solid var(--cp-line);border-radius:6px;padding:4px 6px}
 input[type=radio]{accent-color:var(--yellow)}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-button{font:inherit;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer}
-button:hover{border-color:var(--accent-line)}
+button{font:inherit;padding:7px 12px;border:1px solid var(--cp-line);border-radius:8px;background:var(--cp-surface);color:var(--cp-text);cursor:pointer}
+button:hover{border-color:var(--cp-accent-line)}
 #process{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
 #out .row button{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 #msg{min-height:1.4em;color:var(--yellow);font-size:12px}
-.hint{color:var(--muted);font-size:11px;margin:8px 0 0}
+.hint{color:var(--cp-muted);font-size:11px;margin:8px 0 0}
 @media(max-width:900px){#out{padding:24px 24px 48vh}#panel{top:auto;height:44vh}}
 .cp-grab{display:none}
 #screen{display:none}
@@ -64,11 +64,11 @@ body.view-results #drawBox{display:none}
 #out h2:first-child{margin-top:8px}
 #panel{display:flex;flex-direction:column;overflow:hidden;top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;height:auto;max-height:min(62vh,540px);padding:0;border-width:1px 0 0;border-radius:20px 20px 0 0}
 #panel.collapsed .cp-body{display:none}
-.cp-grab{flex:none;display:flex;align-items:center;justify-content:center;width:100%;height:26px;margin:0;padding:0;border:0;border-radius:20px 20px 0 0;background:var(--bg);cursor:pointer}
+.cp-grab{flex:none;display:flex;align-items:center;justify-content:center;width:100%;height:26px;margin:0;padding:0;border:0;border-radius:20px 20px 0 0;background:var(--cp-bg);cursor:pointer}
 .cp-grab span{display:block;width:40px;height:5px;border-radius:3px;background:#4a4d52}
 .cp-head{display:none}
 .cp-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 16px 8px}
-.cp-foot{flex:none;padding:8px 16px max(6px,env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.cp-foot{flex:none;padding:8px 16px max(6px,env(safe-area-inset-bottom));border-top:1px solid var(--cp-line)}
 #processRow .row{margin:0 0 4px}
 #processRow #process{width:100%;padding:12px}
 #screen #processRow{margin:4px 0 8px}
@@ -78,8 +78,8 @@ body.view-results #drawBox{display:none}
 .cp-foot .hint{margin:4px 0 0}
 .keys{display:none}
 }
-.links{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0;font-size:13px;color:var(--muted)}
-.links a{color:var(--text);text-decoration:none}
+.links{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0;font-size:13px;color:var(--cp-muted)}
+.links a{color:var(--cp-text);text-decoration:none}
 .links a:hover{text-decoration:underline}
 .links a[aria-checked=true]{color:var(--yellow)}
 .about{max-width:640px;margin:0 auto;padding:40px 24px 80px}
@@ -178,8 +178,8 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #out{min-height:0}
 @media all{#sheet svg{height:max(140px,calc(100svh - 430px))}}
 /* Icon buttons: steps, rule and treatments. Quiet: the selected one is yellow on the dark panel and ink with a yellow icon on paper. */
-.links.ico{display:flex;flex-wrap:nowrap;gap:4px;margin:6px 0;font-size:9.5px;color:var(--muted)}
-.ico a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:56px;padding:6px 4px 5px;border-radius:8px;text-decoration:none;color:var(--text);line-height:1.1;text-align:center;overflow-wrap:anywhere}
+.links.ico{display:flex;flex-wrap:nowrap;gap:4px;margin:6px 0;font-size:9.5px;color:var(--cp-muted)}
+.ico a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:56px;padding:6px 4px 5px;border-radius:8px;text-decoration:none;color:var(--cp-text);line-height:1.1;text-align:center;overflow-wrap:anywhere}
 .ico a svg{width:26px;height:26px;display:block}
 .ico a:hover{text-decoration:none;background:rgba(255,255,255,.07)}
 .ico a[aria-checked=true]{color:var(--yellow);text-decoration:none}
@@ -195,9 +195,9 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #act{margin:0}
 #act a{min-width:58px}
 #viewHostPanel{margin:0 0 8px}
-#colours{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:10px 0 4px;color:var(--muted);font-size:12px}
-#colours .swatch{display:flex;align-items:center;gap:6px;margin:0;color:var(--text)}
-#colours input[type=color]{width:34px;height:26px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
+#colours{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:10px 0 4px;color:var(--cp-muted);font-size:12px}
+#colours .swatch{display:flex;align-items:center;gap:6px;margin:0;color:var(--cp-text)}
+#colours input[type=color]{width:34px;height:26px;padding:0;border:1px solid var(--cp-line);border-radius:6px;background:none;cursor:pointer}
 #presets{display:flex;gap:8px;margin-left:auto}
 .preset{width:26px;height:26px;padding:0;border-radius:50%;border:1px solid #555;cursor:pointer}
 .shape-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px}
@@ -214,7 +214,7 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 @media all{
 #drawBox #grid{width:auto;height:min(calc(100vw - 32px),calc(100svh - 360px));max-width:100%;margin:0 auto}
 }
-#grid{border-color:var(--line)}
+#grid{border-color:var(--cp-line)}
 /* Less scrolling: the closing step shows one choice at a time; the results sit under a shorter header on phones. */
 .card{display:none}
 .card.on{display:block}
@@ -337,7 +337,7 @@ body:not(.view-outputs) #steps a[data-s="2"],body:not(.view-outputs) #steps a[da
 #dlBar .dlbtn svg{width:18px;height:18px}
 body[data-step="1"] #dlBar [data-for="1"],body[data-step="2"] #dlBar [data-for="2"],body[data-step="3"] #dlBar [data-for="3"]{display:flex}
 /* The animation sits in the same square, with the same outline, as the grid on Draw. */
-#anim{display:block;width:min(100%,calc(100vh - 360px));max-height:none;height:auto;aspect-ratio:1;margin:0 auto;border:1px solid var(--line);border-radius:6px}
+#anim{display:block;width:min(100%,calc(100vh - 360px));max-height:none;height:auto;aspect-ratio:1;margin:0 auto;border:1px solid var(--cp-line);border-radius:6px}
 @media(max-height:700px){#anim{width:min(100%,calc(100svh - 348px))}}
 /* The print size sits with the download icon it belongs to: under it, right-aligned, on the Contact sheet step only. */
 #paneSwitch{flex-wrap:wrap}
@@ -359,7 +359,7 @@ body[data-step="2"] #dlWrap #paper{display:flex}
 body[data-step="1"] #dlWrap #animFormat{display:flex}
 .row.nav #dlWrap #animFormat{order:-1;flex:0 0 100%;justify-content:flex-end;margin:0 0 4px}
 /* The Book step: the book as a visual in the same square and outline as the animation, its choices above the download. */
-#bookFrame{display:flex;align-items:center;justify-content:center;width:min(100%,calc(100vh - 360px));aspect-ratio:1;margin:0 auto;border:1px solid var(--line);border-radius:6px;background:var(--paper);cursor:pointer}
+#bookFrame{display:flex;align-items:center;justify-content:center;width:min(100%,calc(100vh - 360px));aspect-ratio:1;margin:0 auto;border:1px solid var(--cp-line);border-radius:6px;background:var(--paper);cursor:pointer}
 @media(max-height:700px){#bookFrame{width:min(100%,calc(100svh - 348px))}}
 #bookPages{display:flex;align-items:center;justify-content:center}
 #bookPages canvas{display:block;box-shadow:0 1px 6px rgba(0,0,0,.25)}
@@ -399,7 +399,7 @@ body[data-step="3"] #dlWrap #bookInclude,body[data-step="3"] #dlWrap #bookFormat
 #viewIcons a svg{width:34px;height:34px}
 /* Wide desktop: the controls sit at the side, always open, as on Spot. The bottom sheet is for phones and narrow windows. */
 @media(min-width:901px) and (pointer:fine){
-#panel{top:16px;right:16px;bottom:16px;left:auto;width:320px;max-width:none;transform:none;max-height:none;border:1px solid var(--line);border-radius:14px}
+#panel{top:16px;right:16px;bottom:16px;left:auto;width:320px;max-width:none;transform:none;max-height:none;border:1px solid var(--cp-line);border-radius:14px}
 .cp-grab{display:none}
 #panel.collapsed .cp-body{display:block}
 .cp-head{display:block;padding:14px 16px 4px}
@@ -410,7 +410,7 @@ body{padding-bottom:0!important;padding-right:368px}
 #shadeLab[hidden],#isoHostPanel[hidden]{display:none!important}
 /* Pieces swing past the edge of the mark while they turn, so the drawing is not clipped to its box. */
 /* Instructions for the downloads, in the control panel, for the step you are on. */
-#dlHelp{display:none;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--line);font-size:12px;line-height:1.5;color:#9a9a9a}
+#dlHelp{display:none;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--cp-line);font-size:12px;line-height:1.5;color:#9a9a9a}
 #dlHelp h2{margin:0 0 6px;font-size:12px;font-weight:400;color:#cfcfcf}
 #dlHelp p{margin:0 0 6px;display:none}
 #dlHelp p.fine{display:block;color:#7d7d7d}
@@ -450,14 +450,14 @@ body{padding-right:388px}
 .code-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 6px}
 .code-row .lab{flex:0 0 auto;color:#9a9a9a}
 #codeOut{flex:1 1 auto;min-width:0;word-break:break-all;letter-spacing:.04em;color:#fff;font-style:normal}
-#codeIn{flex:1 1 90px;min-width:0;padding:5px 8px;font:inherit;color:#fff;background:#17191c;border:1px solid var(--line);border-radius:8px;text-transform:uppercase}
+#codeIn{flex:1 1 90px;min-width:0;padding:5px 8px;font:inherit;color:#fff;background:#17191c;border:1px solid var(--cp-line);border-radius:8px;text-transform:uppercase}
 #codeBox button{padding:5px 10px;font-size:12px}
 #codeMsg:empty{display:none}
 
 /* Grid size lives in the control panel; the grid and the frames of the next steps share one square and one position; Next and Start again are the same yellow as the first button */
 #sizeHostPanel{margin:10px 0 4px}
 #sizeHostPanel #size{margin:0}
-#sheet{display:flex;align-items:center;justify-content:center;width:min(100%,calc(100vh - 360px));aspect-ratio:1;margin:0 auto;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+#sheet{display:flex;align-items:center;justify-content:center;width:min(100%,calc(100vh - 360px));aspect-ratio:1;margin:0 auto;border:1px solid var(--cp-line);border-radius:6px;background:var(--paper)}
 @media(max-height:700px){#sheet{width:min(100%,calc(100svh - 348px))}}
 #out #sheet svg{height:92%;width:auto;max-width:92%}
 #drawBox #grid,#anim,#bookFrame,#sheet{margin-left:0;margin-right:0}
@@ -479,9 +479,9 @@ body.view-results #processRow .sub{display:none}
 
 /* Panel in Spot's organisation: a header with a status line, then cards with small-caps labels */
 .cp-head h1{margin:0;font-size:15px;font-weight:400}
-.cp-now{margin:2px 0 0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#panel .cp-sec{margin:12px 0 0;padding:12px;border:1px solid #24272b;border-radius:12px;background:var(--surface);font-size:12px}
-#panel .cp-sec h3{margin:0 0 8px;font-size:11px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cp-now{margin:2px 0 0;font-size:12px;color:var(--cp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panel .cp-sec{margin:12px 0 0;padding:12px;border:1px solid #24272b;border-radius:12px;background:var(--cp-surface);font-size:12px}
+#panel .cp-sec h3{margin:0 0 8px;font-size:11px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:var(--cp-muted)}
 #secDraw h3::before{content:"Shapes and grid"}
 body.view-results #secDraw h3::before{content:"Treatment and grid"}
 #panel #toolsHostPanel:empty{display:none}
@@ -501,9 +501,9 @@ body.view-results #secDraw h3::before{content:"Treatment and grid"}
 #bookPreview.sheet .bp-nav{display:flex}
 #bookPreview.sheet #bpPrev,#bookPreview.sheet #bpNext,#bookPreview.sheet #bpPos{display:none}
 
-#panel #ruleHint{margin:8px 0 0;color:var(--muted)}
+#panel #ruleHint{margin:8px 0 0;color:var(--cp-muted)}
 #viewIcons a[hidden]{display:none}
-#ruleSentence{margin:0;font-size:14px;line-height:1.9;color:var(--text)}
-#panel .rule-word{display:inline;padding:0 2px;border:0;border-bottom:1px dashed var(--accent-line);border-radius:0;background:none;font:inherit;color:var(--yellow);cursor:pointer}
-#panel .rule-word.none{color:var(--muted);border-bottom-color:#555}
-#panel .rule-word:hover{background:var(--accent-bg)}
+#ruleSentence{margin:0;font-size:14px;line-height:1.9;color:var(--cp-text)}
+#panel .rule-word{display:inline;padding:0 2px;border:0;border-bottom:1px dashed var(--cp-accent-line);border-radius:0;background:none;font:inherit;color:var(--yellow);cursor:pointer}
+#panel .rule-word.none{color:var(--cp-muted);border-bottom-color:#555}
+#panel .rule-word:hover{background:var(--cp-accent-bg)}
