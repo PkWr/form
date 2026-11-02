@@ -100,10 +100,9 @@ html.show-start{overflow:hidden}
 html.show-start #startScreen{display:flex;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;overflow:hidden;background:#000;transition:opacity .5s ease;--strip-w:44px;--panel-w:max(320px,calc(100vw / 3 - var(--strip-w)))}
 html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #startLoop{position:absolute;inset:6vmin;width:calc(100% - 12vmin);height:calc(100% - 12vmin)}
-#startLoop .open-hit{cursor:pointer}
 #startLoop:hover #startLoopG{fill:var(--yellow)}
 #startLoop:hover use{stroke:var(--yellow)}
-/* The open button is the word in one of the blocks (start.js); this one stays for keyboards and screen readers. */
+/* The way in is the open button in the About panel; this one stays for keyboards (Enter) and screen readers. */
 #startOpen{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);padding:0;border:0;opacity:0}
 .start-version{position:fixed;left:16px;bottom:max(12px,env(safe-area-inset-bottom));z-index:3;font-size:11px;color:rgba(255,255,255,.55);text-decoration:none}
 .start-version:hover,.start-version:focus-visible{color:var(--yellow);outline:none}

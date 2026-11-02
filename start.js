@@ -56,13 +56,13 @@
     if ((e.key === "Enter" || e.key === " ") && root.classList.contains("show-start") && e.target === document.body) { e.preventDefault(); open(); }
   });
 })();
-// The start loop (opened on pointerup, not click, because the frame is redrawn every few moments): the demo's loop (a random symbol made up and unmade by a random rule, one step at a time, then the next), white on black, with no text. It borrows the engine
+// The start loop: the demo's loop (a random symbol made up and unmade by a random rule, one step at a time, then the next), white on black, with no text. It borrows the engine
 // in app.js, so the grid and the ink colour are set for the loop and put back when the screen is left.
 (function () {
   var root = document.documentElement;
   if (!root.classList.contains("show-start")) return;
   var svg = document.getElementById("startLoop"); if (!svg || typeof ruleWays !== "function") return;
-  var keepG = G, keepINK = INK, dead = false, last = "", timer = 0, follow = null, d2 = function (b) { return follow ? (b.x - follow.x) * (b.x - follow.x) + (b.y - follow.y) * (b.y - follow.y) : 0; };
+  var keepG = G, keepINK = INK, dead = false, last = "", timer = 0;
   var pick = function (a) { return a[Math.floor(Math.random() * a.length)]; }, MAKES = ["move", "change", "grow"];
   function round() {
     if (dead) return;
@@ -75,17 +75,11 @@
     if (!made || made.states.length < 2) return round();
     var states = made.states.map(function (s, id) { return Object.assign({}, s, { id: id, phase: id ? s.phase : "start" }); }), chain = { states: states, orig: states[0] }, bb = bbox(chain, "form");
     svg.setAttribute("viewBox", bb.x + " " + bb.y + " " + bb.w + " " + bb.h);
-    follow = null; svg.innerHTML = '<g id="startLoopG" fill="#fff"></g>';
+    svg.innerHTML = '<g id="startLoopG" fill="#fff"></g>';
     var g = svg.firstChild, n = states.length, step = Math.max(60, Math.min(220, 24000 / n)), k = 0;
     (function tick() {
       if (dead) return;
-      var bl = states[k].blocks, sq = bl.filter(function (b) { return b.s === "square"; }), pool = sq.length ? sq : bl, hit = "";
-      if (pool.length) { // the word open sits in one block and stays in that place while it can; when that block goes it takes the nearest one
-        var near = follow ? pool.slice().sort(function (p, q) { return d2(p) - d2(q); })[0] : null;
-        follow = near && d2(near) <= 2.25 ? near : pick(pool);
-        hit = '<g class="open-hit"><rect x="' + follow.x * U + '" y="' + follow.y * U + '" width="' + U + '" height="' + U + '" fill="transparent"/><text x="' + (follow.x + 0.5) * U + '" y="' + (follow.y + 0.5) * U + '" text-anchor="middle" dominant-baseline="central" fill="#000" stroke="none" font-style="italic" font-weight="300" font-size="' + U * 0.3 + '" font-family="\'IBM Plex Mono\',ui-monospace,monospace">open</text></g>';
-      }
-      g.innerHTML = frame(chain, k, "form") + hit; k++;
+      g.innerHTML = frame(chain, k, "form"); k++;
       timer = setTimeout(k < n ? tick : function () { timer = setTimeout(round, 1400); }, k < n ? step : 0);
     })();
   }
@@ -93,6 +87,5 @@
   new MutationObserver(function () {
     if (!root.classList.contains("show-start")) { dead = true; clearTimeout(timer); G = keepG; INK = keepINK; svg.innerHTML = ""; this.disconnect(); }
   }).observe(root, { attributes: true, attributeFilter: ["class"] });
-  svg.addEventListener("pointerup", function (e) { if (e.target.closest && e.target.closest(".open-hit")) document.getElementById("startOpen").click(); });
   round();
 })();
