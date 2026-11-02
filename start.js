@@ -87,6 +87,7 @@
   new MutationObserver(function () {
     if (!root.classList.contains("show-start")) { dead = true; clearTimeout(timer); G = keepG; INK = keepINK; svg.innerHTML = ""; this.disconnect(); }
   }).observe(root, { attributes: true, attributeFilter: ["class"] });
-  svg.addEventListener("click", function () { document.getElementById("startOpen").click(); }); // the whole loop is the way in
+  // A click would often be lost: the blocks are redrawn every few moments, and a click needs the same element at press and release. So it opens on pointerdown.
+  svg.addEventListener("pointerdown", function (e) { if (e.button === 0 || e.pointerType !== "mouse") document.getElementById("startOpen").click(); });
   round();
 })();
