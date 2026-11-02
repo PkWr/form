@@ -561,6 +561,7 @@ if (typeof document !== 'undefined' && document.getElementById('grid')) { // the
     rules = r.slice(0, 2); $('rsA').textContent = RULE_VERB[rules[0]]; const b = rules[1];
     $('rsAnd').hidden = !b; $('rsB').textContent = b ? RULE_VERB[b] : '+ another rule'; $('rsB').classList.toggle('none', !b);
     $('rsC').textContent = PER_BLOCKS[per] + ' at a time';
+    { const v = rules.map(x => RULE_VERB[x]).join(' and '); $('process').textContent = v.charAt(0).toUpperCase() + v.slice(1); } // the yellow button says the rule
     $('ruleHint').textContent = rules.map(x => RULE_HINT[x]).join(' ') + ' Tap a word to change it.';
     const dir = $('viewIcons').querySelector('[data-mode="direction"]'); dir.hidden = rules.includes('change');
     if (rules.includes('change') && mode === 'direction') { mode = 'form'; [...$('viewIcons').querySelectorAll('a')].forEach(x => x.setAttribute('aria-checked', x.dataset.mode === 'form')); }
