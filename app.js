@@ -360,6 +360,8 @@ const SYMBOLS = {
 
 if (typeof document !== 'undefined' && document.getElementById('grid')) { // the demo page loads this file for the engine only
   const $ = id => document.getElementById(id);
+  // The drawings on screen share one set of shapes, hatch lines and clips by id. They must live in an svg that is always drawn: when the first copy of an id sat inside a hidden step, the clips of the others failed and the density lines spilled out of their blocks.
+  document.body.insertAdjacentHTML('afterbegin', `<svg id="sharedDefs" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">${defs()}</svg>`);
   let grid = Array(G * G).fill(null);
   let shape = 'square', chain = null, mode = 'form', cur = 0, timer = null;
   const mk = s => ({ s, r: 0, q: 0 });
