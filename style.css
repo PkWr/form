@@ -136,6 +136,8 @@ html.start-leaving #startScreen{opacity:0;pointer-events:none}
 .sa-open:active{transform:rotate(0deg) scale(.94)}
 .sa-open:hover,.sa-open:active,.sa-open:focus-visible{background:var(--yellow);color:var(--ink);outline:none}
 .sa-more{border:0;background:none;padding:0;color:var(--ink);font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+/* Wide windows: the full text always shows, with an open at the top (under the opening lines) and another at the end. */
+@media(min-width:761px){.sa-lead{display:flex;margin:4px 0 20px}.sa-more{display:none}.sa-open-end{display:block;margin:8px 0 28px}}
 @media(max-width:760px){
 .sa-lead{display:flex;align-items:center;gap:22px;margin:4px 0 28px}
 .sa-open-end{display:block;margin:8px 0 28px}
