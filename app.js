@@ -200,6 +200,7 @@ const n3 = v => +v.toFixed(3);
 const DENS = [[0, 1], [45, 1.35], [135, 1.7], [90, 1.15], [22, 1.5], [158, 1.05], [67, 1.9], [112, 1.25]];
 function densStack(chain, k) {
   const s = chain.states[k], o = chain.orig || chain.states[0], list = [{ st: o, slot: 0 }];
+  if (s.phase === 'unmake') return [{ blocks: s.blocks, dx: 0, dy: 0, slot: 1 + (s.id % 7) }]; // unmaking: a block that has gone is gone, in every treatment, so no earlier layers
   for (const st of [...pastOf(chain, k).filter(x => x !== o).slice(0, 3).reverse(), s]) if (st !== o) list.push({ st, slot: 1 + (st.id % 7) });
   return list.map(e => ({ blocks: e.st.blocks, dx: e.st.ox - s.ox, dy: e.st.oy - s.oy, slot: e.slot }));
 }
@@ -209,11 +210,11 @@ function densLayers(chain, k) {
 const use = (b, c = INK, o = 1) => `<use opacity="${o}" stroke="${c}" stroke-width="1.5" href="#${b.s}" transform="translate(${b.x * U} ${b.y * U}) rotate(${ang(b)} 50 50)"/>`;
 // Transparency (onion skin): the blocks of the variants shown just before this one stay as fading ghosts.
 const GHOSTS = [0.3, 0.2, 0.13, 0.09, 0.06, 0.04];
-const ghosts = (chain, k) => GHOSTS.map((o, a) => { const st = pastOf(chain, k)[a], s = chain.states[k]; if (!st) return null;
+const ghosts = (chain, k) => chain.states[k].phase === 'unmake' ? [] : GHOSTS.map((o, a) => { const st = pastOf(chain, k)[a], s = chain.states[k]; if (!st) return null;
   return { o, dx: st.ox - s.ox, dy: st.oy - s.oy, blocks: st.blocks }; }).filter(Boolean).reverse();
 // Cumulative Solid, as in the printed book: every place that any earlier variant of the same set (and the original) occupied or vacated stays solid, so the mass grows as the sequence runs. Each past state is shifted into this state's frame.
 function solidTraces(chain, k) {
-  const s = chain.states[k], seen = new Set(), out = [];
+  const s = chain.states[k], seen = new Set(), out = []; if (s.phase === 'unmake') return [];
   [s, ...pastOf(chain, k)].forEach(st => [...st.tr, ...st.blocks].forEach(t => { const b = { ...t, x: t.x + st.ox - s.ox, y: t.y + st.oy - s.oy }, key = b.x + ',' + b.y + b.s + b.r + (b.q || 0); if (!seen.has(key)) { seen.add(key); out.push(b); } }));
   return out;
 }
@@ -222,7 +223,7 @@ function frame0(chain, k, mode) {
   const s = chain.states[k];
   if (mode === 'direction') return s.blocks.map(b => stripes(b, s.blocks)).join('');
   if (mode === 'dens') return densLayers(chain, k);
-  return (mode === 'solid' ? solidTraces(chain, k).map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + s.tr.map(t => use(t, INK, TONE)).join('') : '') + s.blocks.map(use).join('');
+  return (mode === 'solid' ? solidTraces(chain, k).map(t => use(t)).join('') : mode === 'trans' ? ghosts(chain, k).map(g => `<g transform="translate(${g.dx * U} ${g.dy * U})">${g.blocks.map(b => use(b, INK, g.o)).join('')}</g>`).join('') + (s.phase === 'unmake' ? '' : s.tr.map(t => use(t, INK, TONE)).join('')) : '') + s.blocks.map(use).join('');
 }
 function bbox(chain, mode) {
   // The same frame for every treatment (blocks, traces, the density overlay and the ghosts), so changing treatment never changes the scale.
