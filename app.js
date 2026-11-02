@@ -252,7 +252,7 @@ const n2s = v => +v.toFixed(1);
 function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', title = '') {
   const bb = bbox(chain, mode), n = chain.states.length, fh = bb.h + 120, [pw, ph] = PAPERS[paper] || PAPERS.A3, W = pw * 10, H = ph * 10, m = W * 0.06, nb = NOTE ? noteBlock(W) : null, band = nb ? nb.h + (title ? 160 : 0) : 0, top = 0, fs = W / 105;
   // The title sits small in the bottom left corner with the name, in the margin, not across the top.
-  const cap = title ? glyphText(title, m, +n2s(H - m * 0.55 - fs * 1.7), +n2s(fs * 1.2), 'serif') + glyphText('Form by Patrick Walker, form.pkwr.co', m, +n2s(H - m * 0.55), +n2s(fs * 0.85), 'sans') : '';
+  const cap = title ? glyphText(title, m, +n2s(H - m * 0.55 - fs * 1.5), +n2s(fs * 0.85), 'serif') + glyphText('Form by Patrick Walker (form.pkwr.co)', m, +n2s(H - m * 0.55), +n2s(fs * 0.85), 'sans') : '';
   // Choose the number of columns that makes the variants as large as possible on the page.
   let cols = 1, best = 0;
   for (let c = 1; c <= n; c++) { const sc = Math.min((W - 2 * m) / (c * bb.w), (H - 2 * m - band - top) / (Math.ceil(n / c) * fh)); if (sc > best) { best = sc; cols = c; } }
@@ -261,7 +261,7 @@ function sheetSVG(chain, mode, hidden = new Set(), edit = false, paper = 'A3', t
     const cx = (k % cols) * bb.w, cy = Math.floor(k / cols) * fh, off = edit && hidden.has(st.id);
     inner += `<g data-id="${st.id}" opacity="${off ? 0.12 : 1}">` + (edit ? `<rect x="${cx}" y="${cy}" width="${bb.w}" height="${fh}" fill="transparent" style="cursor:pointer"/>` : '') +
       `<g transform="translate(${cx - bb.x} ${cy - bb.y})" fill="${INK}">${frame(chain, k, mode)}</g>` +
-      (st.id ? glyphText(roman(st.id), cx + bb.w / 2, cy + bb.h + 70, 40, 'sans', 'middle') : '') + `</g>`;
+      (st.id ? glyphText(roman(st.id), cx + bb.w / 2, cy + bb.h + 70, 40, 'serif', 'middle') : '') + `</g>`;
   });
   return svgWrap(W, H, `<g transform="translate(${(W - cols * bb.w * best) / 2} ${m + top}) scale(${best})">${inner}</g>` + cap + (nb ? nb.svg(H - band - m / 2) : ''), `width="${pw}mm" height="${ph}mm"`);
 }
