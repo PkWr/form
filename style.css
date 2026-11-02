@@ -100,7 +100,8 @@ html.show-start{overflow:hidden}
 html.show-start #startScreen{display:flex;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;overflow:hidden;background:#000;transition:opacity .5s ease;--strip-w:44px;--panel-w:max(320px,calc(100vw / 3 - var(--strip-w)))}
 html.start-leaving #startScreen{opacity:0;pointer-events:none}
 #startLoop{position:absolute;inset:6vmin;width:calc(100% - 12vmin);height:calc(100% - 12vmin)}
-#startLoop{cursor:pointer}
+#startLoop{pointer-events:none} /* only the blocks themselves are live, so the rollover and the click start where the shape is, not in the empty area round it */
+#startLoop use{pointer-events:auto;cursor:pointer}
 #startLoop:hover #startLoopG{fill:var(--yellow)}
 #startLoop:hover use{stroke:var(--yellow)}
 /* The way in is the open button in the About panel; this one stays for keyboards (Enter) and screen readers. */
